@@ -110,6 +110,7 @@ function _attachAuthStateListener(){
         _maybeShowPinLock();
         _updatePinUI();
         await _hardLoginSync(user.uid, user.email);
+        if(typeof showSc === 'function') showSc('dash');
       } else {
         // IMPORTANT: Firebase can fire this callback with `user === null`
         // ONCE, transiently, before it has finished restoring a persisted
@@ -217,6 +218,25 @@ function _updateOnlineIndicator(online){
 // ══════════════════════════════
 //  EMAIL + PASSWORD AUTH SYSTEM (Firebase Authentication)
 // ══════════════════════════════
+function togglePasswordVisibility(inputId, iconId){
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if(!input) return;
+  if(input.type === 'password'){
+    input.type = 'text';
+    if(icon){
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    }
+  } else {
+    input.type = 'password';
+    if(icon){
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+}
+
 function getSessionUid(){ return localStorage.getItem('sms_session_uid') || null; }
 function getSessionEmail(){ return localStorage.getItem('sms_session_email') || null; }
 function _fbUserPath(uid){ return 'backups/users/' + uid; }
@@ -430,8 +450,11 @@ function _refreshAllViews(){
 }
 
 // ── LOGOUT: hard reset, then blank UI back to Login Screen ─────
-function authLogout(){
-  if(!confirm('لاگ آؤٹ کرنا ہے؟')) return;
+async function authLogout(){
+  const ok = (typeof swalConfirm === 'function')
+    ? await swalConfirm('لاگ آؤٹ کرنا ہے؟', 'آپ کا موجودہ لاگ ان سیشن ختم ہو جائے گا', 'warning', 'جی ہاں، لاگ آؤٹ کریں', 'منسوخ کریں')
+    : confirm('لاگ آؤٹ کرنا ہے؟');
+  if(!ok) return;
 
   // Stop any pending debounced sync from firing after we've wiped data
   if(_fbSyncDebounce) clearTimeout(_fbSyncDebounce);
@@ -612,7 +635,10 @@ async function _fbLoadFromCloud(silent){
 async function fbRestoreFromCloud(){
   const mobile = getSessionUid();
   if(!mobile){ showToast('<i class="fa-solid fa-triangle-exclamation"></i> پہلے لاگ ان کریں', 'warn'); return; }
-  if(!confirm('Cloud سے ڈیٹا لوڈ ہو گا اور موجودہ ڈیٹا replace ہو جائے گا۔ جاری رکھنا ہے؟')) return;
+  const ok = (typeof swalConfirm === 'function')
+    ? await swalConfirm('Cloud سے ڈیٹا بحال کریں؟', 'Cloud سے ڈیٹا لوڈ ہو گا اور موجودہ مقامی ڈیٹا Replace ہو جائے گا۔', 'question', 'جی ہاں، بحال کریں', 'منسوخ کریں')
+    : confirm('Cloud سے ڈیٹا لوڈ ہو گا اور موجودہ ڈیٹا replace ہو جائے گا۔ جاری رکھنا ہے؟');
+  if(!ok) return;
   showToast('⏳ Cloud سے لوڈ ہو رہا ہے…');
   if(!_fbDb) return;
   try{

@@ -1132,36 +1132,65 @@ function renderDash(){
   const hA = document.getElementById('hdr-a');
   if(!dC) return; // DOM not ready yet
 
-  const tot=customers.length;
-  const act=customers.filter(c=>c.status==='active').length;
-  const allPaid=customers.reduce((s,c)=>s+c.payments.reduce((ss,p)=>ss+p.amount,0),0);
-  const allRem=customers.reduce((s,c)=>{const p=c.payments.reduce((ss,x)=>ss+x.amount,0);return s+Math.max(0,c.mobile.remaining-p);},0);
-  dC.textContent=tot;
-  dA.textContent=act;
-  dR.textContent=allPaid>=1000?Math.round(allPaid/1000)+'K':'₨'+fmt(allPaid);
-  dP.textContent=allRem>=1000?Math.round(allRem/1000)+'K':'₨'+fmt(allRem);
-  if(hC) hC.textContent=tot;
-  if(hA) hA.textContent=act;
+  // Sanitize customers array to prevent crashes on uninitialized objects
+  if(Array.isArray(customers)){
+    customers.forEach(c => {
+      if(c){
+        if(!Array.isArray(c.payments)) c.payments = [];
+        if(!c.mobile) c.mobile = {};
+      }
+    });
+  } else {
+    customers = [];
+  }
+
+  const validCustomers = customers.filter(c => c && typeof c === 'object');
+  const tot = validCustomers.length;
+  const act = validCustomers.filter(c => c.status === 'active').length;
+  const allPaid = validCustomers.reduce((s, c) => s + (Array.isArray(c.payments) ? c.payments.reduce((ss, p) => ss + (p.amount || 0), 0) : 0), 0);
+  const allRem = validCustomers.reduce((s, c) => {
+    const p = Array.isArray(c.payments) ? c.payments.reduce((ss, x) => ss + (x.amount || 0), 0) : 0;
+    const remaining = (c.mobile && c.mobile.remaining) ? c.mobile.remaining : 0;
+    return s + Math.max(0, remaining - p);
+  }, 0);
+
+  dC.textContent = tot;
+  dA.textContent = act;
+  dR.textContent = allPaid >= 1000 ? Math.round(allPaid / 1000) + 'K' : '₨' + fmt(allPaid);
+  dP.textContent = allRem >= 1000 ? Math.round(allRem / 1000) + 'K' : '₨' + fmt(allRem);
+  if(hC) hC.textContent = tot;
+  if(hA) hA.textContent = act;
 
   renderPlanSummary();
 
-  const allP=[];customers.forEach(c=>c.payments.forEach(p=>allP.push({...p,cn:c.name,cm:c.mobile.model})));
-  allP.sort((a,b)=>new Date(b.time||b.date)-new Date(a.time||a.date));
-  const rEl=document.getElementById('d-recent');
-  rEl.innerHTML=allP.slice(0,5).length?allP.slice(0,5).map(p=>`
-    <div class="pitem">
-      <div><div style="font-weight:600;">${p.cn}</div><div class="pdate">${p.cm} — ${fmtDT(p.date)}</div></div>
-      <span class="pamt">Rs. ${fmt(p.amount)}</span>
-    </div>`).join(''):'<div class="empty"><div class="empty-ico"><i class="fa-solid fa-chart-simple"></i></div><p>ابھی کوئی ریکارڈ نہیں</p></div>';
+  const allP = [];
+  validCustomers.forEach(c => {
+    if(Array.isArray(c.payments)){
+      c.payments.forEach(p => {
+        if(p) allP.push({ ...p, cn: c.name || '', cm: c.mobile?.model || '' });
+      });
+    }
+  });
+  allP.sort((a, b) => new Date(b.time || b.date) - new Date(a.time || a.date));
+  const rEl = document.getElementById('d-recent');
+  if(rEl){
+    rEl.innerHTML = allP.slice(0, 5).length ? allP.slice(0, 5).map(p => `
+      <div class="pitem">
+        <div><div style="font-weight:600;">${p.cn}</div><div class="pdate">${p.cm} — ${fmtDT(p.date)}</div></div>
+        <span class="pamt">Rs. ${fmt(p.amount)}</span>
+      </div>`).join('') : '<div class="empty"><div class="empty-ico"><i class="fa-solid fa-chart-simple"></i></div><p>ابھی کوئی ریکارڈ نہیں</p></div>';
+  }
 
-  const dEl=document.getElementById('d-due');
-  const dueList=customers.filter(c=>c.status==='active');
-  dEl.innerHTML=dueList.length?dueList.map(c=>{
-    const p=c.payments.reduce((s,x)=>s+x.amount,0);
-    const r=Math.max(0,c.mobile.remaining-p);
-    const left=c.mobile.months-c.payments.length;
-    return `<div class="pitem"><div><div style="font-weight:600;">${c.name}</div><div class="pdate">${c.mobile.model} — ${left} قسطیں باقی</div></div><span class="pamt">Rs. ${fmt(r)}</span></div>`;
-  }).join(''):'<div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p>سب ٹھیک ہے!</p></div>';
+  const dEl = document.getElementById('d-due');
+  if(dEl){
+    const dueList = validCustomers.filter(c => c.status === 'active');
+    dEl.innerHTML = dueList.length ? dueList.map(c => {
+      const p = Array.isArray(c.payments) ? c.payments.reduce((s, x) => s + (x.amount || 0), 0) : 0;
+      const r = Math.max(0, (c.mobile?.remaining || 0) - p);
+      const left = (c.mobile?.months || 0) - (c.payments ? c.payments.length : 0);
+      return `<div class="pitem"><div><div style="font-weight:600;">${c.name}</div><div class="pdate">${c.mobile?.model || ''} — ${left} قسطیں باقی</div></div><span class="pamt">Rs. ${fmt(r)}</span></div>`;
+    }).join('') : '<div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p>سب ٹھیک ہے!</p></div>';
+  }
 }
 
 // ══════════════════════════════
@@ -1322,16 +1351,54 @@ function _navInit(){
   // land on).
   try{ history.replaceState({sms:true,view:'root'}, '', '#dash'); }catch(e){}
 }
-function delCust(id){
-  const c=customers.find(x=>x.id===id);if(!c)return;
-  if(!confirm(`کیا آپ واقعی "${c.name}" کو حذف کرنا چاہتے ہیں؟`))return;
-  customers=customers.filter(x=>x.id!==id);save();renderCustomers();renderDash();
-  showToast('<i class="fa-solid fa-trash"></i> حذف ہو گیا','warn');
+async function swalConfirm(title, text='', icon='question', confirmButtonText='جی ہاں', cancelButtonText='منسوخ کریں'){
+  if(typeof Swal === 'undefined') return confirm(title + (text ? '\n' + text : ''));
+  const res = await Swal.fire({
+    title: title,
+    html: text,
+    icon: icon,
+    showCancelButton: true,
+    confirmButtonColor: '#1565C0',
+    cancelButtonColor: '#d33',
+    confirmButtonText: confirmButtonText,
+    cancelButtonText: cancelButtonText,
+    background: 'var(--card, #fff)',
+    color: 'var(--t1, #0D1B4B)'
+  });
+  return res.isConfirmed;
 }
-function showToast(msg,t=''){
-  const el=document.getElementById('toast');
-  el.innerHTML=msg;el.className='toast'+(t?' '+t:'');
-  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);
+
+async function delCust(id){
+  const c = customers.find(x=>x.id===id); if(!c) return;
+  const ok = await swalConfirm(`کیا آپ واقعی "${c.name}" کو حذف کرنا چاہتے ہیں؟`, 'یہ کسٹمر اور اس کا تمام ہسٹری ریکارڈ مٹ جائے گا!', 'warning', 'جی ہاں، حذف کریں', 'منسوخ کریں');
+  if(!ok) return;
+  customers = customers.filter(x=>x.id!==id);
+  save(); renderCustomers(); renderDash();
+  showToast('<i class="fa-solid fa-trash"></i> حذف ہو گیا', 'warn');
+}
+
+function showToast(msg, t=''){
+  if(typeof Swal !== 'undefined'){
+    const iconMap = { warn: 'warning', error: 'error', success: 'success', info: 'info' };
+    const icon = iconMap[t] || (msg.includes('خوش آمدید') || msg.includes('مکمل') || msg.includes('جمع') || msg.includes('بچت') || msg.includes('لود') ? 'success' : (msg.includes('حذف') || msg.includes('وارننگ') || msg.includes('غلط') || msg.includes('مسئلہ') ? 'warning' : 'info'));
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
+    Toast.fire({ icon: icon, html: msg });
+  } else {
+    const el = document.getElementById('toast');
+    if(!el) return;
+    el.innerHTML = msg; el.className = 'toast' + (t ? ' ' + t : '');
+    el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2800);
+  }
 }
 
 // ══════════════════════════════
@@ -1987,6 +2054,17 @@ function printReminderMedia(){
 // ══════════════════════════════
 //  UPDATE showSc & recPay
 // ══════════════════════════════
+function goToAddStep(step){
+  document.querySelectorAll('.add-step-content').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  const targetContent = document.getElementById('add-step-' + step);
+  const targetBtn = document.getElementById('step-btn-' + step);
+  if(targetContent) targetContent.classList.add('active');
+  if(targetBtn) targetBtn.classList.add('active');
+  const card = document.querySelector('#sc-add .card');
+  if(card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function showSc(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
@@ -1994,6 +2072,7 @@ function showSc(n){
   const nm={dash:0,calc:1,add:2,customers:3,pay:4,alerts:5,reminders:6,report:7,games:8,about:9};
   document.querySelectorAll('.ni')[nm[n]]?.classList.add('active');
   if(n==='dash') renderDash();
+  if(n==='add') goToAddStep(1);
   if(n==='customers'){
     const srchEl = document.getElementById('srch');
     if(srchEl) srchEl.value = '';

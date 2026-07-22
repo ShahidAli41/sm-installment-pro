@@ -6,8 +6,8 @@
 <title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="styles.css">
 
 <!-- Firebase SDK — loaded as static head scripts (not injected dynamically)
      so it is guaranteed to be present before our inline script runs. This is
@@ -48,6 +48,10 @@
           </div>
         </div>
       </div>
+      <button class="hdr-logout-btn" onclick="authLogout()" title="لاگ آؤٹ">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="t" data-ur="لاگ آؤٹ" data-en="Logout">لاگ آؤٹ</span>
+      </button>
     </div>
   </div>
 </div>
@@ -63,19 +67,21 @@
       <div class="dc bg2"><div class="dico"><i class="fa-solid fa-circle-check"></i></div><div class="dnum" id="d-r">₨0</div><div class="dlbl" data-ur="وصول شدہ" data-en="Collected">وصول شدہ</div></div>
       <div class="dc bred"><div class="dico">⏳</div><div class="dnum" id="d-p">₨0</div><div class="dlbl" data-ur="باقی رقم" data-en="Remaining">باقی رقم</div></div>
     </div>
-    <div class="card">
-      <div class="ch"><h3><i class="fa-solid fa-calendar-days"></i> <span data-ur="پلان بریک ڈاؤن" data-en="Plan Breakdown">پلان بریک ڈاؤن</span></h3></div>
-      <div class="cb" id="d-plans-summary" style="display:flex;flex-wrap:wrap;gap:8px;">
-        <div class="empty"><p data-ur="ابھی کوئی کسٹمر نہیں" data-en="No customers yet">ابھی کوئی کسٹمر نہیں</p></div>
+    <div class="dash-grid-layout">
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-calendar-days"></i> <span data-ur="پلان بریک ڈاؤن" data-en="Plan Breakdown">پلان بریک ڈاؤن</span></h3></div>
+        <div class="cb" id="d-plans-summary" style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div class="empty"><p data-ur="ابھی کوئی کسٹمر نہیں" data-en="No customers yet">ابھی کوئی کسٹمر نہیں</p></div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="ch"><h3><i class="fa-solid fa-list-check"></i> <span data-ur="حالیہ ادائیگیاں" data-en="Recent Payments">حالیہ ادائیگیاں</span></h3><button class="btn bsm" style="background:rgba(255,255,255,0.18);color:#fff;border:none;font-size:11px;padding:5px 9px;border-radius:8px;cursor:pointer;" onclick="showSc('customers')" data-ur="تمام ▶" data-en="All ▶">تمام ▶</button></div>
-      <div class="cb" id="d-recent"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-chart-simple"></i></div><p data-ur="ابھی کوئی ریکارڈ نہیں" data-en="No records yet">ابھی کوئی ریکارڈ نہیں</p></div></div>
-    </div>
-    <div class="card">
-      <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> <span data-ur="باقی اقساط والے کسٹمرز" data-en="Pending Installments">باقی اقساط والے کسٹمرز</span></h3></div>
-      <div class="cb" id="d-due"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p data-ur="سب ٹھیک ہے!" data-en="All good!">سب ٹھیک ہے!</p></div></div>
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-list-check"></i> <span data-ur="حالیہ ادائیگیاں" data-en="Recent Payments">حالیہ ادائیگیاں</span></h3><button class="btn bsm" style="background:rgba(255,255,255,0.18);color:#fff;border:none;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;" onclick="showSc('customers')" data-ur="تمام ▶" data-en="All ▶">تمام ▶</button></div>
+        <div class="cb" id="d-recent"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-chart-simple"></i></div><p data-ur="ابھی کوئی ریکارڈ نہیں" data-en="No records yet">ابھی کوئی ریکارڈ نہیں</p></div></div>
+      </div>
+      <div class="card dash-full-card">
+        <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> <span data-ur="باقی اقساط والے کسٹمرز" data-en="Pending Installments">باقی اقساط والے کسٹمرز</span></h3></div>
+        <div class="cb" id="d-due"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p data-ur="سب ٹھیک ہے!" data-en="All good!">سب ٹھیک ہے!</p></div></div>
+      </div>
     </div>
   </div>
 
@@ -86,206 +92,246 @@
       <div class="cb">
         <input type="hidden" id="edit-id" value="">
 
-        <div class="gr-badge-wrap">
-          <div class="gr-badge"><i class="fa-solid fa-hashtag"></i> <span id="c-gr-badge-text">GR#0001</span></div>
-          <div class="gr-badge-label">کسٹمر رجسٹریشن نمبر (خودکار)</div>
-        </div>
-
-        <div class="sdiv"><span><i class="fa-solid fa-user"></i> کسٹمر کی معلومات</span></div>
-        <div class="fgrid">
-          <div class="fg"><label><i class="fa-solid fa-user"></i> نام</label><input id="c-name" placeholder="محمد علی"></div>
-          <div class="fg"><label><i class="fa-solid fa-phone"></i> موبائل نمبر</label><input type="tel" id="c-phone" placeholder="03001234567"></div>
-          <div class="fg"><label><i class="fa-solid fa-id-card"></i> CNIC</label><input id="c-cnic" placeholder="35202-1234567-1" maxlength="15"></div>
-          <div class="fg"><label><i class="fa-solid fa-envelope"></i> ای میل</label><input type="email" id="c-email" placeholder="example@gmail.com"></div>
-          <div class="fg full"><label><i class="fa-solid fa-comment"></i> واٹس ایپ نمبر</label><input type="tel" id="c-wa" placeholder="03001234567"></div>
-          <div class="fg full"><label><i class="fa-solid fa-location-dot"></i> پتہ</label><input id="c-addr" placeholder="گھر کا پتہ"></div>
-          <div class="fg full">
-            <label><i class="fa-solid fa-location-crosshairs"></i> کسٹمر کا GPS مقام</label>
-            <div style="display:flex;gap:8px;">
-              <input id="c-gps-display" placeholder="ابھی تک مقام حاصل نہیں کیا گیا" readonly style="flex:1;background:var(--bg);">
-              <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="captureCustomerGpsLocation()">
-                <i class="fa-solid fa-location-crosshairs"></i> Get Location
-              </button>
-            </div>
-            <div id="c-gps-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
-            <input type="hidden" id="c-gps-lat" value="">
-            <input type="hidden" id="c-gps-lng" value="">
+        <!-- STEPPER HEADER -->
+        <div class="form-stepper">
+          <div class="step-btn active" id="step-btn-1" onclick="goToAddStep(1)">
+            <div class="step-num">1</div>
+            <div class="step-txt">👤 کسٹمر و ضامن</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-btn" id="step-btn-2" onclick="goToAddStep(2)">
+            <div class="step-num">2</div>
+            <div class="step-txt">📱 آئٹم و قیمت</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-btn" id="step-btn-3" onclick="goToAddStep(3)">
+            <div class="step-num">3</div>
+            <div class="step-txt">📅 پلان و محفوظ</div>
           </div>
         </div>
 
-        <div class="sdiv"><span><i class="fa-solid fa-handshake"></i> ضامن</span></div>
-        <div class="fgrid">
-          <div class="fg"><label><i class="fa-solid fa-user-shield"></i> ضامن نام</label><input id="g-name" placeholder="ضامن کا نام"></div>
-          <div class="fg"><label><i class="fa-solid fa-phone"></i> ضامن نمبر</label><input type="tel" id="g-phone" placeholder="03009876543"></div>
-          <div class="fg full"><label><i class="fa-solid fa-id-card"></i> ضامن CNIC</label><input id="g-cnic" placeholder="35202-7654321-2" maxlength="15"></div>
-        </div>
-
-        <div class="sdiv"><span><i class="fa-solid fa-boxes-stacked"></i> آئٹم کی تفصیل</span></div>
-        <div class="fgrid">
-          <!-- LEVEL 1 — Category -->
-          <div class="fg full">
-            <label><i class="fa-solid fa-layer-group"></i> کیٹیگری منتخب کریں</label>
-            <div class="dd-row">
-              <select id="m-category" onchange="onCategoryChange()">
-                <option value="الیکٹرانکس اینڈ ہوم اپلائنسز">🏠 الیکٹرانکس اینڈ ہوم اپلائنسز</option>
-                <option value="موبائل فونز اینڈ گیجٹس" selected>📱 موبائل فونز اینڈ گیجٹس</option>
-                <option value="گاڑیاں اینڈ بائیکس">🏍️ گاڑیاں اینڈ بائیکس</option>
-                <option value="فرنیچر اینڈ ہوم ڈیکور">🛋️ فرنیچر اینڈ ہوم ڈیکور</option>
-                <option value="دیگر">🛠️ دیگر</option>
-              </select>
-              <button type="button" class="dd-plus" onclick="toggleManualBox('m-category-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
-            </div>
-          </div>
-          <div class="fg full dd-manual-box" id="m-category-other-box" style="display:none;">
-            <label><i class="fa-solid fa-pen"></i> کیٹیگری (خود لکھیں)</label>
-            <input id="m-category-other" placeholder="مثال: کچن ویئر" oninput="onCategoryOtherInput()">
+        <!-- STEP 1: CUSTOMER & GUARANTOR -->
+        <div class="add-step-content active" id="add-step-1">
+          <div class="gr-badge-wrap">
+            <div class="gr-badge"><i class="fa-solid fa-hashtag"></i> <span id="c-gr-badge-text">GR#0001</span></div>
+            <div class="gr-badge-label">کسٹمر رجسٹریشن نمبر (خودکار)</div>
           </div>
 
-          <!-- LEVEL 2 — Item (options depend on the chosen category) -->
-          <div class="fg full" id="m-item-box">
-            <label><i class="fa-solid fa-tag"></i> آئٹم منتخب کریں</label>
-            <div class="dd-row">
-              <select id="m-item-sel" onchange="onItemSelChange()"></select>
-              <button type="button" class="dd-plus" onclick="toggleManualBox('m-item-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
-            </div>
-          </div>
-          <div class="fg full dd-manual-box" id="m-item-other-box" style="display:none;">
-            <label><i class="fa-solid fa-pen"></i> آئٹم کا نام (خود لکھیں)</label>
-            <input id="m-item-other" placeholder="مثال: بلینڈر" oninput="calc()">
-          </div>
-
-          <!-- LEVEL 3 — Company / Brand (options depend on the chosen category) -->
-          <div class="fg full" id="m-brand-box">
-            <label><i class="fa-solid fa-industry"></i> کمپنی / برانڈ</label>
-            <div class="dd-row">
-              <select id="m-brand" onchange="onBrandChange()"></select>
-              <button type="button" class="dd-plus" onclick="toggleManualBox('m-brand-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
-            </div>
-          </div>
-          <div class="fg full dd-manual-box" id="m-brand-other-box" style="display:none;">
-            <label><i class="fa-solid fa-pen"></i> کمپنی / برانڈ (خود لکھیں)</label>
-            <input id="m-brand-other" placeholder="مثال: کوئی نئی کمپنی" oninput="calc()">
-          </div>
-
-          <!-- LEVEL 4 — RAM/Storage Spec (mobile phones only) -->
-          <div class="fg full" id="m-spec-box" style="display:none;">
-            <label><i class="fa-solid fa-memory"></i> رام / اسٹوریج</label>
-            <div class="dd-row">
-              <select id="m-spec" onchange="calc()">
-                <option value="">-- منتخب کریں --</option>
-                <option value="2/32">2/32</option>
-                <option value="3/32">3/32</option>
-                <option value="3/64">3/64</option>
-                <option value="4/64">4/64</option>
-                <option value="4/128">4/128</option>
-                <option value="6/128">6/128</option>
-                <option value="6/256">6/256</option>
-                <option value="8/128">8/128</option>
-                <option value="8/256">8/256</option>
-                <option value="دیگر">🛠️ دیگر</option>
-              </select>
-              <button type="button" class="dd-plus" onclick="toggleManualBox('m-spec-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
-            </div>
-          </div>
-          <div class="fg full dd-manual-box" id="m-spec-other-box" style="display:none;">
-            <label><i class="fa-solid fa-pen"></i> رام / اسٹوریج (خود لکھیں)</label>
-            <input id="m-spec-other" placeholder="مثال: 12/512" oninput="calc()">
-          </div>
-
-          <!-- LEVEL 5 — Model Number / Name (manual text, always available) -->
-          <div class="fg full">
-            <label><i class="fa-solid fa-hashtag"></i> ماڈل نمبر / نام</label>
-            <input id="m-model" placeholder="مثال: Y20, CD-70, EcoStar 450" oninput="_markModelEdited()">
-          </div>
-
-          <!-- LEVEL 6 — Dynamic Unique ID (IMEI / Serial / Chassis) -->
-          <div class="fg">
-            <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> سیریل / شناخت نمبر</label>
-            <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
-          </div>
-          <div class="fg" id="m-engine-box" style="display:none;">
-            <label><i class="fa-solid fa-gear"></i> انجن نمبر</label>
-            <input id="m-engine-no" placeholder="مثال: ENG-123456" dir="ltr">
-          </div>
-          <div class="fg"><label><i class="fa-solid fa-money-bill"></i> آئٹم اصل قیمت (Rs.)</label><input type="number" id="m-price" placeholder="85000" oninput="calc()"></div>
-          <div class="fg"><label><i class="fa-solid fa-credit-card"></i> ایڈوانس (Rs.)</label><input type="number" id="m-adv" placeholder="10000" oninput="calc()"></div>
-
-          <!-- LEVEL 7 — Category-specific extra fields (rendered dynamically) -->
-          <div class="fg full" id="m-extra-wrap" style="display:none;">
-            <div class="sdiv" style="margin:4px 0 10px;"><span><i class="fa-solid fa-sliders"></i> اضافی تفصیل</span></div>
-            <div class="fgrid" id="m-extra-fields"></div>
-          </div>
-        </div>
-
-        <!-- MARKUP -->
-        <div class="markup-box">
-          <div style="font-size:12px;font-weight:700;color:var(--a1);margin-bottom:8px;"><i class="fa-solid fa-arrow-trend-up"></i> منافع / مارک اپ شامل کریں</div>
-          <div class="markup-toggle">
-            <div class="mtog on" id="mt-pct" onclick="setMarkupType('pct')">فیصد (%)</div>
-            <div class="mtog" id="mt-amt" onclick="setMarkupType('amt')">رقم (Rs.)</div>
-            <div class="mtog" id="mt-none" onclick="setMarkupType('none')">بغیر منافع</div>
-          </div>
-          <div class="markup-row" id="markup-field">
-            <label><i class="fa-solid fa-chart-simple"></i> مارک اپ فیصد:</label>
-            <input type="number" id="m-markup" placeholder="10" min="0" max="100" oninput="calc()" style="max-width:120px;">
-            <span id="mu-unit" style="font-weight:700;color:var(--a1);font-size:13px;">%</span>
-          </div>
-        </div>
-
-        <!-- INSTALLMENT PLANS -->
-        <div class="sdiv"><span><i class="fa-solid fa-calendar-days"></i> انسٹالمنٹ پلان منتخب کریں</span></div>
-        <div class="plans-grid" id="plans-grid" style="grid-template-columns:repeat(3,1fr);">
-          <div class="plan-card" onclick="selectPlan(2,this)"><div class="pm">2</div><div class="pl">ماہ</div><div class="pp" id="pp-2">—</div></div>
-          <div class="plan-card" onclick="selectPlan(4,this)"><div class="pm">4</div><div class="pl">ماہ</div><div class="pp" id="pp-4">—</div></div>
-          <div class="plan-card selected" onclick="selectPlan(6,this)"><div class="pm">6</div><div class="pl">ماہ</div><div class="pp" id="pp-6">—</div></div>
-          <div class="plan-card" onclick="selectPlan(8,this)"><div class="pm">8</div><div class="pl">ماہ</div><div class="pp" id="pp-8">—</div></div>
-          <div class="plan-card" onclick="selectPlan(10,this)"><div class="pm">10</div><div class="pl">ماہ</div><div class="pp" id="pp-10">—</div></div>
-          <div class="plan-card" id="plan-manual" onclick="selectPlan('manual',this)"><div class="pm" style="font-size:14px;"><i class="fa-solid fa-signature"></i></div><div class="pl">مینوئل</div><div class="pp" id="pp-manual">خود لکھیں</div></div>
-        </div>
-        <input type="hidden" id="m-months" value="6">
-        <!-- Manual months input (shown only when manual selected) -->
-        <div id="manual-months-box" style="display:none;margin-top:10px;">
+          <div class="sdiv"><span><i class="fa-solid fa-user"></i> کسٹمر کی معلومات</span></div>
           <div class="fgrid">
-            <div class="fg">
-              <label><i class="fa-solid fa-calendar-days"></i> ماہ کی تعداد (مینوئل)</label>
-              <input type="number" id="m-months-manual" placeholder="مثال: 15" min="1" max="60" oninput="onManualMonths()">
+            <div class="fg"><label><i class="fa-solid fa-user"></i> نام</label><input id="c-name" placeholder="محمد علی"></div>
+            <div class="fg"><label><i class="fa-solid fa-phone"></i> موبائل نمبر</label><input type="tel" id="c-phone" placeholder="03001234567"></div>
+            <div class="fg"><label><i class="fa-solid fa-id-card"></i> CNIC</label><input id="c-cnic" placeholder="35202-1234567-1" maxlength="15"></div>
+            <div class="fg"><label><i class="fa-solid fa-envelope"></i> ای میل</label><input type="email" id="c-email" placeholder="example@gmail.com"></div>
+            <div class="fg full"><label><i class="fa-solid fa-comment"></i> واٹس ایپ نمبر</label><input type="tel" id="c-wa" placeholder="03001234567"></div>
+            <div class="fg full"><label><i class="fa-solid fa-location-dot"></i> پتہ</label><input id="c-addr" placeholder="گھر کا پتہ"></div>
+            <div class="fg full">
+              <label><i class="fa-solid fa-location-crosshairs"></i> کسٹمر کا GPS مقام</label>
+              <div style="display:flex;gap:8px;">
+                <input id="c-gps-display" placeholder="ابھی تک مقام حاصل نہیں کیا گیا" readonly style="flex:1;background:var(--bg);">
+                <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="captureCustomerGpsLocation()">
+                  <i class="fa-solid fa-location-crosshairs"></i> Get Location
+                </button>
+              </div>
+              <div id="c-gps-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+              <input type="hidden" id="c-gps-lat" value="">
+              <input type="hidden" id="c-gps-lng" value="">
             </div>
+          </div>
+
+          <div class="sdiv"><span><i class="fa-solid fa-handshake"></i> ضامن</span></div>
+          <div class="fgrid">
+            <div class="fg"><label><i class="fa-solid fa-user-shield"></i> ضامن نام</label><input id="g-name" placeholder="ضامن کا نام"></div>
+            <div class="fg"><label><i class="fa-solid fa-phone"></i> ضامن نمبر</label><input type="tel" id="g-phone" placeholder="03009876543"></div>
+            <div class="fg full"><label><i class="fa-solid fa-id-card"></i> ضامن CNIC</label><input id="g-cnic" placeholder="35202-7654321-2" maxlength="15"></div>
+          </div>
+
+          <div class="step-nav-row">
+            <div></div>
+            <button type="button" class="btn bp" onclick="goToAddStep(2)">اگلا قدم (آئٹم و قیمت) ◄</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: ITEM & PRICE -->
+        <div class="add-step-content" id="add-step-2">
+          <div class="sdiv"><span><i class="fa-solid fa-boxes-stacked"></i> آئٹم کی تفصیل</span></div>
+          <div class="fgrid">
+            <!-- LEVEL 1 — Category -->
+            <div class="fg full">
+              <label><i class="fa-solid fa-layer-group"></i> کیٹیگری منتخب کریں</label>
+              <div class="dd-row">
+                <select id="m-category" onchange="onCategoryChange()">
+                  <option value="الیکٹرانکس اینڈ ہوم اپلائنسز">🏠 الیکٹرانکس اینڈ ہوم اپلائنسز</option>
+                  <option value="موبائل فونز اینڈ گیجٹس" selected>📱 موبائل فونز اینڈ گیجٹس</option>
+                  <option value="گاڑیاں اینڈ بائیکس">🏍️ گاڑیاں اینڈ بائیکس</option>
+                  <option value="فرنیچر اینڈ ہوم ڈیکور">🛋️ فرنیچر اینڈ ہوم ڈیکور</option>
+                  <option value="دیگر">🛠️ دیگر</option>
+                </select>
+                <button type="button" class="dd-plus" onclick="toggleManualBox('m-category-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="fg full dd-manual-box" id="m-category-other-box" style="display:none;">
+              <label><i class="fa-solid fa-pen"></i> کیٹیگری (خود لکھیں)</label>
+              <input id="m-category-other" placeholder="مثال: کچن ویئر" oninput="onCategoryOtherInput()">
+            </div>
+
+            <!-- LEVEL 2 — Item -->
+            <div class="fg full" id="m-item-box">
+              <label><i class="fa-solid fa-tag"></i> آئٹم منتخب کریں</label>
+              <div class="dd-row">
+                <select id="m-item-sel" onchange="onItemSelChange()"></select>
+                <button type="button" class="dd-plus" onclick="toggleManualBox('m-item-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="fg full dd-manual-box" id="m-item-other-box" style="display:none;">
+              <label><i class="fa-solid fa-pen"></i> آئٹم کا نام (خود لکھیں)</label>
+              <input id="m-item-other" placeholder="مثال: بلینڈر" oninput="calc()">
+            </div>
+
+            <!-- LEVEL 3 — Brand -->
+            <div class="fg full" id="m-brand-box">
+              <label><i class="fa-solid fa-industry"></i> کمپنی / برانڈ</label>
+              <div class="dd-row">
+                <select id="m-brand" onchange="onBrandChange()"></select>
+                <button type="button" class="dd-plus" onclick="toggleManualBox('m-brand-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="fg full dd-manual-box" id="m-brand-other-box" style="display:none;">
+              <label><i class="fa-solid fa-pen"></i> کمپنی / برانڈ (خود لکھیں)</label>
+              <input id="m-brand-other" placeholder="مثال: کوئی نئی کمپنی" oninput="calc()">
+            </div>
+
+            <!-- LEVEL 4 — Spec -->
+            <div class="fg full" id="m-spec-box" style="display:none;">
+              <label><i class="fa-solid fa-memory"></i> رام / اسٹوریج</label>
+              <div class="dd-row">
+                <select id="m-spec" onchange="calc()">
+                  <option value="">-- منتخب کریں --</option>
+                  <option value="2/32">2/32</option>
+                  <option value="3/32">3/32</option>
+                  <option value="3/64">3/64</option>
+                  <option value="4/64">4/64</option>
+                  <option value="4/128">4/128</option>
+                  <option value="6/128">6/128</option>
+                  <option value="6/256">6/256</option>
+                  <option value="8/128">8/128</option>
+                  <option value="8/256">8/256</option>
+                  <option value="دیگر">🛠️ دیگر</option>
+                </select>
+                <button type="button" class="dd-plus" onclick="toggleManualBox('m-spec-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="fg full dd-manual-box" id="m-spec-other-box" style="display:none;">
+              <label><i class="fa-solid fa-pen"></i> رام / اسٹوریج (خود لکھیں)</label>
+              <input id="m-spec-other" placeholder="مثال: 12/512" oninput="calc()">
+            </div>
+
+            <!-- LEVEL 5 — Model -->
+            <div class="fg full">
+              <label><i class="fa-solid fa-hashtag"></i> ماڈل نمبر / نام</label>
+              <input id="m-model" placeholder="مثال: Y20, CD-70, EcoStar 450" oninput="_markModelEdited()">
+            </div>
+
+            <!-- LEVEL 6 — Serial / Engine -->
             <div class="fg">
-              <label><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط (مینوئل)</label>
-              <input type="number" id="m-monthly-manual" placeholder="خودکار یا اپنی رقم لکھیں" oninput="onManualMonthly()">
+              <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> سیریل / شناخت نمبر</label>
+              <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
+            </div>
+            <div class="fg" id="m-engine-box" style="display:none;">
+              <label><i class="fa-solid fa-gear"></i> انجن نمبر</label>
+              <input id="m-engine-no" placeholder="مثال: ENG-123456" dir="ltr">
+            </div>
+            <div class="fg"><label><i class="fa-solid fa-money-bill"></i> آئٹم اصل قیمت (Rs.)</label><input type="number" id="m-price" placeholder="85000" oninput="calc()"></div>
+            <div class="fg"><label><i class="fa-solid fa-credit-card"></i> ایڈوانس (Rs.)</label><input type="number" id="m-adv" placeholder="10000" oninput="calc()"></div>
+
+            <div class="fg full" id="m-extra-wrap" style="display:none;">
+              <div class="sdiv" style="margin:4px 0 10px;"><span><i class="fa-solid fa-sliders"></i> اضافی تفصیل</span></div>
+              <div class="fgrid" id="m-extra-fields"></div>
             </div>
           </div>
-        </div>
 
-        <div class="fgrid">
-          <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> شروع تاریخ</label><input type="date" id="m-start"></div>
-          <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> قسط کی تاریخ (ہر ماہ)</label>
-            <select id="m-dday">
-              <option value="1">1 تاریخ</option><option value="5">5 تاریخ</option>
-              <option value="10" selected>10 تاریخ</option><option value="15">15 تاریخ</option>
-              <option value="20">20 تاریخ</option><option value="25">25 تاریخ</option>
-              <option value="28">28 تاریخ</option>
-            </select>
+          <div class="step-nav-row">
+            <button type="button" class="btn ba" onclick="goToAddStep(1)">► پیچھے (کسٹمر)</button>
+            <button type="button" class="btn bp" onclick="goToAddStep(3)">اگلا قدم (پلان و محفوظ) ◄</button>
           </div>
         </div>
 
-        <!-- CALC RESULT -->
-        <div class="cres" id="cres" style="display:none;">
-          <div class="crow"><span class="cl"><i class="fa-solid fa-mobile-screen-button"></i> اصل قیمت</span><span class="cv" id="cr-price">—</span></div>
-          <div class="crow"><span class="cl"><i class="fa-solid fa-arrow-trend-up"></i> مارک اپ / منافع</span><span class="cv red" id="cr-markup">—</span></div>
-          <div class="crow"><span class="cl"><i class="fa-solid fa-money-bill"></i> کل قیمت (مارک اپ سمیت)</span><span class="cv" id="cr-total">—</span></div>
-          <div class="crow"><span class="cl"><i class="fa-solid fa-credit-card"></i> ایڈوانس</span><span class="cv green" id="cr-adv">—</span></div>
-          <div class="crow"><span class="cl"><i class="fa-solid fa-chart-simple"></i> قسط رقم</span><span class="cv" id="cr-rem">—</span></div>
-          <div class="crow"><span class="cl"><i class="fa-solid fa-calendar-days"></i> مدت</span><span class="cv" id="cr-mo">—</span></div>
-          <div class="crow" style="background:linear-gradient(90deg,rgba(255,111,0,0.08),transparent);border-radius:8px;padding:10px 8px;">
-            <span class="cl" style="font-weight:700;"><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط</span>
-            <span class="cv big" id="cr-mon">—</span>
+        <!-- STEP 3: MARKUP & PLAN -->
+        <div class="add-step-content" id="add-step-3">
+          <!-- MARKUP -->
+          <div class="markup-box">
+            <div style="font-size:12px;font-weight:700;color:var(--a1);margin-bottom:8px;"><i class="fa-solid fa-arrow-trend-up"></i> منافع / مارک اپ شامل کریں</div>
+            <div class="markup-toggle">
+              <div class="mtog on" id="mt-pct" onclick="setMarkupType('pct')">فیصد (%)</div>
+              <div class="mtog" id="mt-amt" onclick="setMarkupType('amt')">رقم (Rs.)</div>
+              <div class="mtog" id="mt-none" onclick="setMarkupType('none')">بغیر منافع</div>
+            </div>
+            <div class="markup-row" id="markup-field">
+              <label><i class="fa-solid fa-chart-simple"></i> مارک اپ فیصد:</label>
+              <input type="number" id="m-markup" placeholder="10" min="0" max="100" oninput="calc()" style="max-width:120px;">
+              <span id="mu-unit" style="font-weight:700;color:var(--a1);font-size:13px;">%</span>
+            </div>
           </div>
-        </div>
 
-        <div style="margin-top:16px;display:flex;gap:10px;">
-          <button class="btn bp bfull" id="save-btn" onclick="saveCustomer()"><i class="fa-solid fa-floppy-disk"></i> کسٹمر محفوظ کریں</button>
-          <button class="btn br" id="cancel-edit-btn" onclick="cancelEdit()" style="display:none;"><i class="fa-solid fa-xmark"></i> منسوخ</button>
+          <!-- INSTALLMENT PLANS -->
+          <div class="sdiv"><span><i class="fa-solid fa-calendar-days"></i> انسٹالمنٹ پلان منتخب کریں</span></div>
+          <div class="plans-grid" id="plans-grid" style="grid-template-columns:repeat(3,1fr);">
+            <div class="plan-card" onclick="selectPlan(2,this)"><div class="pm">2</div><div class="pl">ماہ</div><div class="pp" id="pp-2">—</div></div>
+            <div class="plan-card" onclick="selectPlan(4,this)"><div class="pm">4</div><div class="pl">ماہ</div><div class="pp" id="pp-4">—</div></div>
+            <div class="plan-card selected" onclick="selectPlan(6,this)"><div class="pm">6</div><div class="pl">ماہ</div><div class="pp" id="pp-6">—</div></div>
+            <div class="plan-card" onclick="selectPlan(8,this)"><div class="pm">8</div><div class="pl">ماہ</div><div class="pp" id="pp-8">—</div></div>
+            <div class="plan-card" onclick="selectPlan(10,this)"><div class="pm">10</div><div class="pl">ماہ</div><div class="pp" id="pp-10">—</div></div>
+            <div class="plan-card" id="plan-manual" onclick="selectPlan('manual',this)"><div class="pm" style="font-size:14px;"><i class="fa-solid fa-signature"></i></div><div class="pl">مینوئل</div><div class="pp" id="pp-manual">خود لکھیں</div></div>
+          </div>
+          <input type="hidden" id="m-months" value="6">
+          <div id="manual-months-box" style="display:none;margin-top:10px;">
+            <div class="fgrid">
+              <div class="fg">
+                <label><i class="fa-solid fa-calendar-days"></i> ماہ کی تعداد (مینوئل)</label>
+                <input type="number" id="m-months-manual" placeholder="مثال: 15" min="1" max="60" oninput="onManualMonths()">
+              </div>
+              <div class="fg">
+                <label><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط (مینوئل)</label>
+                <input type="number" id="m-monthly-manual" placeholder="خودکار یا اپنی رقم لکھیں" oninput="onManualMonthly()">
+              </div>
+            </div>
+          </div>
+
+          <div class="fgrid">
+            <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> شروع تاریخ</label><input type="date" id="m-start"></div>
+            <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> قسط کی تاریخ (ہر ماہ)</label>
+              <select id="m-dday">
+                <option value="1">1 تاریخ</option><option value="5">5 تاریخ</option>
+                <option value="10" selected>10 تاریخ</option><option value="15">15 تاریخ</option>
+                <option value="20">20 تاریخ</option><option value="25">25 تاریخ</option>
+                <option value="28">28 تاریخ</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CALC RESULT -->
+          <div class="cres" id="cres" style="display:none;">
+            <div class="crow"><span class="cl"><i class="fa-solid fa-mobile-screen-button"></i> اصل قیمت</span><span class="cv" id="cr-price">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-arrow-trend-up"></i> مارک اپ / منافع</span><span class="cv red" id="cr-markup">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-money-bill"></i> کل قیمت (مارک اپ سمیت)</span><span class="cv" id="cr-total">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-credit-card"></i> ایڈوانس</span><span class="cv green" id="cr-adv">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-chart-simple"></i> قسط رقم</span><span class="cv" id="cr-rem">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-calendar-days"></i> مدت</span><span class="cv" id="cr-mo">—</span></div>
+            <div class="crow" style="background:linear-gradient(90deg,rgba(255,111,0,0.08),transparent);border-radius:8px;padding:10px 8px;">
+              <span class="cl" style="font-weight:700;"><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط</span>
+              <span class="cv big" id="cr-mon">—</span>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;">
+            <button class="btn bp bfull" id="save-btn" onclick="saveCustomer()"><i class="fa-solid fa-floppy-disk"></i> کسٹمر محفوظ کریں</button>
+            <button class="btn br" id="cancel-edit-btn" onclick="cancelEdit()" style="display:none;"><i class="fa-solid fa-xmark"></i> منسوخ</button>
+          </div>
+
+          <div class="step-nav-row">
+            <button type="button" class="btn ba" onclick="goToAddStep(2)">► پیچھے (آئٹم و قیمت)</button>
+            <div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -855,9 +901,18 @@
 
     <!-- LOGIN -->
     <div id="auth-login" style="display:flex;flex-direction:column;gap:10px;text-align:right;">
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-login-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ</label><input id="auth-login-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
-      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authLogin()">🔓 لاگ ان کریں</button>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label>
+        <input id="auth-login-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); authLogin(); }">
+      </div>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ</label>
+        <div style="position:relative;width:100%;">
+          <input id="auth-login-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;padding-right:38px;width:100%;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); authLogin(); }">
+          <i class="fa-solid fa-eye" id="toggle-auth-login-pass" onclick="togglePasswordVisibility('auth-login-pass', 'toggle-auth-login-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#1565C0;z-index:10;font-size:16px;padding:4px;" title="پاس ورڈ دکھائیں / چھپائیں"></i>
+        </div>
+      </div>
+      <button class="btn" type="button" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authLogin()">🔓 لاگ ان کریں</button>
 
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
         <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('register')">نیا اکاؤنٹ بنائیں؟</span>
@@ -868,10 +923,25 @@
     <!-- REGISTER -->
     <div id="auth-register" style="display:none;flex-direction:column;gap:10px;text-align:right;">
       <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:2px;">پہلی بار؟ اپنا اکاؤنٹ بنائیں</div>
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-reg-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> نیا پاس ورڈ (کم از کم 6 حروف)</label><input id="auth-reg-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ دوبارہ لکھیں</label><input id="auth-reg-pass2" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
-      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authRegister()"><i class="fa-solid fa-circle-check"></i> اکاؤنٹ بنائیں</button>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label>
+        <input id="auth-reg-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); authRegister(); }">
+      </div>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-lock"></i> نیا پاس ورڈ (کم از کم 6 حروف)</label>
+        <div style="position:relative;width:100%;">
+          <input id="auth-reg-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;padding-right:38px;width:100%;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); authRegister(); }">
+          <i class="fa-solid fa-eye" id="toggle-auth-reg-pass" onclick="togglePasswordVisibility('auth-reg-pass', 'toggle-auth-reg-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#1565C0;z-index:10;font-size:16px;padding:4px;" title="پاس ورڈ دکھائیں / چھپائیں"></i>
+        </div>
+      </div>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ دوبارہ لکھیں</label>
+        <div style="position:relative;width:100%;">
+          <input id="auth-reg-pass2" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;padding-right:38px;width:100%;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); authRegister(); }">
+          <i class="fa-solid fa-eye" id="toggle-auth-reg-pass2" onclick="togglePasswordVisibility('auth-reg-pass2', 'toggle-auth-reg-pass2')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#1565C0;z-index:10;font-size:16px;padding:4px;" title="پاس ورڈ دکھائیں / چھپائیں"></i>
+        </div>
+      </div>
+      <button class="btn" type="button" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authRegister()"><i class="fa-solid fa-circle-check"></i> اکاؤنٹ بنائیں</button>
       <div style="text-align:center;font-size:12px;margin-top:4px;">
         <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('login')">پہلے سے اکاؤنٹ ہے؟ لاگ ان کریں</span>
       </div>
@@ -880,8 +950,11 @@
     <!-- FORGOT PASSWORD -->
     <div id="auth-forgot" style="display:none;flex-direction:column;gap:10px;text-align:right;">
       <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:2px;"><i class="fa-solid fa-envelope"></i> آپ کے ای میل پر ری سیٹ لنک بھیجا جائے گا</div>
-      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-forgot-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
-      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="sendPasswordReset()"><i class="fa-solid fa-file-export"></i> ری سیٹ لنک بھیجیں</button>
+      <div class="fg">
+        <label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label>
+        <input id="auth-forgot-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); sendPasswordReset(); }">
+      </div>
+      <button class="btn" type="button" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="sendPasswordReset()"><i class="fa-solid fa-file-export"></i> ری سیٹ لنک بھیجیں</button>
       <div id="auth-forgot-msg" style="color:#B9F6CA;font-size:12px;text-align:center;min-height:16px;"></div>
       <div style="text-align:center;font-size:12px;margin-top:4px;">
         <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('login')"><i class="fa-solid fa-xmark"></i> منسوخ کریں</span>
