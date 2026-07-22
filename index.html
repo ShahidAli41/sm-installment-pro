@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+
+<!-- Firebase SDK — loaded as static head scripts (not injected dynamically)
+     so it is guaranteed to be present before our inline script runs. This is
+     the reliable pattern for Android WebView/APK wrappers, where dynamically
+     injecting <script> tags via document.createElement can be blocked or can
+     race the rest of app init (this was the root cause of "Forgot Password"
+     emails silently failing to send on some devices). -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<div class="hdr">
+  <div class="hdr-main">
+    <div class="brand">
+      <div class="brand-icon"><div class="brand-icon-inner"><span class="bi-txt">SM</span></div></div>
+      <div class="brand-text" onclick="openTitleEdit()" style="cursor:pointer;" title="Click to edit shop name">
+        <div class="sname" id="shop-name-display">شاہد موبائل شاپ</div>
+        <div class="ssub" id="shop-sub-display">INSTALLMENT MANAGEMENT SYSTEM <i class="fa-solid fa-pen"></i></div>
+      </div>
+    </div>
+    <div class="hdr-pills">
+      <div class="pill"><b id="hdr-c">0</b><span class="t" data-ur="کسٹمر" data-en="Customers"> کسٹمر</span></div>
+      <div class="pill"><b id="hdr-a">0</b><span class="t" data-ur=" فعال" data-en=" Active"> فعال</span></div>
+      <div class="hdr-toggles">
+        <div class="theme-switch" id="dark-btn" onclick="toggleDark()" title="Dark / Light">
+          <div class="ts-track">
+            <i class="fa-solid fa-sun ts-ic ts-sun"></i>
+            <i class="fa-solid fa-moon ts-ic ts-moon"></i>
+            <div class="ts-thumb"><i class="fa-solid fa-moon"></i></div>
+          </div>
+        </div>
+        <div class="lang-switch" id="lang-btn" onclick="toggleLang()" title="اردو / English">
+          <div class="ls-track">
+            <div class="ls-thumb" id="lang-thumb">اردو</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="sc-dash" class="screen active">
+    <div class="dgrid">
+      <div class="dc bl"><div class="dico"><i class="fa-solid fa-users"></i></div><div class="dnum" id="d-c">0</div><div class="dlbl" data-ur="کل کسٹمرز" data-en="Total Customers">کل کسٹمرز</div></div>
+      <div class="dc bo"><div class="dico"><i class="fa-solid fa-mobile-screen-button"></i></div><div class="dnum" id="d-a">0</div><div class="dlbl" data-ur="فعال قسطیں" data-en="Active">فعال قسطیں</div></div>
+      <div class="dc bg2"><div class="dico"><i class="fa-solid fa-circle-check"></i></div><div class="dnum" id="d-r">₨0</div><div class="dlbl" data-ur="وصول شدہ" data-en="Collected">وصول شدہ</div></div>
+      <div class="dc bred"><div class="dico">⏳</div><div class="dnum" id="d-p">₨0</div><div class="dlbl" data-ur="باقی رقم" data-en="Remaining">باقی رقم</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-calendar-days"></i> <span data-ur="پلان بریک ڈاؤن" data-en="Plan Breakdown">پلان بریک ڈاؤن</span></h3></div>
+      <div class="cb" id="d-plans-summary" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="empty"><p data-ur="ابھی کوئی کسٹمر نہیں" data-en="No customers yet">ابھی کوئی کسٹمر نہیں</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-list-check"></i> <span data-ur="حالیہ ادائیگیاں" data-en="Recent Payments">حالیہ ادائیگیاں</span></h3><button class="btn bsm" style="background:rgba(255,255,255,0.18);color:#fff;border:none;font-size:11px;padding:5px 9px;border-radius:8px;cursor:pointer;" onclick="showSc('customers')" data-ur="تمام ▶" data-en="All ▶">تمام ▶</button></div>
+      <div class="cb" id="d-recent"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-chart-simple"></i></div><p data-ur="ابھی کوئی ریکارڈ نہیں" data-en="No records yet">ابھی کوئی ریکارڈ نہیں</p></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> <span data-ur="باقی اقساط والے کسٹمرز" data-en="Pending Installments">باقی اقساط والے کسٹمرز</span></h3></div>
+      <div class="cb" id="d-due"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p data-ur="سب ٹھیک ہے!" data-en="All good!">سب ٹھیک ہے!</p></div></div>
+    </div>
+  </div>
+
+  <!-- ADD CUSTOMER -->
+  <div id="sc-add" class="screen">
+    <div class="card">
+      <div class="ch"><h3 id="add-title"><i class="fa-solid fa-circle-plus"></i> نیا کسٹمر شامل کریں</h3></div>
+      <div class="cb">
+        <input type="hidden" id="edit-id" value="">
+
+        <div class="gr-badge-wrap">
+          <div class="gr-badge"><i class="fa-solid fa-hashtag"></i> <span id="c-gr-badge-text">GR#0001</span></div>
+          <div class="gr-badge-label">کسٹمر رجسٹریشن نمبر (خودکار)</div>
+        </div>
+
+        <div class="sdiv"><span><i class="fa-solid fa-user"></i> کسٹمر کی معلومات</span></div>
+        <div class="fgrid">
+          <div class="fg"><label><i class="fa-solid fa-user"></i> نام</label><input id="c-name" placeholder="محمد علی"></div>
+          <div class="fg"><label><i class="fa-solid fa-phone"></i> موبائل نمبر</label><input type="tel" id="c-phone" placeholder="03001234567"></div>
+          <div class="fg"><label><i class="fa-solid fa-id-card"></i> CNIC</label><input id="c-cnic" placeholder="35202-1234567-1" maxlength="15"></div>
+          <div class="fg"><label><i class="fa-solid fa-envelope"></i> ای میل</label><input type="email" id="c-email" placeholder="example@gmail.com"></div>
+          <div class="fg full"><label><i class="fa-solid fa-comment"></i> واٹس ایپ نمبر</label><input type="tel" id="c-wa" placeholder="03001234567"></div>
+          <div class="fg full"><label><i class="fa-solid fa-location-dot"></i> پتہ</label><input id="c-addr" placeholder="گھر کا پتہ"></div>
+          <div class="fg full">
+            <label><i class="fa-solid fa-location-crosshairs"></i> کسٹمر کا GPS مقام</label>
+            <div style="display:flex;gap:8px;">
+              <input id="c-gps-display" placeholder="ابھی تک مقام حاصل نہیں کیا گیا" readonly style="flex:1;background:var(--bg);">
+              <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="captureCustomerGpsLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i> Get Location
+              </button>
+            </div>
+            <div id="c-gps-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+            <input type="hidden" id="c-gps-lat" value="">
+            <input type="hidden" id="c-gps-lng" value="">
+          </div>
+        </div>
+
+        <div class="sdiv"><span><i class="fa-solid fa-handshake"></i> ضامن</span></div>
+        <div class="fgrid">
+          <div class="fg"><label><i class="fa-solid fa-user-shield"></i> ضامن نام</label><input id="g-name" placeholder="ضامن کا نام"></div>
+          <div class="fg"><label><i class="fa-solid fa-phone"></i> ضامن نمبر</label><input type="tel" id="g-phone" placeholder="03009876543"></div>
+          <div class="fg full"><label><i class="fa-solid fa-id-card"></i> ضامن CNIC</label><input id="g-cnic" placeholder="35202-7654321-2" maxlength="15"></div>
+        </div>
+
+        <div class="sdiv"><span><i class="fa-solid fa-boxes-stacked"></i> آئٹم کی تفصیل</span></div>
+        <div class="fgrid">
+          <!-- LEVEL 1 — Category -->
+          <div class="fg full">
+            <label><i class="fa-solid fa-layer-group"></i> کیٹیگری منتخب کریں</label>
+            <div class="dd-row">
+              <select id="m-category" onchange="onCategoryChange()">
+                <option value="الیکٹرانکس اینڈ ہوم اپلائنسز">🏠 الیکٹرانکس اینڈ ہوم اپلائنسز</option>
+                <option value="موبائل فونز اینڈ گیجٹس" selected>📱 موبائل فونز اینڈ گیجٹس</option>
+                <option value="گاڑیاں اینڈ بائیکس">🏍️ گاڑیاں اینڈ بائیکس</option>
+                <option value="فرنیچر اینڈ ہوم ڈیکور">🛋️ فرنیچر اینڈ ہوم ڈیکور</option>
+                <option value="دیگر">🛠️ دیگر</option>
+              </select>
+              <button type="button" class="dd-plus" onclick="toggleManualBox('m-category-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="fg full dd-manual-box" id="m-category-other-box" style="display:none;">
+            <label><i class="fa-solid fa-pen"></i> کیٹیگری (خود لکھیں)</label>
+            <input id="m-category-other" placeholder="مثال: کچن ویئر" oninput="onCategoryOtherInput()">
+          </div>
+
+          <!-- LEVEL 2 — Item (options depend on the chosen category) -->
+          <div class="fg full" id="m-item-box">
+            <label><i class="fa-solid fa-tag"></i> آئٹم منتخب کریں</label>
+            <div class="dd-row">
+              <select id="m-item-sel" onchange="onItemSelChange()"></select>
+              <button type="button" class="dd-plus" onclick="toggleManualBox('m-item-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="fg full dd-manual-box" id="m-item-other-box" style="display:none;">
+            <label><i class="fa-solid fa-pen"></i> آئٹم کا نام (خود لکھیں)</label>
+            <input id="m-item-other" placeholder="مثال: بلینڈر" oninput="calc()">
+          </div>
+
+          <!-- LEVEL 3 — Company / Brand (options depend on the chosen category) -->
+          <div class="fg full" id="m-brand-box">
+            <label><i class="fa-solid fa-industry"></i> کمپنی / برانڈ</label>
+            <div class="dd-row">
+              <select id="m-brand" onchange="onBrandChange()"></select>
+              <button type="button" class="dd-plus" onclick="toggleManualBox('m-brand-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="fg full dd-manual-box" id="m-brand-other-box" style="display:none;">
+            <label><i class="fa-solid fa-pen"></i> کمپنی / برانڈ (خود لکھیں)</label>
+            <input id="m-brand-other" placeholder="مثال: کوئی نئی کمپنی" oninput="calc()">
+          </div>
+
+          <!-- LEVEL 4 — RAM/Storage Spec (mobile phones only) -->
+          <div class="fg full" id="m-spec-box" style="display:none;">
+            <label><i class="fa-solid fa-memory"></i> رام / اسٹوریج</label>
+            <div class="dd-row">
+              <select id="m-spec" onchange="calc()">
+                <option value="">-- منتخب کریں --</option>
+                <option value="2/32">2/32</option>
+                <option value="3/32">3/32</option>
+                <option value="3/64">3/64</option>
+                <option value="4/64">4/64</option>
+                <option value="4/128">4/128</option>
+                <option value="6/128">6/128</option>
+                <option value="6/256">6/256</option>
+                <option value="8/128">8/128</option>
+                <option value="8/256">8/256</option>
+                <option value="دیگر">🛠️ دیگر</option>
+              </select>
+              <button type="button" class="dd-plus" onclick="toggleManualBox('m-spec-other-box', this)" title="خود لکھیں"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="fg full dd-manual-box" id="m-spec-other-box" style="display:none;">
+            <label><i class="fa-solid fa-pen"></i> رام / اسٹوریج (خود لکھیں)</label>
+            <input id="m-spec-other" placeholder="مثال: 12/512" oninput="calc()">
+          </div>
+
+          <!-- LEVEL 5 — Model Number / Name (manual text, always available) -->
+          <div class="fg full">
+            <label><i class="fa-solid fa-hashtag"></i> ماڈل نمبر / نام</label>
+            <input id="m-model" placeholder="مثال: Y20, CD-70, EcoStar 450" oninput="_markModelEdited()">
+          </div>
+
+          <!-- LEVEL 6 — Dynamic Unique ID (IMEI / Serial / Chassis) -->
+          <div class="fg">
+            <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> سیریل / شناخت نمبر</label>
+            <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
+          </div>
+          <div class="fg" id="m-engine-box" style="display:none;">
+            <label><i class="fa-solid fa-gear"></i> انجن نمبر</label>
+            <input id="m-engine-no" placeholder="مثال: ENG-123456" dir="ltr">
+          </div>
+          <div class="fg"><label><i class="fa-solid fa-money-bill"></i> آئٹم اصل قیمت (Rs.)</label><input type="number" id="m-price" placeholder="85000" oninput="calc()"></div>
+          <div class="fg"><label><i class="fa-solid fa-credit-card"></i> ایڈوانس (Rs.)</label><input type="number" id="m-adv" placeholder="10000" oninput="calc()"></div>
+
+          <!-- LEVEL 7 — Category-specific extra fields (rendered dynamically) -->
+          <div class="fg full" id="m-extra-wrap" style="display:none;">
+            <div class="sdiv" style="margin:4px 0 10px;"><span><i class="fa-solid fa-sliders"></i> اضافی تفصیل</span></div>
+            <div class="fgrid" id="m-extra-fields"></div>
+          </div>
+        </div>
+
+        <!-- MARKUP -->
+        <div class="markup-box">
+          <div style="font-size:12px;font-weight:700;color:var(--a1);margin-bottom:8px;"><i class="fa-solid fa-arrow-trend-up"></i> منافع / مارک اپ شامل کریں</div>
+          <div class="markup-toggle">
+            <div class="mtog on" id="mt-pct" onclick="setMarkupType('pct')">فیصد (%)</div>
+            <div class="mtog" id="mt-amt" onclick="setMarkupType('amt')">رقم (Rs.)</div>
+            <div class="mtog" id="mt-none" onclick="setMarkupType('none')">بغیر منافع</div>
+          </div>
+          <div class="markup-row" id="markup-field">
+            <label><i class="fa-solid fa-chart-simple"></i> مارک اپ فیصد:</label>
+            <input type="number" id="m-markup" placeholder="10" min="0" max="100" oninput="calc()" style="max-width:120px;">
+            <span id="mu-unit" style="font-weight:700;color:var(--a1);font-size:13px;">%</span>
+          </div>
+        </div>
+
+        <!-- INSTALLMENT PLANS -->
+        <div class="sdiv"><span><i class="fa-solid fa-calendar-days"></i> انسٹالمنٹ پلان منتخب کریں</span></div>
+        <div class="plans-grid" id="plans-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="plan-card" onclick="selectPlan(2,this)"><div class="pm">2</div><div class="pl">ماہ</div><div class="pp" id="pp-2">—</div></div>
+          <div class="plan-card" onclick="selectPlan(4,this)"><div class="pm">4</div><div class="pl">ماہ</div><div class="pp" id="pp-4">—</div></div>
+          <div class="plan-card selected" onclick="selectPlan(6,this)"><div class="pm">6</div><div class="pl">ماہ</div><div class="pp" id="pp-6">—</div></div>
+          <div class="plan-card" onclick="selectPlan(8,this)"><div class="pm">8</div><div class="pl">ماہ</div><div class="pp" id="pp-8">—</div></div>
+          <div class="plan-card" onclick="selectPlan(10,this)"><div class="pm">10</div><div class="pl">ماہ</div><div class="pp" id="pp-10">—</div></div>
+          <div class="plan-card" id="plan-manual" onclick="selectPlan('manual',this)"><div class="pm" style="font-size:14px;"><i class="fa-solid fa-signature"></i></div><div class="pl">مینوئل</div><div class="pp" id="pp-manual">خود لکھیں</div></div>
+        </div>
+        <input type="hidden" id="m-months" value="6">
+        <!-- Manual months input (shown only when manual selected) -->
+        <div id="manual-months-box" style="display:none;margin-top:10px;">
+          <div class="fgrid">
+            <div class="fg">
+              <label><i class="fa-solid fa-calendar-days"></i> ماہ کی تعداد (مینوئل)</label>
+              <input type="number" id="m-months-manual" placeholder="مثال: 15" min="1" max="60" oninput="onManualMonths()">
+            </div>
+            <div class="fg">
+              <label><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط (مینوئل)</label>
+              <input type="number" id="m-monthly-manual" placeholder="خودکار یا اپنی رقم لکھیں" oninput="onManualMonthly()">
+            </div>
+          </div>
+        </div>
+
+        <div class="fgrid">
+          <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> شروع تاریخ</label><input type="date" id="m-start"></div>
+          <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> قسط کی تاریخ (ہر ماہ)</label>
+            <select id="m-dday">
+              <option value="1">1 تاریخ</option><option value="5">5 تاریخ</option>
+              <option value="10" selected>10 تاریخ</option><option value="15">15 تاریخ</option>
+              <option value="20">20 تاریخ</option><option value="25">25 تاریخ</option>
+              <option value="28">28 تاریخ</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CALC RESULT -->
+        <div class="cres" id="cres" style="display:none;">
+          <div class="crow"><span class="cl"><i class="fa-solid fa-mobile-screen-button"></i> اصل قیمت</span><span class="cv" id="cr-price">—</span></div>
+          <div class="crow"><span class="cl"><i class="fa-solid fa-arrow-trend-up"></i> مارک اپ / منافع</span><span class="cv red" id="cr-markup">—</span></div>
+          <div class="crow"><span class="cl"><i class="fa-solid fa-money-bill"></i> کل قیمت (مارک اپ سمیت)</span><span class="cv" id="cr-total">—</span></div>
+          <div class="crow"><span class="cl"><i class="fa-solid fa-credit-card"></i> ایڈوانس</span><span class="cv green" id="cr-adv">—</span></div>
+          <div class="crow"><span class="cl"><i class="fa-solid fa-chart-simple"></i> قسط رقم</span><span class="cv" id="cr-rem">—</span></div>
+          <div class="crow"><span class="cl"><i class="fa-solid fa-calendar-days"></i> مدت</span><span class="cv" id="cr-mo">—</span></div>
+          <div class="crow" style="background:linear-gradient(90deg,rgba(255,111,0,0.08),transparent);border-radius:8px;padding:10px 8px;">
+            <span class="cl" style="font-weight:700;"><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط</span>
+            <span class="cv big" id="cr-mon">—</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:10px;">
+          <button class="btn bp bfull" id="save-btn" onclick="saveCustomer()"><i class="fa-solid fa-floppy-disk"></i> کسٹمر محفوظ کریں</button>
+          <button class="btn br" id="cancel-edit-btn" onclick="cancelEdit()" style="display:none;"><i class="fa-solid fa-xmark"></i> منسوخ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div id="sc-customers" class="screen">
+    <div class="sbar" style="position:relative;">
+      <i class="fa-solid fa-magnifying-glass" style="position:absolute;top:50%;transform:translateY(-50%);right:16px;color:var(--p1);font-size:14px;pointer-events:none;"></i>
+      <input type="text" class="sinp" id="srch" style="padding-right:38px;" placeholder="نام، نمبر، CNIC یا سیریل نمبر تلاش کریں..." oninput="renderCustomers()">
+    </div>
+    <div class="ftabs">
+      <div class="ftab active" onclick="setF(this,'all')">تمام</div>
+      <div class="ftab" onclick="setF(this,'active')">فعال</div>
+      <div class="ftab" onclick="setF(this,'done')">مکمل</div>
+    </div>
+    <div id="clist"></div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div id="sc-pay" class="screen">
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-money-bill-wave"></i> قسط جمع کریں</h3></div>
+      <div class="cb">
+        <div class="fg"><label><i class="fa-solid fa-user"></i> کسٹمر منتخب کریں</label>
+          <select id="pay-sel" onchange="loadPay()">
+            <option value="">-- کسٹمر منتخب کریں --</option>
+          </select>
+        </div>
+        <div id="pay-info" style="display:none;">
+          <div class="cres">
+            <div class="crow"><span class="cl"><i class="fa-solid fa-mobile-screen-button"></i> موبائل</span><span class="cv" id="pi-model">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط</span><span class="cv big" id="pi-mon">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-circle-check"></i> ادا شدہ</span><span class="cv green" id="pi-paid">—</span></div>
+            <div class="crow"><span class="cl">⏳ باقی</span><span class="cv red" id="pi-rem">—</span></div>
+            <div class="crow"><span class="cl"><i class="fa-solid fa-calendar-days"></i> اقساط</span><span class="cv" id="pi-cnt">—</span></div>
+          </div>
+          <div class="fgrid" style="margin-top:12px;">
+            <div class="fg"><label><i class="fa-solid fa-money-bill"></i> قسط رقم (Rs.)</label><input type="number" id="pay-amt" placeholder="رقم"></div>
+            <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> تاریخ</label><input type="date" id="pay-date"></div>
+            <div class="fg full"><label><i class="fa-solid fa-note-sticky"></i> نوٹ</label><input id="pay-note" placeholder="اختیاری نوٹ..."></div>
+          </div>
+          <button class="btn bg bfull" style="margin-top:10px;" onclick="recPay()"><i class="fa-solid fa-circle-check"></i> قسط جمع کریں</button>
+          <div class="sdiv" style="margin-top:16px;"><span><i class="fa-solid fa-scroll"></i> ادائیگی تاریخ</span></div>
+          <div id="pay-hist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAPH SCREEN -->
+  <div id="sc-graph" class="screen">
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-chart-column"></i> ماہانہ وصولی گراف</h3></div>
+      <div class="cb">
+        <div class="chart-wrap"><canvas id="chart-monthly" height="220"></canvas></div>
+        <div class="chart-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#1E88E5;"></div>وصول شدہ</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#FF6F00;"></div>باقی</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-chart-pie"></i> کسٹمر اسٹیٹس</h3></div>
+      <div class="cb">
+        <div class="chart-wrap" style="display:flex;justify-content:center;"><canvas id="chart-status" width="220" height="220"></canvas></div>
+        <div class="chart-legend" id="status-legend"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-chart-line"></i> ادائیگی ٹرینڈ (آخری 6 ماہ)</h3></div>
+      <div class="cb">
+        <div class="chart-wrap"><canvas id="chart-trend" height="200"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTALLMENT CALCULATOR SCREEN -->
+  <div id="sc-calc" class="screen">
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-calculator"></i> انسٹالمنٹ کیلکولیٹر</h3></div>
+      <div class="cb">
+        <div class="fgrid">
+          <div class="fg full">
+            <label><i class="fa-solid fa-mobile-screen-button"></i> موبائل کی قیمت (Rs.)</label>
+            <input type="number" id="ic-price" placeholder="مثال: 39500" oninput="calcIC()">
+          </div>
+          <div class="fg full">
+            <label><i class="fa-solid fa-credit-card"></i> ایڈوانس رقم (Rs.)</label>
+            <input type="number" id="ic-adv-amt" placeholder="مثال: 12000" oninput="calcIC()">
+          </div>
+          <div class="fg">
+            <label><i class="fa-solid fa-chart-simple"></i> انسٹالمنٹ فیصد (%)</label>
+            <input type="number" id="ic-markup" placeholder="مثال: 0" min="0" max="100" value="0" oninput="calcIC()">
+          </div>
+          <div class="fg">
+            <label><i class="fa-solid fa-calendar-days"></i> مہینوں کی تعداد</label>
+            <input type="number" id="ic-months" placeholder="مثال: 10" min="1" max="60" oninput="calcIC()">
+          </div>
+        </div>
+        <div id="ic-result" style="display:none;">
+          <div class="ic-result-box">
+            <div class="ic-main-lbl" style="color:rgba(255,255,255,0.7);font-size:11px;letter-spacing:1px;margin-bottom:4px;">انسٹالمنٹ رقم (فیصد)</div>
+            <div class="ic-main-val" id="ic-markup-amt">—</div>
+            <div class="ic-main-lbl">قیمت کا <span id="ic-pct-lbl">0</span>% = انسٹالمنٹ چارج</div>
+            <div class="ic-mini-grid" style="margin-top:14px;">
+              <div class="ic-mini"><div class="iv" id="ic-adv-show">—</div><div class="il">ایڈوانس</div></div>
+              <div class="ic-mini"><div class="iv" id="ic-total-minus-adv">—</div><div class="il">ٹوٹل (ایڈوانس منہا)</div></div>
+              <div class="ic-mini"><div class="iv" id="ic-monthly">—</div><div class="il">ماہانہ قسط</div></div>
+            </div>
+          </div>
+          <div class="ic-table-wrap">
+            <table class="ic-table">
+              <thead>
+                <tr>
+                  <th>موبائل کی قیمت</th>
+                  <th>ایڈوانس</th>
+                  <th>فیصد</th>
+                  <th>انسٹالمنٹ</th>
+                  <th>مہینے</th>
+                  <th>ٹوٹل</th>
+                  <th>واجب الاداء</th>
+                  <th>ماہانہ قسط</th>
+                </tr>
+              </thead>
+              <tbody id="ic-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GAMES SCREEN ══ -->
+  <div id="sc-games" class="screen">
+    <div class="settings-pagehead games-pagehead">
+      <div class="sph-icon games-sph-icon"><i class="fa-solid fa-gamepad"></i></div>
+      <div class="sph-txt">
+        <div class="sph-title"><i class="fa-solid fa-dice"></i> گیمز</div>
+        <div class="sph-sub">تھوڑا سا آرام کریں — دلچسپ پزل گیمز کھیلیں</div>
+      </div>
+    </div>
+
+    <div class="game-cards">
+      <div class="game-card gc-mosaic" onclick="openGame('mosaic')">
+        <div class="gc-art">💎</div>
+        <div class="gc-info">
+          <div class="gc-title">موزیک بلاکس</div>
+          <div class="gc-sub">Mosaic Blocks — بلاک پزل</div>
+          <div class="gc-tags"><span><i class="fa-solid fa-layer-group"></i> 50 لیولز</span><span><i class="fa-solid fa-volume-high"></i> ساؤنڈ</span></div>
+        </div>
+        <button type="button" class="btn ba gc-play"><i class="fa-solid fa-play"></i> کھیلیں</button>
+      </div>
+
+      <div class="game-card gc-arrow" onclick="openGame('arrow')">
+        <div class="gc-art">➤</div>
+        <div class="gc-info">
+          <div class="gc-title">ایرو فلو</div>
+          <div class="gc-sub">Arrow Flow — تیر پزل</div>
+          <div class="gc-tags"><span><i class="fa-solid fa-layer-group"></i> 45 لیولز</span><span><i class="fa-solid fa-music"></i> میوزک</span></div>
+        </div>
+        <button type="button" class="btn gc-play gc-play-arrow"><i class="fa-solid fa-play"></i> کھیلیں</button>
+      </div>
+
+      <div class="game-card gc-zen" onclick="openGame('zen')">
+        <div class="gc-art">➕</div>
+        <div class="gc-info">
+          <div class="gc-title">زیرو زین</div>
+          <div class="gc-sub">Zero Zen — ذہنی سکون پزل</div>
+          <div class="gc-tags"><span><i class="fa-solid fa-layer-group"></i> 45 لیولز</span><span><i class="fa-solid fa-brain"></i> مائنڈ ریلیکس</span></div>
+        </div>
+        <button type="button" class="btn gc-play gc-play-zen"><i class="fa-solid fa-play"></i> کھیلیں</button>
+      </div>
+
+      <div class="game-card gc-puzzle" onclick="openGame('puzzle')">
+        <div class="gc-art">🧩</div>
+        <div class="gc-info">
+          <div class="gc-title">پزل پکچر</div>
+          <div class="gc-sub">Picture Puzzle — تصویری پزل</div>
+          <div class="gc-tags"><span><i class="fa-solid fa-images"></i> کئی تصاویر</span><span><i class="fa-solid fa-puzzle-piece"></i> سلائیڈنگ پزل</span></div>
+        </div>
+        <button type="button" class="btn gc-play gc-play-puzzle"><i class="fa-solid fa-play"></i> کھیلیں</button>
+      </div>
+    </div>
+
+    <div class="about-badge" style="margin-top:18px;">
+      <i class="fa-solid fa-circle-info"></i> آپ کی گیم پیش رفت خودکار محفوظ ہوتی ہے
+    </div>
+  </div>
+
+  <!-- ABOUT / CONTACT SCREEN -->
+  <div id="sc-about" class="screen">
+    <div class="settings-pagehead">
+      <div class="sph-icon"><i class="fa-solid fa-gear"></i></div>
+      <div class="sph-txt">
+        <div class="sph-title"><i class="fa-solid fa-sliders"></i> سیٹنگز</div>
+        <div class="sph-sub">پروفائل، ایپ اور اکاؤنٹ کی مکمل ترتیبات</div>
+      </div>
+    </div>
+    <div class="about-hero" onclick="openProfileSidebar()" style="cursor:pointer;" title="پروفائل اپڈیٹ کرنے کے لیے تھپتھپائیں">
+      <div class="about-avatar" style="background:none;padding:0;overflow:hidden;">
+        <img id="about-avatar-img" src="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+      </div>
+      <div class="about-name" id="about-profile-name">شاہد مدنی</div>
+      <div class="about-title">SHOP OWNER • PROFILE & SETTINGS</div>
+      <button type="button" class="about-hero-cta" onclick="event.stopPropagation();openProfileSidebar();"><i class="fa-solid fa-pen-to-square"></i> اپڈیٹ پروفائل</button>
+    </div>
+
+    <div class="contact-cards">
+      <a class="cc cc-phone" id="about-phone-link" href="tel:03132092639">
+        <div class="cc-icon"><i class="fa-solid fa-phone"></i></div>
+        <div class="cc-info">
+          <div class="ci-label">موبائل نمبر</div>
+          <div class="ci-val" id="about-phone-val">0313-2092639</div>
+        </div>
+        <div class="cc-arrow">›</div>
+      </a>
+      <a class="cc cc-wa" id="about-wa-link" href="https://wa.me/923132092639" target="_blank">
+        <div class="cc-icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <div class="cc-info">
+          <div class="ci-label">واٹس ایپ</div>
+          <div class="ci-val" id="about-wa-val">0313-2092639</div>
+        </div>
+        <div class="cc-arrow">›</div>
+      </a>
+      <a class="cc cc-mail" id="about-mail-link" href="mailto:faizanequran41@gmail.com">
+        <div class="cc-icon"><i class="fa-solid fa-envelope"></i></div>
+        <div class="cc-info">
+          <div class="ci-label">جی میل آئی ڈی</div>
+          <div class="ci-val" id="about-mail-val">faizanequran41@gmail.com</div>
+        </div>
+        <div class="cc-arrow">›</div>
+      </a>
+      <div class="cc" id="about-addr-card" style="cursor:default;">
+        <div class="cc-icon" style="background:linear-gradient(135deg,#6A1B9A,#8E24AA);"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="cc-info">
+          <div class="ci-label">دکان کا پتہ</div>
+          <div class="ci-val" id="about-addr-val" style="direction:rtl;">—</div>
+        </div>
+      </div>
+      <a class="cc" id="about-gps-card" href="#" target="_blank" style="display:none;">
+        <div class="cc-icon" style="background:linear-gradient(135deg,#00897B,#00BFA5);"><i class="fa-solid fa-map-location-dot"></i></div>
+        <div class="cc-info">
+          <div class="ci-label">GPS مقام (نقشے پر دیکھیں)</div>
+          <div class="ci-val" id="about-gps-val">Google Maps</div>
+        </div>
+        <div class="cc-arrow">›</div>
+      </a>
+    </div>
+
+    <div class="about-badge">
+      🤲 جَزَاكَ اللَّهُ خَيْرًا فِي الدَّارَيْن 🌸<br>
+      <i class="fa-solid fa-mobile-screen-button"></i> <span id="about-badge-name">شاہد موبائل شاپ</span> — آپ کا اعتماد ہماری پہچان<br>
+      <i class="fa-solid fa-circle-check"></i> قسطوں پر موبائل فراہم کریں آسان طریقے سے
+    </div>
+
+    <!-- ══ THEME COLOR SWATCHER ══ -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch"><h3><i class="fa-solid fa-palette"></i> تھیم کلر منتخب کریں</h3></div>
+      <div class="cb">
+        <div id="theme-swatch-row" class="theme-swatch-row"></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:10px;text-align:center;">
+          <i class="fa-solid fa-circle-check"></i> منتخب کردہ رنگ پوری ایپ میں فوراً لاگو ہو جائے گا اور محفوظ رہے گا۔
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ APP LOCK / PIN SETTINGS ══ -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch"><h3><i class="fa-solid fa-user-shield"></i> ایپ لاک سیٹنگز (PIN)</h3></div>
+      <div class="cb">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border-radius:10px;border:1px solid var(--bd);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--t1);"><i class="fa-solid fa-user-shield"></i> PIN لاک ایکٹو کریں</div>
+            <div style="font-size:10px;color:var(--t2);margin-top:2px;">ایپ کھولتے وقت 4 ہندسوں کا PIN لازمی ہوگا</div>
+          </div>
+          <label class="toggle-sw">
+            <input type="checkbox" id="pin-toggle" onchange="togglePinLock(this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <button class="btn bp" style="width:100%;padding:9px;font-size:12px;margin-top:12px;" onclick="openPinSetup()"><i class="fa-solid fa-key"></i> PIN سیٹ / تبدیل کریں</button>
+        <div id="pin-support-note" style="font-size:11px;color:var(--t2);margin-top:10px;text-align:center;">فون بند ہونے یا 1 منٹ سے زیادہ پس منظر میں رہنے پر PIN مانگا جائے گا</div>
+      </div>
+    </div>
+
+    <!-- BACKUP CENTER -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch" style="justify-content:space-between;">
+        <h3><i class="fa-solid fa-database"></i> Backup &amp; Restore Center</h3>
+        <div id="fb-user-badge" style="background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 10px;font-size:10px;color:#fff;font-weight:600;"></div>
+      </div>
+      <div class="cb" style="padding:14px;">
+
+        <!-- AUTO BACKUP STATUS BAR -->
+        <div id="backup-status-bar" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#E8F5E9,#E3F2FD);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1px solid #BBDEFB;transition:all .3s;">
+          <div style="font-size:24px;" id="backup-status-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:#0D47A1;" id="backup-status-title">Cloud Sync Status</div>
+            <div id="last-backup-txt" style="font-size:11px;color:#546E7A;margin-top:2px;">ابھی تک کوئی بیک اپ نہیں</div>
+          </div>
+          <div id="backup-status-dot" style="width:10px;height:10px;border-radius:50%;background:#ccc;flex-shrink:0;box-shadow:0 0 0 3px rgba(0,0,0,0.08);"></div>
+        </div>
+
+        <!-- FIREBASE CLOUD SECTION -->
+        <div style="border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;">
+          <div style="background:linear-gradient(135deg,#F57C00,#FF6F00,#E65100);padding:12px 16px;color:#fff;display:flex;align-items:center;gap:10px;">
+            <div style="font-size:22px;"><i class="fa-solid fa-fire"></i></div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:13px;">Firebase Cloud Sync</div>
+              <div style="font-size:10px;opacity:.8;">Real-time sync — works offline too</div>
+            </div>
+            <div id="fb-online-indicator" style="font-size:10px;background:rgba(255,255,255,0.2);border-radius:10px;padding:3px 8px;"></div>
+          </div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <div id="fb-user-info" style="background:#F0FDF4;border-radius:10px;padding:10px 12px;font-size:12px;color:#1B5E20;font-weight:600;border:1px solid #A5D6A7;"></div>
+            <button class="btn" style="background:linear-gradient(135deg,#34A853,#1B5E20);color:#fff;padding:9px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;" onclick="fbManualSync()">
+              <span style="font-size:18px;"><i class="fa-solid fa-cloud"></i></span> ابھی Cloud پر محفوظ کریں
+            </button>
+            <button class="btn" style="background:linear-gradient(135deg,#1565C0,#1E88E5);color:#fff;padding:9px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;" onclick="fbRestoreFromCloud()">
+              <span style="font-size:18px;">⬇️</span> Cloud سے ڈیٹا بحال کریں
+            </button>
+            <div style="padding:10px;background:#F8FBFF;border-radius:10px;border:1px solid #BBDEFB;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:#0D47A1;">Auto Sync (ہر تبدیلی پر)</div>
+                  <div style="font-size:10px;color:#546E7A;">نئی انٹری ہوتے ہی Cloud پر محفوظ</div>
+                </div>
+                <label class="toggle-sw">
+                  <input type="checkbox" id="auto-backup-toggle" checked onchange="toggleAutoBackup(this.checked)">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            </div>
+            <button class="btn" style="background:rgba(229,57,53,0.08);color:#E53935;padding:10px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid rgba(229,57,53,0.25);" onclick="authLogout()">
+              <i class="fa-solid fa-right-from-bracket"></i> لاگ آؤٹ
+            </button>
+          </div>
+        </div>
+
+        <!-- LOCAL BACKUP SECTION -->
+        <div style="border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;">
+          <div style="background:linear-gradient(135deg,#37474F,#263238);padding:12px 16px;color:#fff;display:flex;align-items:center;gap:10px;">
+            <div style="font-size:22px;"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div>
+              <div style="font-weight:700;font-size:13px;">Local Device Backup</div>
+              <div style="font-size:10px;opacity:.8;">Export to device or share via WhatsApp/Email</div>
+            </div>
+          </div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <button class="btn" style="background:linear-gradient(135deg,#37474F,#263238);color:#fff;padding:9px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;" onclick="exportLocalJSON()">
+              <span style="font-size:18px;"><i class="fa-solid fa-file-export"></i></span> Export Data (JSON)
+            </button>
+            <button class="btn" style="background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;padding:9px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;" onclick="exportLocalCSV()">
+              <span style="font-size:18px;"><i class="fa-solid fa-chart-simple"></i></span> Export Customers (CSV/Excel)
+            </button>
+            <label class="btn" style="background:linear-gradient(135deg,#E65100,#FF6F00);color:#fff;padding:9px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer;">
+              <span style="font-size:18px;"><i class="fa-solid fa-file-import"></i></span> Import / Restore Backup
+              <input type="file" accept=".json" id="import-file-input" style="display:none;" onchange="importLocalJSON(event)">
+            </label>
+          </div>
+        </div>
+
+        <!-- SETTINGS ROW -->
+        <div style="display:flex;gap:8px;">
+          <button class="btn bp" style="flex:1;padding:9px;font-size:12px;" onclick="changePassword()"><i class="fa-solid fa-lock"></i> پاس ورڈ تبدیل کریں</button>
+          <button class="btn" style="flex:1;padding:9px;font-size:12px;background:linear-gradient(135deg,#880E4F,#AD1457);color:#fff;border-radius:10px;font-weight:700;" onclick="clearAllData()"><i class="fa-solid fa-trash"></i> Clear All Data</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<!-- IMPORT CONFIRM MODAL -->
+<div class="movl" id="mod-import-confirm">
+  <div class="modal" style="max-width:360px;">
+    <div class="mhdr" style="background:linear-gradient(135deg,#E65100,#FF6F00);"><h3><i class="fa-solid fa-triangle-exclamation"></i> Import Warning</h3><button class="mcls" onclick="closeMod('mod-import-confirm')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy" style="text-align:center;padding:24px 20px;">
+      <div style="font-size:48px;margin-bottom:14px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div style="font-size:15px;font-weight:700;color:#E65100;margin-bottom:10px;">موجودہ ڈیٹا مٹ جائے گا!</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:20px;" id="import-confirm-info">بیک اپ سے ڈیٹا بحال ہوگا۔ کیا آپ واقعی جاری رکھنا چاہتے ہیں؟</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" style="flex:1;padding:10px;background:linear-gradient(135deg,#E65100,#FF6F00);color:#fff;border-radius:10px;font-weight:700;" onclick="confirmImport()"><i class="fa-solid fa-circle-check"></i> ہاں، بحال کریں</button>
+        <button class="btn ba" style="flex:1;padding:10px;" onclick="closeMod('mod-import-confirm')"><i class="fa-solid fa-xmark"></i> منسوخ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GDRIVE PROGRESS MODAL -->
+<div class="movl" id="mod-gdrive-progress">
+  <div class="modal" style="max-width:320px;">
+    <div class="mhdr" style="background:linear-gradient(135deg,#1A73E8,#0D47A1);"><h3><i class="fa-brands fa-google-drive"></i> Google Drive</h3></div>
+    <div class="mbdy" style="text-align:center;padding:28px 20px;">
+      <div id="gdrive-progress-icon" style="font-size:52px;margin-bottom:14px;animation:spin 1.5s linear infinite;"><i class="fa-solid fa-arrows-rotate"></i></div>
+      <div id="gdrive-progress-txt" style="font-size:14px;font-weight:700;color:var(--p1);"></div>
+      <div id="gdrive-progress-sub" style="font-size:12px;color:var(--t2);margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="print-area" style="display:none;"></div>
+
+  <!-- REMINDERS SCREEN (یاددہانی) -->
+  <div id="sc-reminders" class="screen">
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-bell"></i> یاددہانی کے پیغامات</h3></div>
+      <div class="cb">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.8;">
+          نیچے دیے گئے میسج ٹیمپلیٹس میں تبدیلی کریں۔ یہ الفاظ خودکار بھر جائیں گے:<br>
+          <code>{name}</code> کسٹمر کا نام • <code>{model}</code> آئٹم ماڈل • <code>{monthly}</code> ماہانہ قسط •
+          <code>{remaining}</code> باقی رقم • <code>{lateInfo}</code> تاخیر کا پیغام • <code>{shopName}</code> دکان کا نام • <code>{phone}</code> رابطہ نمبر
+        </div>
+
+        <div class="fg">
+          <label><i class="fa-solid fa-envelope"></i> عام یاددہانی (Late Payment Reminder)</label>
+          <textarea id="rt-general" rows="7" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-family:inherit;font-size:13px;resize:vertical;direction:rtl;"></textarea>
+        </div>
+
+        <div class="fg" style="margin-top:14px;">
+          <label><i class="fa-solid fa-calendar-days"></i> قسط شیڈول یاددہانی (Schedule Reminder)</label>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:4px;">اضافی متغیر: <code>{schedule}</code> — مکمل قسط شیڈول لسٹ</div>
+          <textarea id="rt-schedule" rows="6" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-family:inherit;font-size:13px;resize:vertical;direction:rtl;"></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn bp" style="flex:1;padding:9px;font-size:12px;" onclick="saveReminderTemplates()"><i class="fa-solid fa-floppy-disk"></i> محفوظ کریں</button>
+          <button class="btn bg" style="flex:1;padding:9px;font-size:12px;" onclick="resetReminderTemplates()">↺ ڈیفالٹ پر واپس</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERMS & CONDITIONS CUSTOMIZATION -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch"><h3><i class="fa-solid fa-file-contract"></i> شرائط و ضوابط</h3></div>
+      <div class="cb">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">یہ شرائط ہر نئے معاہدے اور کسٹمر لیجر میں خودکار شامل ہو سکتی ہیں۔</div>
+        <div class="fg">
+          <textarea id="tc-text" rows="7" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-family:inherit;font-size:13px;resize:vertical;direction:rtl;"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border-radius:10px;border:1px solid var(--bd);margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--t1);">معاہدے/لیجر میں شرائط و ضوابط شامل کریں</div>
+          <label class="toggle-sw">
+            <input type="checkbox" id="tc-embed-toggle" onchange="saveTcEmbedSetting(this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn bp" style="flex:1;padding:9px;font-size:12px;" onclick="saveTermsConditions()"><i class="fa-solid fa-floppy-disk"></i> شرائط محفوظ کریں</button>
+          <button class="btn bg" style="flex:1;padding:9px;font-size:12px;" onclick="resetTermsConditions()">↺ ڈیفالٹ پر واپس</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS SCREEN -->
+  <div id="sc-alerts" class="screen">
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> لیٹ پیمنٹ الرٹس</h3></div>
+      <div class="cb" style="padding:0;">
+        <div id="alerts-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--bd);"></div>
+      </div>
+    </div>
+    <div id="alerts-list"></div>
+  </div>
+
+  <!-- PROFIT REPORT SCREEN -->
+  <div id="sc-report" class="screen">
+    <!-- REPORT VIEW SWITCHER -->
+    <div class="card">
+      <div class="cb" style="padding:10px;">
+        <div style="display:flex;gap:8px;">
+          <button class="btn bp rpt-tab-btn" id="rpt-tab-btn-1" style="flex:1;padding:10px 4px;font-size:12px;" onclick="showReportView(1)"><i class="fa-solid fa-sack-dollar"></i> وصولی</button>
+          <button class="btn ba rpt-tab-btn" id="rpt-tab-btn-2" style="flex:1;padding:10px 4px;font-size:12px;" onclick="showReportView(2)"><i class="fa-solid fa-triangle-exclamation"></i> بقایا جات</button>
+          <button class="btn ba rpt-tab-btn" id="rpt-tab-btn-3" style="flex:1;padding:10px 4px;font-size:12px;" onclick="showReportView(3)"><i class="fa-solid fa-chart-pie"></i> خلاصہ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VIEW 1: DAILY/MONTHLY COLLECTION REPORT ══ -->
+    <div id="rpt-view-1">
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-sack-dollar"></i> روزانہ اور ماہانہ وصولی</h3></div>
+        <div class="cb">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="fg" style="flex:1;min-width:120px;"><label>از تاریخ</label><input type="date" id="rpt-from"></div>
+            <div class="fg" style="flex:1;min-width:120px;"><label>تا تاریخ</label><input type="date" id="rpt-to"></div>
+            <button class="btn bp" style="padding:8px 11px;font-size:12px;" onclick="renderCollectionRange()"><i class="fa-solid fa-magnifying-glass"></i> حساب لگائیں</button>
+          </div>
+          <div id="rpt-range-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:14px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch" style="justify-content:space-between;">
+          <h3><i class="fa-solid fa-chart-column"></i> ماہانہ منافع رپورٹ</h3>
+          <select id="rpt-year" onchange="renderReport()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-size:13px;"></select>
+        </div>
+        <div class="cb" style="padding:0;">
+          <div id="rpt-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-chart-simple"></i> گرافیکل رپورٹ — ماہانہ وصولی</h3></div>
+        <div class="cb">
+          <div id="rpt-graph" class="bar-chart"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-calendar-days"></i> ماہ بہ ماہ تفصیل</h3></div>
+        <div class="cb" style="padding:0;">
+          <div class="report-table-container">
+            <table class="ic-table" id="rpt-table" style="min-width:500px;">
+              <thead><tr>
+                <th>ماہ</th><th>وصولی</th><th>اسٹاک لاگت</th><th>منافع</th><th>کسٹمرز</th>
+              </tr></thead>
+              <tbody id="rpt-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VIEW 2: PENDING / DEFAULTER LEDGER ══ -->
+    <div id="rpt-view-2" style="display:none;">
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> بقایا جات کی تفصیل (Defaulter Ledger)</h3></div>
+        <div class="cb" style="padding:0;">
+          <div id="rpt-defaulter-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--bd);"></div>
+          <div id="rpt-defaulter-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VIEW 3: BUSINESS OVERVIEW ══ -->
+    <div id="rpt-view-3" style="display:none;">
+      <div class="card">
+        <div class="ch"><h3><i class="fa-solid fa-chart-pie"></i> کاروبار کا خلاصہ (Business Overview)</h3></div>
+        <div class="cb" style="padding:0;">
+          <div id="rpt-overview-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-file-export"></i> ایکسل ایکسپورٹ</h3></div>
+      <div class="cb">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn bp" style="padding:10px;" onclick="exportExcel('customers')"><i class="fa-solid fa-file-export"></i> تمام کسٹمرز Excel میں</button>
+          <button class="btn bg" style="padding:10px;" onclick="exportExcel('payments')"><i class="fa-solid fa-file-export"></i> تمام ادائیگیاں Excel میں</button>
+          <button class="btn ba" style="padding:10px;" onclick="exportExcel('stock')"><i class="fa-solid fa-file-export"></i> اسٹاک رپورٹ Excel میں</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- AUTH OVERLAY (Mobile Number + PIN) -->
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at top,#241A05 0%,#0C0904 60%,#000000 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;">
+  <div style="text-align:center;color:#fff;padding:30px 24px;width:100%;max-width:360px;">
+    <img src="" id="auth-splash-logo" style="width:112px;height:112px;border-radius:26px;margin-bottom:14px;box-shadow:0 8px 28px rgba(255,193,7,0.35),0 0 0 1px rgba(255,215,0,0.4);">
+    <div style="font-size:21px;font-weight:800;letter-spacing:1px;margin-bottom:2px;background:linear-gradient(135deg,#FFD700,#FFA000,#FFECB3);-webkit-background-clip:text;background-clip:text;color:transparent;">SM Installment Pro</div>
+    <div style="font-size:12px;color:rgba(255,215,0,0.65);letter-spacing:2px;margin-bottom:22px;">انسٹالمنٹ سسٹم — لاگ ان</div>
+
+    <div id="auth-error" style="color:#FF8A80;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+
+    <!-- LOGIN -->
+    <div id="auth-login" style="display:flex;flex-direction:column;gap:10px;text-align:right;">
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-login-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ</label><input id="auth-login-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
+      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authLogin()">🔓 لاگ ان کریں</button>
+
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
+        <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('register')">نیا اکاؤنٹ بنائیں؟</span>
+        <span style="cursor:pointer;color:#FFD54F;" onclick="showForgotPassword()">پاس ورڈ بھول گئے؟</span>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="auth-register" style="display:none;flex-direction:column;gap:10px;text-align:right;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:2px;">پہلی بار؟ اپنا اکاؤنٹ بنائیں</div>
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-reg-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> نیا پاس ورڈ (کم از کم 6 حروف)</label><input id="auth-reg-pass" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-lock"></i> پاس ورڈ دوبارہ لکھیں</label><input id="auth-reg-pass2" type="password" placeholder="••••••••" dir="ltr" style="text-align:left;"></div>
+      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="authRegister()"><i class="fa-solid fa-circle-check"></i> اکاؤنٹ بنائیں</button>
+      <div style="text-align:center;font-size:12px;margin-top:4px;">
+        <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('login')">پہلے سے اکاؤنٹ ہے؟ لاگ ان کریں</span>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="auth-forgot" style="display:none;flex-direction:column;gap:10px;text-align:right;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:2px;"><i class="fa-solid fa-envelope"></i> آپ کے ای میل پر ری سیٹ لنک بھیجا جائے گا</div>
+      <div class="fg"><label style="color:#fff;"><i class="fa-solid fa-envelope"></i> ای میل ایڈریس</label><input id="auth-forgot-email" type="email" placeholder="example@gmail.com" dir="ltr" style="text-align:left;"></div>
+      <button class="btn" style="background:linear-gradient(135deg,#FFD54F,#FF8F00);color:#1a1200;padding:9px;border-radius:12px;font-size:13px;font-weight:800;" onclick="sendPasswordReset()"><i class="fa-solid fa-file-export"></i> ری سیٹ لنک بھیجیں</button>
+      <div id="auth-forgot-msg" style="color:#B9F6CA;font-size:12px;text-align:center;min-height:16px;"></div>
+      <div style="text-align:center;font-size:12px;margin-top:4px;">
+        <span style="cursor:pointer;color:#FFD54F;" onclick="showAuthMode('login')"><i class="fa-solid fa-xmark"></i> منسوخ کریں</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN APP-LOCK SCREEN — shown after Firebase confirms the session
+     (or automatically after the 1-minute background auto-lock) whenever
+     the user has PIN Lock switched on in Settings. -->
+<div id="pin-lock-screen" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at top,#241A05 0%,#0C0904 60%,#000000 100%);z-index:10000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
+  <div style="width:78px;height:78px;border-radius:50%;background:rgba(255,213,79,0.1);border:2px solid rgba(255,213,79,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+    <i class="fa-solid fa-user-shield" style="font-size:34px;color:#FFD54F;"></i>
+  </div>
+  <div style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;">PIN درج کریں</div>
+  <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:20px;">ایپ کھولنے کے لیے اپنا 4 ہندسوں کا PIN درج کریں</div>
+
+  <div style="display:flex;gap:14px;margin-bottom:8px;">
+    <div class="pdot" id="pin-dot-0"></div>
+    <div class="pdot" id="pin-dot-1"></div>
+    <div class="pdot" id="pin-dot-2"></div>
+    <div class="pdot" id="pin-dot-3"></div>
+  </div>
+  <div id="pin-lock-err" style="color:#FF8A80;font-size:12px;min-height:18px;margin-bottom:14px;"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:280px;">
+    <div class="pkey" onclick="pinKeyPress('1')">1</div>
+    <div class="pkey" onclick="pinKeyPress('2')">2</div>
+    <div class="pkey" onclick="pinKeyPress('3')">3</div>
+    <div class="pkey" onclick="pinKeyPress('4')">4</div>
+    <div class="pkey" onclick="pinKeyPress('5')">5</div>
+    <div class="pkey" onclick="pinKeyPress('6')">6</div>
+    <div class="pkey" onclick="pinKeyPress('7')">7</div>
+    <div class="pkey" onclick="pinKeyPress('8')">8</div>
+    <div class="pkey" onclick="pinKeyPress('9')">9</div>
+    <div class="pkey" onclick="pinKeyPress('hash')">#</div>
+    <div class="pkey" onclick="pinKeyPress('0')">0</div>
+    <div class="pkey" onclick="pinKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
+  </div>
+
+  <div style="margin-top:20px;font-size:12px;color:#FFD54F;cursor:pointer;" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket"></i> لاگ آؤٹ کریں</div>
+</div>
+
+<!-- PIN SETUP / CHANGE SCREEN — opened from Settings -->
+<div id="pin-setup-screen" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at top,#241A05 0%,#0C0904 60%,#000000 100%);z-index:10000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
+  <button onclick="closePinSetup()" style="position:absolute;top:20px;left:20px;background:none;border:none;color:#fff;font-size:19px;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+  <div style="width:78px;height:78px;border-radius:50%;background:rgba(255,213,79,0.1);border:2px solid rgba(255,213,79,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+    <i class="fa-solid fa-key" style="font-size:34px;color:#FFD54F;"></i>
+  </div>
+  <div style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;" id="pin-setup-title">نیا PIN درج کریں</div>
+  <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:20px;" id="pin-setup-hint">4 ہندسوں کا PIN منتخب کریں</div>
+
+  <div style="display:flex;gap:14px;margin-bottom:8px;">
+    <div class="pdot" id="pin-setup-dot-0"></div>
+    <div class="pdot" id="pin-setup-dot-1"></div>
+    <div class="pdot" id="pin-setup-dot-2"></div>
+    <div class="pdot" id="pin-setup-dot-3"></div>
+  </div>
+  <div id="pin-setup-err" style="color:#FF8A80;font-size:12px;min-height:18px;margin-bottom:14px;"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:280px;">
+    <div class="pkey" onclick="pinSetupKeyPress('1')">1</div>
+    <div class="pkey" onclick="pinSetupKeyPress('2')">2</div>
+    <div class="pkey" onclick="pinSetupKeyPress('3')">3</div>
+    <div class="pkey" onclick="pinSetupKeyPress('4')">4</div>
+    <div class="pkey" onclick="pinSetupKeyPress('5')">5</div>
+    <div class="pkey" onclick="pinSetupKeyPress('6')">6</div>
+    <div class="pkey" onclick="pinSetupKeyPress('7')">7</div>
+    <div class="pkey" onclick="pinSetupKeyPress('8')">8</div>
+    <div class="pkey" onclick="pinSetupKeyPress('9')">9</div>
+    <div class="pkey" onclick="pinSetupKeyPress('hash')">#</div>
+    <div class="pkey" onclick="pinSetupKeyPress('0')">0</div>
+    <div class="pkey" onclick="pinSetupKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
+  </div>
+</div>
+
+
+<!-- RECEIPT MODAL -->
+<div class="movl" id="mod-receipt">
+  <div class="modal" style="max-width:420px;">
+    <div class="mhdr"><h3><i class="fa-solid fa-receipt"></i> ادائیگی رسید</h3><button class="mcls" onclick="closeMod('mod-receipt')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div id="receipt-body"></div>
+      <div class="bgrp" style="margin-top:14px;">
+        <button class="btn bp" onclick="printReceipt()"><i class="fa-solid fa-print"></i> پرنٹ</button>
+        <button class="btn bg" onclick="shareReceipt()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
+        <button class="btn ba" onclick="closeMod('mod-receipt')"><i class="fa-solid fa-xmark"></i> بند</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REMINDER CHOICE MODAL — Text Message vs PDF/Media Receipt -->
+<div class="movl" id="mod-reminder-choice">
+  <div class="modal" style="max-width:380px;">
+    <div class="mhdr"><h3><i class="fa-solid fa-comment-dots"></i> یاددہانی بھیجیں</h3><button class="mcls" onclick="closeMod('mod-reminder-choice')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px;text-align:center;">
+        <span id="rc-cust-name" style="font-weight:800;color:var(--t1);"></span> کو یاددہانی بھیجنے کا طریقہ منتخب کریں
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn bwa" style="padding:10px;font-size:13.5px;justify-content:flex-start;gap:12px;" onclick="reminderSendText()">
+          <i class="fa-brands fa-whatsapp" style="font-size:20px;"></i>
+          <span style="text-align:right;flex:1;">
+            <div style="font-weight:800;">ڈائریکٹ ٹیکسٹ میسج بھیجیں</div>
+            <div style="font-size:10.5px;opacity:0.85;font-weight:500;">WhatsApp پر فوری تیار شدہ پیغام</div>
+          </span>
+        </button>
+        <button class="btn bp" style="padding:10px;font-size:13.5px;justify-content:flex-start;gap:12px;" onclick="reminderGenerateMedia()">
+          <i class="fa-solid fa-file-image" style="font-size:20px;"></i>
+          <span style="text-align:right;flex:1;">
+            <div style="font-weight:800;">PDF / میڈیا رسید بنائیں</div>
+            <div style="font-size:10.5px;opacity:0.85;font-weight:500;">پرنٹ یا شیئر کے قابل گرافیکل رسید</div>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REMINDER MEDIA/PDF PREVIEW MODAL -->
+<div class="movl" id="mod-reminder-media">
+  <div class="modal" style="max-width:420px;">
+    <div class="mhdr"><h3><i class="fa-solid fa-file-image"></i> میڈیا رسید</h3><button class="mcls" onclick="closeMod('mod-reminder-media')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <canvas id="reminder-canvas" style="display:none;"></canvas>
+      <img id="reminder-media-preview" style="width:100%;border-radius:12px;border:1px solid var(--bd);box-shadow:0 4px 16px rgba(0,0,0,0.12);">
+      <div class="bgrp" style="margin-top:14px;">
+        <button class="btn bp" onclick="downloadReminderMedia()"><i class="fa-solid fa-download"></i> ڈاؤن لوڈ</button>
+        <button class="btn bg" onclick="shareReminderMedia()"><i class="fa-solid fa-share-nodes"></i> شیئر کریں</button>
+        <button class="btn ba" onclick="printReminderMedia()"><i class="fa-solid fa-print"></i> پرنٹ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bnav">
+  <div class="ni active" onclick="showSc('dash')"><div class="nico"><i class="fa-solid fa-house"></i></div><span class="nlbl">ہوم</span></div>
+  <div class="ni" onclick="showSc('calc')"><div class="nico"><i class="fa-solid fa-calculator"></i></div><span class="nlbl">کیلکولیٹر</span></div>
+  <div class="ni" onclick="showSc('add')"><div class="nico"><i class="fa-solid fa-circle-plus"></i></div><span class="nlbl">نیا</span></div>
+  <div class="ni" onclick="showSc('customers')"><div class="nico"><i class="fa-solid fa-users"></i></div><span class="nlbl">کسٹمرز</span></div>
+  <div class="ni" onclick="showSc('pay')"><div class="nico"><i class="fa-solid fa-money-bill-wave"></i></div><span class="nlbl">قسط</span></div>
+  <div class="ni" onclick="showSc('alerts')" id="nav-alerts"><div class="nico"><i class="fa-solid fa-bell"></i></div><span class="nlbl">الرٹس</span></div>
+  <div class="ni" onclick="showSc('reminders')"><div class="nico"><i class="fa-solid fa-comment-dots"></i></div><span class="nlbl">یاددہانی</span></div>
+  <div class="ni" onclick="showSc('report')"><div class="nico"><i class="fa-solid fa-chart-column"></i></div><span class="nlbl">رپورٹ</span></div>
+  <div class="ni ni-games" onclick="showSc('games')"><div class="nico"><i class="fa-solid fa-gamepad"></i></div><span class="nlbl">گیمز</span></div>
+  <div class="ni" onclick="showSc('about')"><div class="nico"><i class="fa-solid fa-gear"></i></div><span class="nlbl">سیٹنگز</span></div>
+</div>
+
+<!-- ══ PROFILE SLIDE-OUT SIDEBAR ══ -->
+<div class="profile-drawer-overlay" id="profile-drawer-overlay" onclick="closeProfileSidebar()"></div>
+<div class="profile-drawer" id="profile-drawer">
+  <div class="pd-head">
+    <button type="button" class="pd-close" onclick="closeProfileSidebar()" title="بند کریں"><i class="fa-solid fa-xmark"></i></button>
+    <label class="pd-pic-wrap" style="cursor:pointer;" title="تصویر تبدیل کریں">
+      <img class="pd-pic" id="prof-logo-preview" src="" alt="Profile">
+      <div class="pd-pic-ring"></div>
+      <div class="pd-pic-edit"><i class="fa-solid fa-camera"></i></div>
+      <input type="file" id="prof-logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+    </label>
+    <div class="pd-head-title">پروفائل ترمیم کریں</div>
+  </div>
+  <div class="pd-body">
+    <div class="fg"><label><i class="fa-solid fa-id-badge"></i> آپ کا مکمل نام (Full Name)</label><input id="prof-owner-name" placeholder="مثال: شاہد مدنی"></div>
+    <div class="fg"><label><i class="fa-solid fa-store"></i> دکان کا نام</label><input id="prof-name" placeholder="شاہد موبائل شاپ"></div>
+    <div class="fg"><label><i class="fa-solid fa-phone"></i> رابطہ نمبر</label><input type="tel" id="prof-phone" placeholder="03132092639"></div>
+    <div class="fg"><label><i class="fa-solid fa-location-dot"></i> دکان کا پتہ</label><input id="prof-address" placeholder="دکان نمبر، بازار، شہر"></div>
+
+    <div class="fg">
+      <label><i class="fa-solid fa-location-dot"></i> GPS مقام (Google Maps)</label>
+      <div style="display:flex;gap:8px;">
+        <input id="prof-gps-link" placeholder="ابھی تک کوئی مقام محفوظ نہیں" readonly style="flex:1;background:var(--bg);">
+        <button type="button" class="btn bp" style="width:auto;padding:0 14px;white-space:nowrap;" onclick="captureGpsLocation()"><i class="fa-solid fa-location-crosshairs"></i></button>
+      </div>
+      <div id="prof-gps-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+    </div>
+
+    <div class="fg">
+      <label><i class="fa-solid fa-envelope"></i> جی میل <span id="prof-email-lock-tag" style="display:none;color:var(--a1);font-size:10px;"><i class="fa-solid fa-lock"></i> لاک شدہ</span></label>
+      <div style="display:flex;gap:8px;">
+        <input type="email" id="prof-email" placeholder="example@gmail.com" style="flex:1;" oninput="_draftSaveProfileEmail()">
+        <button type="button" id="prof-email-unlock-btn" class="btn bp" style="display:none;width:auto;padding:0 12px;white-space:nowrap;" onclick="_unlockProfileEmail()"><i class="fa-solid fa-lock-open"></i></button>
+      </div>
+      <div style="font-size:10px;color:var(--t2);margin-top:4px;">
+        <i class="fa-solid fa-circle-info"></i> اسی ای میل سے Firebase Cloud پر بیک اپ ہوتا ہے۔
+      </div>
+    </div>
+  </div>
+  <div class="pd-foot">
+    <button type="button" class="btn bp bfull" onclick="saveProfileSettings()"><i class="fa-solid fa-floppy-disk"></i> پروفائل محفوظ کریں</button>
+  </div>
+</div>
+
+<!-- ══ GAME PLAYER (full-screen) ══ -->
+<div class="game-player" id="game-player">
+  <div class="gp-bar">
+    <button type="button" class="gp-close" onclick="closeGame()"><i class="fa-solid fa-xmark"></i> بند کریں</button>
+    <div class="gp-title" id="gp-title"></div>
+  </div>
+  <iframe id="game-frame" class="gp-frame" title="Game"></iframe>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="movl" id="mod-detail">
+  <div class="modal">
+    <div class="mhdr"><h3 id="md-title">تفصیل</h3><button class="mcls" onclick="closeMod('mod-detail')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy" id="mod-body"></div>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div class="movl" id="mod-msg">
+  <div class="modal">
+    <div class="mhdr"><h3 id="msg-title">پیغام</h3><button class="mcls" onclick="closeMod('mod-msg')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div class="msgbox" id="msg-prev"></div>
+      <div class="bgrp" style="margin-top:12px;">
+        <button class="btn bwa" onclick="sendWA()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
+        <button class="btn bmail" onclick="sendMail()"><i class="fa-solid fa-envelope"></i> ای میل</button>
+        <button class="btn bsms" onclick="copyMsg()"><i class="fa-solid fa-clipboard"></i> کاپی</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER MODAL -->
+<div class="movl" id="mod-ledger">
+  <div class="modal">
+    <div class="mhdr"><h3 id="led-title"><i class="fa-solid fa-chart-column"></i> لیجر</h3><button class="mcls" onclick="closeMod('mod-ledger')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div id="ledger-body"></div>
+      <div class="bgrp" style="margin-top:12px;">
+        <button class="btn bwa" onclick="sendLedgerWA()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
+        <button class="btn bmail" onclick="sendLedgerMail()"><i class="fa-solid fa-envelope"></i> ای میل</button>
+        <button class="btn bsms" onclick="copyLedger()"><i class="fa-solid fa-clipboard"></i> کاپی</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TITLE EDIT MODAL -->
+<div class="movl" id="mod-title">
+  <div class="modal" style="max-width:360px;">
+    <div class="mhdr"><h3><i class="fa-solid fa-pen"></i> Shop Name Edit</h3><button class="mcls" onclick="closeMod('mod-title')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div class="fg full" style="margin-bottom:14px;">
+        <label><i class="fa-solid fa-mobile-screen-button"></i> Shop Name (Urdu)</label>
+        <input id="title-ur" placeholder="شاہد موبائل شاپ" dir="rtl">
+      </div>
+      <div class="fg full" style="margin-bottom:14px;">
+        <label><i class="fa-solid fa-mobile-screen-button"></i> Shop Name (English)</label>
+        <input id="title-en" placeholder="Shahid Mobile Shop" dir="ltr">
+      </div>
+      <div class="fg full" style="margin-bottom:14px;">
+        <label><i class="fa-solid fa-clipboard"></i> Subtitle / Tagline</label>
+        <input id="title-sub" placeholder="INSTALLMENT MANAGEMENT SYSTEM" dir="ltr">
+      </div>
+      <div class="bgrp">
+        <button class="btn bp" onclick="saveTitle()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn ba" onclick="closeMod('mod-title')"><i class="fa-solid fa-xmark"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AGREEMENT MODAL -->
+<div class="movl" id="mod-agreement">
+  <div class="modal" style="max-width:480px;">
+    <div class="mhdr"><h3><i class="fa-solid fa-file-contract"></i> معاہدہ / کنٹریکٹ سمری</h3><button class="mcls" onclick="closeMod('mod-agreement')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mbdy">
+      <div id="agreement-body"></div>
+      <div class="bgrp" style="margin-top:14px;flex-wrap:wrap;">
+        <button class="btn bp" onclick="printAgreement()"><i class="fa-solid fa-print"></i> <span data-ur="پرنٹ" data-en="Print">پرنٹ</span></button>
+        <button class="btn bg" onclick="shareAgreement()"><i class="fa-brands fa-whatsapp"></i> <span data-ur="واٹس ایپ پر بھیجیں" data-en="Send on WhatsApp">واٹس ایپ پر بھیجیں</span></button>
+        <button class="btn" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="sendAgreementPDFviaWhatsApp()"><i class="fa-solid fa-file-pdf"></i> <span data-ur="پی ڈی ایف بھیجیں" data-en="Send PDF">پی ڈی ایف بھیجیں</span></button>
+        <button class="btn" style="background:linear-gradient(135deg,#546E7A,#37474F);color:#fff;" onclick="shareAgreementSMS()"><i class="fa-solid fa-comment-sms"></i> <span data-ur="SMS پر بھیجیں" data-en="Send SMS">SMS پر بھیجیں</span></button>
+        <button class="btn ba" onclick="closeMod('mod-agreement')"><i class="fa-solid fa-xmark"></i> <span data-ur="بند" data-en="Close">بند</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DUAL DIGITAL SIGNATURE MODAL — shown when saving a new installment
+     agreement. White background as requested, two touch-drawable pads. -->
+<!-- FULL-SCREEN DUAL SIGNATURE WIZARD
+     Step 1: shopkeeper signs (full width / half height canvas) → Next
+     Step 2: customer signs (same layout) → Save -->
+<div id="sig-wizard" style="position:fixed;inset:0;background:#ffffff;z-index:10001;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;flex-shrink:0;">
+    <h3 style="color:#000;margin:0;font-size:15px;font-weight:900;"><i class="fa-solid fa-file-signature"></i> <span id="sig-wizard-title">مالک دکان / اونر کے دستخط (Owner Signature)</span></h3>
+    <button onclick="cancelSignatureModal()" style="background:none;border:none;font-size:19px;color:#78909C;cursor:pointer;line-height:1;"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div style="display:flex;justify-content:center;gap:8px;padding:10px 0;flex-shrink:0;">
+    <div id="sig-step-dot-1" class="sig-step-dot active"></div>
+    <div id="sig-step-dot-2" class="sig-step-dot"></div>
+  </div>
+
+  <div style="text-align:center;font-size:13px;color:#546E7A;padding:0 16px;flex-shrink:0;" id="sig-wizard-hint">
+    مرحلہ 1 از 2 — دکاندار براہ مہربانی نیچے دستخط کریں
+  </div>
+
+  <!-- Both pads live in the DOM the whole time (so going back preserves
+       a signature already drawn); only the active step's pad is shown,
+       each filling the full width and roughly half the screen height. -->
+  <div style="flex:1;display:flex;flex-direction:column;padding:14px;min-height:0;">
+    <div id="sig-pad-shop-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;">
+      <canvas id="sig-canvas-shop" style="width:100%;height:100%;touch-action:none;display:block;"></canvas>
+    </div>
+    <div id="sig-pad-cust-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;display:none;">
+      <canvas id="sig-canvas-cust" style="width:100%;height:100%;touch-action:none;display:block;"></canvas>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;padding:14px;border-top:1px solid #eee;flex-shrink:0;">
+    <button class="sig-clear" style="flex:1;font-size:12px;" onclick="clearActiveSignature()"><i class="fa-solid fa-eraser"></i> صاف کریں</button>
+    <button class="btn ba" id="sig-wizard-back" onclick="sigWizardBack()" style="flex:1;display:none;"><i class="fa-solid fa-arrow-right"></i> پیچھے</button>
+    <button class="btn bp" style="flex:2;" id="sig-wizard-next" onclick="sigWizardNext()">اگلا <i class="fa-solid fa-arrow-left"></i></button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="firebase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
