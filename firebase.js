@@ -564,19 +564,21 @@ async function _hardLoginSync(uid, email){
   localStorage.setItem('sms_last_backup_ts', Date.now().toString());
 }
 
-// ── SYNC TO CLOUD (mobile-number based path) ──────────────────
 async function fbSyncToCloud(){
   const mobile = getSessionUid();
   if(!mobile || !_fbDb) return;
   try{
-    const data = buildBackupData();
-    data.syncedAt = new Date().toISOString();
-    await _fbDb.ref(_fbUserPath(mobile) + '/shopData').set(data);
+    const rawData = (typeof buildBackupData === 'function') ? buildBackupData() : {};
+    const cleanData = JSON.parse(JSON.stringify(rawData));
+    cleanData.syncedAt = new Date().toISOString();
+
+    await _fbDb.ref(_fbUserPath(mobile) + '/shopData').set(cleanData);
     localStorage.setItem('sms_last_backup_ts', Date.now().toString());
     updateStatusBar();
     _showSyncBadge('done');
+    console.log('[Firebase Sync] Realtime Database updated successfully for user:', mobile);
   } catch(e){
-    console.warn('[FB sync]', e.message);
+    console.error('[Firebase sync error]', e);
     _showSyncBadge('error');
   }
 }

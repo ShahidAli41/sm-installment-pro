@@ -2068,9 +2068,13 @@ function goToAddStep(step){
 function showSc(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.mob-ni').forEach(x=>x.classList.remove('active'));
   const el=document.getElementById('sc-'+n);if(el)el.classList.add('active');
-  const nm={dash:0,calc:1,add:2,customers:3,pay:4,alerts:5,reminders:6,report:7,games:8,about:9};
-  document.querySelectorAll('.ni')[nm[n]]?.classList.add('active');
+  const nm={dash:0,calc:1,add:2,customers:3,pay:4,alerts:5,reminders:6,report:7,games:8,about:8};
+  if(nm[n] !== undefined){
+    document.querySelectorAll('.ni')[nm[n]]?.classList.add('active');
+    document.querySelectorAll('.mob-ni')[nm[n]]?.classList.add('active');
+  }
   if(n==='dash') renderDash();
   if(n==='add') goToAddStep(1);
   if(n==='customers'){
@@ -2084,6 +2088,23 @@ function showSc(n){
   if(n==='alerts') renderAlerts();
   if(n==='report') initReport();
   _navGoScreen(n);
+}
+
+function toggleMobileMenu(){
+  const dropdown = document.getElementById('hdr-mobile-dropdown');
+  const btn = document.getElementById('mobile-menu-btn');
+  if(dropdown){
+    dropdown.classList.toggle('open');
+    if(btn) btn.classList.toggle('active');
+  }
+}
+
+function navMobileGo(n){
+  showSc(n);
+  const dropdown = document.getElementById('hdr-mobile-dropdown');
+  const btn = document.getElementById('mobile-menu-btn');
+  if(dropdown) dropdown.classList.remove('open');
+  if(btn) btn.classList.remove('active');
 }
 
 // Override recPay to show receipt after payment
@@ -3315,11 +3336,9 @@ function sendScheduleReminder(id){
 function save(){
   saveLocalData();
   const mobile = getSessionUid();
-  if(mobile && _fbAutoSync){
+  if(mobile && (typeof _fbAutoSync === 'undefined' || _fbAutoSync)){
     _showSyncBadge('syncing');
-    // Debounce: wait 1.5s after last write before syncing
-    clearTimeout(_fbSyncDebounce);
-    _fbSyncDebounce = setTimeout(()=> fbSyncToCloud(), 1500);
+    if(typeof fbSyncToCloud === 'function') fbSyncToCloud();
   }
 }
 

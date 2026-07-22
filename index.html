@@ -24,34 +24,71 @@
 <!-- ══ HEADER ══ -->
 <div class="hdr">
   <div class="hdr-main">
+    <!-- BRAND LOGO & TITLE -->
     <div class="brand">
-      <div class="brand-icon"><div class="brand-icon-inner"><span class="bi-txt">SM</span></div></div>
-      <div class="brand-text" onclick="openTitleEdit()" style="cursor:pointer;" title="Click to edit shop name">
+      <div class="brand-icon"><span class="bi-txt">SM</span></div>
+      <div class="brand-text" onclick="openTitleEdit()" style="cursor:pointer;" title="شاپ کا نام تبدیل کریں">
         <div class="sname" id="shop-name-display">شاہد موبائل شاپ</div>
-        <div class="ssub" id="shop-sub-display">INSTALLMENT MANAGEMENT SYSTEM <i class="fa-solid fa-pen"></i></div>
+        <div class="ssub" id="shop-sub-display">INSTALLMENT MANAGEMENT SYSTEM <i class="fa-solid fa-pen" style="font-size:8px;"></i></div>
       </div>
     </div>
-    <div class="hdr-pills">
-      <div class="pill"><b id="hdr-c">0</b><span class="t" data-ur="کسٹمر" data-en="Customers"> کسٹمر</span></div>
-      <div class="pill"><b id="hdr-a">0</b><span class="t" data-ur=" فعال" data-en=" Active"> فعال</span></div>
-      <div class="hdr-toggles">
-        <div class="theme-switch" id="dark-btn" onclick="toggleDark()" title="Dark / Light">
-          <div class="ts-track">
-            <i class="fa-solid fa-sun ts-ic ts-sun"></i>
-            <i class="fa-solid fa-moon ts-ic ts-moon"></i>
-            <div class="ts-thumb"><i class="fa-solid fa-moon"></i></div>
-          </div>
-        </div>
-        <div class="lang-switch" id="lang-btn" onclick="toggleLang()" title="اردو / English">
-          <div class="ls-track">
-            <div class="ls-thumb" id="lang-thumb">اردو</div>
-          </div>
+
+    <!-- CENTER INLINE NAVIGATION (Desktop / Tablet) -->
+    <nav class="hdr-nav">
+      <div class="ni active" onclick="showSc('dash')"><i class="fa-solid fa-house nico"></i><span class="nlbl">ہوم</span></div>
+      <div class="ni" onclick="showSc('calc')"><i class="fa-solid fa-calculator nico"></i><span class="nlbl">کیلکولیٹر</span></div>
+      <div class="ni" onclick="showSc('add')"><i class="fa-solid fa-circle-plus nico"></i><span class="nlbl">نیا کسٹمر</span></div>
+      <div class="ni" onclick="showSc('customers')"><i class="fa-solid fa-users nico"></i><span class="nlbl">کسٹمرز</span></div>
+      <div class="ni" onclick="showSc('pay')"><i class="fa-solid fa-money-bill-wave nico"></i><span class="nlbl">وصولی</span></div>
+      <div class="ni" onclick="showSc('alerts')" id="nav-alerts"><i class="fa-solid fa-bell nico"></i><span class="nlbl">الرٹس</span></div>
+      <div class="ni" onclick="showSc('reminders')"><i class="fa-solid fa-comment-dots nico"></i><span class="nlbl">یاددہانی</span></div>
+      <div class="ni" onclick="showSc('report')"><i class="fa-solid fa-chart-column nico"></i><span class="nlbl">رپورٹ</span></div>
+      <div class="ni" onclick="showSc('about')"><i class="fa-solid fa-gear nico"></i><span class="nlbl">سیٹنگز</span></div>
+    </nav>
+
+    <!-- RIGHT CONTROLS & MOBILE MENU TOGGLE -->
+    <div class="hdr-controls">
+      <div class="pill" title="کل کسٹمرز"><b id="hdr-c">0</b><span class="t"> کسٹمر</span></div>
+      <div class="pill" title="فعال قسطیں"><b id="hdr-a">0</b><span class="t"> فعال</span></div>
+
+      <div class="theme-switch" id="dark-btn" onclick="toggleDark()" title="Dark / Light">
+        <div class="ts-track">
+          <i class="fa-solid fa-sun ts-ic ts-sun"></i>
+          <i class="fa-solid fa-moon ts-ic ts-moon"></i>
+          <div class="ts-thumb"><i class="fa-solid fa-moon"></i></div>
         </div>
       </div>
+      <div class="lang-switch" id="lang-btn" onclick="toggleLang()" title="اردو / English">
+        <div class="ls-track">
+          <div class="ls-thumb" id="lang-thumb">اردو</div>
+        </div>
+      </div>
+
       <button class="hdr-logout-btn" onclick="authLogout()" title="لاگ آؤٹ">
         <i class="fa-solid fa-right-from-bracket"></i>
-        <span class="t" data-ur="لاگ آؤٹ" data-en="Logout">لاگ آؤٹ</span>
+        <span class="t">لاگ آؤٹ</span>
       </button>
+
+      <!-- MOBILE BURGER BUTTON -->
+      <button type="button" class="hdr-menu-btn" onclick="toggleMobileMenu()" id="mobile-menu-btn" title="مینو">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MOBILE COLLAPSIBLE MENU -->
+  <div class="hdr-mobile-dropdown" id="hdr-mobile-dropdown">
+    <div class="mob-nav-grid">
+      <div class="mob-ni active" onclick="navMobileGo('dash')"><i class="fa-solid fa-house"></i><span>ہوم</span></div>
+      <div class="mob-ni" onclick="navMobileGo('calc')"><i class="fa-solid fa-calculator"></i><span>کیلکولیٹر</span></div>
+      <div class="mob-ni" onclick="navMobileGo('add')"><i class="fa-solid fa-circle-plus"></i><span>نیا کسٹمر</span></div>
+      <div class="mob-ni" onclick="navMobileGo('customers')"><i class="fa-solid fa-users"></i><span>کسٹمرز</span></div>
+      <div class="mob-ni" onclick="navMobileGo('pay')"><i class="fa-solid fa-money-bill-wave"></i><span>وصولی</span></div>
+      <div class="mob-ni" onclick="navMobileGo('alerts')"><i class="fa-solid fa-bell"></i><span>الرٹس</span></div>
+      <div class="mob-ni" onclick="navMobileGo('reminders')"><i class="fa-solid fa-comment-dots"></i><span>یاددہانی</span></div>
+      <div class="mob-ni" onclick="navMobileGo('report')"><i class="fa-solid fa-chart-column"></i><span>رپورٹ</span></div>
+      <div class="mob-ni" onclick="navMobileGo('games')"><i class="fa-solid fa-gamepad"></i><span>گیمز</span></div>
+      <div class="mob-ni" onclick="navMobileGo('about')"><i class="fa-solid fa-gear"></i><span>سیٹنگز</span></div>
     </div>
   </div>
 </div>
@@ -1092,18 +1129,7 @@
   </div>
 </div>
 
-<div class="bnav">
-  <div class="ni active" onclick="showSc('dash')"><div class="nico"><i class="fa-solid fa-house"></i></div><span class="nlbl">ہوم</span></div>
-  <div class="ni" onclick="showSc('calc')"><div class="nico"><i class="fa-solid fa-calculator"></i></div><span class="nlbl">کیلکولیٹر</span></div>
-  <div class="ni" onclick="showSc('add')"><div class="nico"><i class="fa-solid fa-circle-plus"></i></div><span class="nlbl">نیا</span></div>
-  <div class="ni" onclick="showSc('customers')"><div class="nico"><i class="fa-solid fa-users"></i></div><span class="nlbl">کسٹمرز</span></div>
-  <div class="ni" onclick="showSc('pay')"><div class="nico"><i class="fa-solid fa-money-bill-wave"></i></div><span class="nlbl">قسط</span></div>
-  <div class="ni" onclick="showSc('alerts')" id="nav-alerts"><div class="nico"><i class="fa-solid fa-bell"></i></div><span class="nlbl">الرٹس</span></div>
-  <div class="ni" onclick="showSc('reminders')"><div class="nico"><i class="fa-solid fa-comment-dots"></i></div><span class="nlbl">یاددہانی</span></div>
-  <div class="ni" onclick="showSc('report')"><div class="nico"><i class="fa-solid fa-chart-column"></i></div><span class="nlbl">رپورٹ</span></div>
-  <div class="ni ni-games" onclick="showSc('games')"><div class="nico"><i class="fa-solid fa-gamepad"></i></div><span class="nlbl">گیمز</span></div>
-  <div class="ni" onclick="showSc('about')"><div class="nico"><i class="fa-solid fa-gear"></i></div><span class="nlbl">سیٹنگز</span></div>
-</div>
+
 
 <!-- ══ PROFILE SLIDE-OUT SIDEBAR ══ -->
 <div class="profile-drawer-overlay" id="profile-drawer-overlay" onclick="closeProfileSidebar()"></div>
