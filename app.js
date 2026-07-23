@@ -85,11 +85,11 @@ function calc(){
 
   document.getElementById('cres').style.display='block';
   document.getElementById('cr-price').textContent  = 'Rs. '+fmt(price);
-  document.getElementById('cr-markup').textContent = markup>0 ? 'Rs. '+fmt(markup)+(markupType==='pct'?' ('+mval+'%)':'') : 'بغیر مارک اپ';
+  document.getElementById('cr-markup').textContent = markup>0 ? 'Rs. '+fmt(markup)+(markupType==='pct'?' ('+mval+'%)':'') : (isUrdu ? 'بغیر مارک اپ' : 'No Markup');
   document.getElementById('cr-total').textContent  = 'Rs. '+fmt(total);
   document.getElementById('cr-adv').textContent    = 'Rs. '+fmt(adv);
   document.getElementById('cr-rem').textContent    = 'Rs. '+fmt(remain);
-  document.getElementById('cr-mo').textContent     = months+' ماہ';
+  document.getElementById('cr-mo').textContent     = months+(isUrdu ? ' ماہ' : ' months');
   document.getElementById('cr-mon').textContent    = 'Rs. '+fmt(monthly);
 
   updatePlanPrices(total, adv);
@@ -866,7 +866,10 @@ function renderCustomers(){
     const s=cFilter==='all'||c.status===cFilter;
     return m&&s;
   });
-  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-ico"><i class="fa-solid fa-users"></i></div><p>کوئی نتیجہ نہیں ملا</p></div>'; return; }
+  if(!list.length){ 
+    el.innerHTML=`<div class="empty"><div class="empty-ico"><i class="fa-solid fa-users"></i></div><p>${isUrdu ? 'کوئی نتیجہ نہیں ملا' : 'No results found'}</p></div>`; 
+    return; 
+  }
   el.innerHTML=list.map(c=>{
     if(!Array.isArray(c.payments)) c.payments=[];
     if(!c.mobile) c.mobile={};
@@ -874,8 +877,12 @@ function renderCustomers(){
     const rem=Math.max(0,(c.mobile?.remaining||0)-paid);
     const totalRem = c.mobile?.remaining || c.mobile?.price || 1; // guard div/0
     const pct=Math.min(100,Math.round((paid/totalRem)*100));
-    const sl=c.status==='done'?'مکمل <i class="fa-solid fa-circle-check"></i>':c.status==='late'?'تاخیر <i class="fa-solid fa-triangle-exclamation"></i>':'فعال 🟢';
-    const sc=c.status==='done'?'bdone':c.status==='late'?'blate':'bact';
+    
+    let sl, sc;
+    if(c.status==='done') { sl = isUrdu ? 'مکمل <i class="fa-solid fa-circle-check"></i>' : 'Done <i class="fa-solid fa-circle-check"></i>'; sc = 'bdone'; }
+    else if(c.status==='late') { sl = isUrdu ? 'تاخیر <i class="fa-solid fa-triangle-exclamation"></i>' : 'Late <i class="fa-solid fa-triangle-exclamation"></i>'; sc = 'blate'; }
+    else { sl = isUrdu ? 'فعال 🟢' : 'Active 🟢'; sc = 'bact'; }
+    
     return `<div class="ccard">
       <div class="ctop">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -886,17 +893,17 @@ function renderCustomers(){
       </div>
       <div class="cinfo">
         <div class="ii"><i class="fa-solid fa-mobile-screen-button"></i> <strong>${c.mobile.model}</strong></div>
-        ${c.mobile.imei?`<div class="ii" style="font-size:11px;color:var(--t2)"><i class="fa-solid fa-hashtag"></i> سیریل نمبر: <strong>${c.mobile.imei}</strong></div>`:''}
+        ${c.mobile.imei?`<div class="ii" style="font-size:11px;color:var(--t2)"><i class="fa-solid fa-hashtag"></i> ${isUrdu ? 'سیریل نمبر' : 'Serial No'}: <strong>${c.mobile.imei}</strong></div>`:''}
         <div class="ii"><i class="fa-solid fa-money-bill"></i> <strong>Rs. ${fmt(c.mobile.total||c.mobile.price)}</strong></div>
-        <div class="ii"><i class="fa-solid fa-credit-card"></i> ایڈوانس: <strong>Rs. ${fmt(c.mobile.advance)}</strong></div>
-        <div class="ii"><i class="fa-solid fa-arrow-trend-up"></i> مارک اپ: <strong>${c.mobile.markup>0?'Rs. '+fmt(c.mobile.markup):'—'}</strong></div>
-        <div class="ii"><i class="fa-solid fa-calendar-days"></i> ماہانہ: <strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
-        <div class="ii"><i class="fa-solid fa-circle-check"></i> ادا: <strong style="color:var(--g2)">Rs. ${fmt(paid)}</strong></div>
-        <div class="ii">⏳ باقی: <strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
-        <div class="ii"><i class="fa-solid fa-chart-simple"></i> مدت: <strong>${c.mobile.months} ماہ</strong></div>
+        <div class="ii"><i class="fa-solid fa-credit-card"></i> ${isUrdu ? 'ایڈوانس' : 'Advance'}: <strong>Rs. ${fmt(c.mobile.advance)}</strong></div>
+        <div class="ii"><i class="fa-solid fa-arrow-trend-up"></i> ${isUrdu ? 'مارک اپ' : 'Markup'}: <strong>${c.mobile.markup>0?'Rs. '+fmt(c.mobile.markup):'—'}</strong></div>
+        <div class="ii"><i class="fa-solid fa-calendar-days"></i> ${isUrdu ? 'ماہانہ' : 'Monthly'}: <strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
+        <div class="ii"><i class="fa-solid fa-circle-check"></i> ${isUrdu ? 'ادا' : 'Paid'}: <strong style="color:var(--g2)">Rs. ${fmt(paid)}</strong></div>
+        <div class="ii">⏳ ${isUrdu ? 'باقی' : 'Remaining'}: <strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
+        <div class="ii"><i class="fa-solid fa-chart-simple"></i> ${isUrdu ? 'مدت' : 'Duration'}: <strong>${c.mobile.months} ${isUrdu ? 'ماہ' : 'Mo.'}</strong></div>
       </div>
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
-      <div class="plbl"><span>${c.payments.length}/${c.mobile.months} اقساط</span><span>${pct}%</span></div>
+      <div class="plbl"><span>${c.payments.length}/${c.mobile.months} ${isUrdu ? 'اقساط' : 'Inst.'}</span><span>${pct}%</span></div>
       <div class="cacts">
         <button class="btn bp bsm" onclick="showDetail(${c.id})"><i class="fa-solid fa-clipboard"></i> تفصیل</button>
         <button class="btn bg bsm" onclick="editCustomer(${c.id})"><i class="fa-solid fa-pen"></i> ایڈٹ</button>
@@ -1112,12 +1119,26 @@ function loadPay(){
 }
 function renderPayHist(c){
   const el=document.getElementById('pay-hist');
-  el.innerHTML=c.payments.length?[...c.payments].reverse().map(p=>`
+  el.innerHTML=c.payments.length?[...c.payments].reverse().map(p=>{
+    const methodStr = p.method || 'Cash';
+    let displayMethod = methodStr;
+    if(isUrdu) {
+      const map = { 'Cash':'کیش', 'Bank Transfer':'بینک ٹرانسفر', 'JazzCash':'جاز کیش', 'EasyPaisa':'ایزی پیسہ', 'Raast':'راست', 'Cheque':'چیک', 'Other':'دیگر' };
+      displayMethod = map[methodStr] || methodStr;
+    }
+    return `
     <div class="pitem">
-      <div><div style="font-weight:600;">${fmtDT(p.date)}</div>${p.note?`<div class="pdate"><i class="fa-solid fa-note-sticky"></i> ${p.note}</div>`:''}</div>
-      <span class="pamt">Rs. ${fmt(p.amount)}</span>
-      <span class="pst spaid">ادا <i class="fa-solid fa-circle-check"></i></span>
-    </div>`).join(''):'<div style="text-align:center;padding:14px;color:var(--t2);">ابھی کوئی ادائیگی نہیں</div>';
+      <div>
+        <div style="font-weight:600;">${fmtDT(p.date)}</div>
+        <div class="pdate" style="margin-top:2px;color:var(--p1);font-weight:500;"><i class="fa-solid fa-wallet"></i> ${displayMethod}</div>
+        ${p.note?`<div class="pdate"><i class="fa-solid fa-note-sticky"></i> ${p.note}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <span class="pamt" style="display:block;">Rs. ${fmt(p.amount)}</span>
+        <span class="pst spaid">${isUrdu ? 'ادا' : 'Paid'} <i class="fa-solid fa-circle-check"></i></span>
+      </div>
+    </div>`;
+  }).join(''):`<div style="text-align:center;padding:14px;color:var(--t2);">${isUrdu ? 'ابھی کوئی ادائیگی نہیں' : 'No payments yet'}</div>`;
 }
 // ══════════════════════════════
 //  DASHBOARD
@@ -1623,26 +1644,34 @@ function showReceipt(custId, payObj){
   const rem=Math.max(0,c.mobile.remaining-paid);
   const now=new Date();
   const dateStr=`${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+  
+  let pMethod = payObj?.method || 'Cash';
+  if(isUrdu) {
+    const map = { 'Cash':'کیش', 'Bank Transfer':'بینک ٹرانسفر', 'JazzCash':'جاز کیش', 'EasyPaisa':'ایزی پیسہ', 'Raast':'راست', 'Cheque':'چیک', 'Other':'دیگر' };
+    pMethod = map[pMethod] || pMethod;
+  }
+  
   const html=`
   <div class="rcpt-print" id="receipt-content">
     <div class="rcpt-print-hdr">
       <h2><i class="fa-solid fa-mobile-screen-button"></i> ${shopProfile.name}</h2>
       <p><i class="fa-solid fa-phone"></i> ${shopProfile.phone}${shopProfile.email?' | '+shopProfile.email:''}</p>
       ${shopProfile.address?`<p>📍 ${shopProfile.address}</p>`:''}
-      <p>قسط رسید | ${dateStr}</p>
+      <p>${isUrdu ? 'قسط رسید' : 'Payment Receipt'} | ${dateStr}</p>
     </div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-user"></i> نام</span><strong>${c.name}</strong></div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-phone"></i> نمبر</span><strong>${c.phone}</strong></div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-mobile-screen-button"></i> موبائل</span><strong>${c.mobile.model}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-user"></i> ${isUrdu ? 'نام' : 'Name'}</span><strong>${c.name}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-phone"></i> ${isUrdu ? 'نمبر' : 'Number'}</span><strong>${c.phone}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-mobile-screen-button"></i> ${isUrdu ? 'آئٹم' : 'Item'}</span><strong>${c.mobile.model}</strong></div>
     ${c.cnic?`<div class="rcpt-rrow"><span><i class="fa-solid fa-id-card"></i> CNIC</span><strong>${c.cnic}</strong></div>`:''}
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-money-bill"></i> کل قیمت</span><strong>Rs. ${fmt(c.mobile.total||c.mobile.price)}</strong></div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-credit-card"></i> ایڈوانس</span><strong>Rs. ${fmt(c.mobile.advance)}</strong></div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-calendar-days"></i> اقساط</span><strong>${c.payments.length}/${c.mobile.months} ماہ</strong></div>
-    <div class="rcpt-rrow big"><span><i class="fa-solid fa-circle-check"></i> ادا شدہ (آج)</span><strong>Rs. ${fmt(payObj?payObj.amount:0)}</strong></div>
-    <div class="rcpt-rrow"><span><i class="fa-solid fa-circle-check"></i> کل ادا شدہ</span><strong style="color:green">Rs. ${fmt(paid)}</strong></div>
-    <div class="rcpt-rrow"><span>⏳ باقی رقم</span><strong style="color:red">Rs. ${fmt(rem)}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-money-bill"></i> ${isUrdu ? 'کل قیمت' : 'Total Price'}</span><strong>Rs. ${fmt(c.mobile.total||c.mobile.price)}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-credit-card"></i> ${isUrdu ? 'ایڈوانس' : 'Advance'}</span><strong>Rs. ${fmt(c.mobile.advance)}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-calendar-days"></i> ${isUrdu ? 'اقساط' : 'Inst.'}</span><strong>${c.payments.length}/${c.mobile.months} ${isUrdu ? 'ماہ' : 'Mo.'}</strong></div>
+    <div class="rcpt-rrow big"><span><i class="fa-solid fa-circle-check"></i> ${isUrdu ? 'ادا شدہ (آج)' : 'Paid (Today)'}</span><strong>Rs. ${fmt(payObj?payObj.amount:0)}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-wallet"></i> ${isUrdu ? 'ذریعہ ادائیگی' : 'Payment Method'}</span><strong>${pMethod}</strong></div>
+    <div class="rcpt-rrow"><span><i class="fa-solid fa-circle-check"></i> ${isUrdu ? 'کل ادا شدہ' : 'Total Paid'}</span><strong style="color:green">Rs. ${fmt(paid)}</strong></div>
+    <div class="rcpt-rrow"><span>⏳ ${isUrdu ? 'باقی رقم' : 'Remaining'}</span><strong style="color:red">Rs. ${fmt(rem)}</strong></div>
     <div class="rcpt-footer">
-      شکریہ! آپ کا اعتماد ہماری پہچان ہے <i class="fa-solid fa-handshake"></i><br>
+      ${isUrdu ? 'شکریہ! آپ کا اعتماد ہماری پہچان ہے' : 'Thank you for your trust!'} <i class="fa-solid fa-handshake"></i><br>
       ${shopProfile.name}
     </div>
   </div>`;
@@ -1792,21 +1821,31 @@ function renderAlerts(){
   const navAl=document.getElementById('nav-alerts');
   if(navAl){
     const badge=navAl.querySelector('.nlbl');
-    badge.innerHTML=overdue>0?`الرٹس<span class="badge-count">${overdue}</span>`:'الرٹس';
+    const txt = isUrdu ? 'الرٹس' : 'Alerts';
+    badge.innerHTML=overdue>0?`${txt}<span class="badge-count">${overdue}</span>`:txt;
   }
 
   const smry=document.getElementById('alerts-summary');
   smry.innerHTML=`
-    <div class="sum-box"><div class="sv" style="color:#E53935">${overdue}</div><div class="sl">تاخیر</div></div>
-    <div class="sum-box" style="border-left:1px solid var(--bd)"><div class="sv" style="color:#FF6F00">${dueToday}</div><div class="sl">آج واجب</div></div>
-    <div class="sum-box" style="border-left:1px solid var(--bd)"><div class="sv" style="color:#43A047">${upcoming}</div><div class="sl">3 دن میں واجب</div></div>`;
+    <div class="sum-box"><div class="sv" style="color:#E53935">${overdue}</div><div class="sl">${isUrdu ? 'تاخیر' : 'Late'}</div></div>
+    <div class="sum-box" style="border-left:1px solid var(--bd)"><div class="sv" style="color:#FF6F00">${dueToday}</div><div class="sl">${isUrdu ? 'آج واجب' : 'Due Today'}</div></div>
+    <div class="sum-box" style="border-left:1px solid var(--bd)"><div class="sv" style="color:#43A047">${upcoming}</div><div class="sl">${isUrdu ? '3 دن میں واجب' : 'Due in 3 days'}</div></div>`;
 
   const el=document.getElementById('alerts-list');
-  if(!flagged.length){el.innerHTML='<div class="card"><div class="cb"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p>سب ٹھیک ہے! کوئی لیٹ پیمنٹ یا قریبی واجب الادا قسط نہیں</p></div></div></div>';return;}
+  if(!flagged.length){el.innerHTML=`<div class="card"><div class="cb"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p>${isUrdu ? 'سب ٹھیک ہے! کوئی لیٹ پیمنٹ یا قریبی واجب الادا قسط نہیں' : 'All good! No late payments or upcoming installments due.'}</p></div></div></div>`;return;}
   el.innerHTML=flagged.map(({c,rem,paidCount,nextDue,diffDays})=>{
     const dd=nextDue.getDate()+'/'+(nextDue.getMonth()+1)+'/'+nextDue.getFullYear();
     const cls=diffDays>7?'alert-red':diffDays>0?'alert-yellow':'alert-green';
-    const daytxt=diffDays>0?`${diffDays} دن تاخیر <i class="fa-solid fa-triangle-exclamation"></i> (Late Payment Alert)`:diffDays===0?'آج واجب الادا (Due Today)':`${Math.abs(diffDays)} دن میں واجب (Upcoming Due)`;
+    
+    let daytxt;
+    if(diffDays>0) {
+      daytxt = isUrdu ? `${diffDays} دن تاخیر <i class="fa-solid fa-triangle-exclamation"></i>` : `${diffDays} Days Late <i class="fa-solid fa-triangle-exclamation"></i>`;
+    } else if(diffDays===0) {
+      daytxt = isUrdu ? `آج واجب الادا` : `Due Today`;
+    } else {
+      daytxt = isUrdu ? `${Math.abs(diffDays)} دن میں واجب` : `Due in ${Math.abs(diffDays)} days`;
+    }
+
     const daycls=diffDays>0?'days-over':'days-ok';
     const left=c.mobile.months-paidCount;
     return `<div class="alert-card ${cls}">
@@ -1818,15 +1857,15 @@ function renderAlerts(){
         <span class="alert-days ${daycls}">${daytxt}</span>
       </div>
       <div class="alert-info">
-        <div class="alert-ii">ماہانہ قسط<strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
-        <div class="alert-ii">باقی رقم<strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
-        <div class="alert-ii">اگلی تاریخ<strong>${dd}</strong></div>
-        <div class="alert-ii">باقی اقساط<strong>${left} ماہ</strong></div>
+        <div class="alert-ii">${isUrdu ? 'ماہانہ قسط' : 'Monthly Inst.'}<strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
+        <div class="alert-ii">${isUrdu ? 'باقی رقم' : 'Remaining'}<strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
+        <div class="alert-ii">${isUrdu ? 'اگلی تاریخ' : 'Next Date'}<strong>${dd}</strong></div>
+        <div class="alert-ii">${isUrdu ? 'باقی اقساط' : 'Left Inst.'}<strong>${left} ${isUrdu ? 'ماہ' : 'Mo.'}</strong></div>
       </div>
       <div class="alert-acts">
-        <button class="btn bwa bsm" onclick="alertWA(${c.id},${diffDays})"><i class="fa-brands fa-whatsapp"></i> یاددہانی</button>
-        <button class="btn bp bsm" onclick="showSc('pay')"><i class="fa-solid fa-sack-dollar"></i> قسط جمع</button>
-        <button class="btn ba bsm" onclick="showDetail(${c.id})"><i class="fa-solid fa-clipboard"></i> تفصیل</button>
+        <button class="btn bwa bsm" onclick="alertWA(${c.id},${diffDays})"><i class="fa-brands fa-whatsapp"></i> ${isUrdu ? 'یاددہانی' : 'Reminder'}</button>
+        <button class="btn bp bsm" onclick="showSc('pay')"><i class="fa-solid fa-sack-dollar"></i> ${isUrdu ? 'قسط جمع' : 'Receive Pay'}</button>
+        <button class="btn ba bsm" onclick="showDetail(${c.id})"><i class="fa-solid fa-clipboard"></i> ${isUrdu ? 'تفصیل' : 'Details'}</button>
       </div>
     </div>`;
   }).join('');
@@ -2113,16 +2152,19 @@ function recPay(){
   const amt=parseFloat(document.getElementById('pay-amt').value)||0;
   const date=document.getElementById('pay-date').value;
   const note=document.getElementById('pay-note').value.trim();
+  const methodElement = document.getElementById('pay-method');
+  const method = methodElement ? methodElement.value : 'Cash';
+  
   const c=customers.find(x=>String(x.id)===String(rawVal));
-  if(!c||!amt){showToast('<i class="fa-solid fa-triangle-exclamation"></i> کسٹمر اور رقم لازمی ہے','warn');return;}
-  const payObj={amount:amt,date,note,time:new Date().toISOString()};
+  if(!c||!amt){showToast(isUrdu ? '<i class="fa-solid fa-triangle-exclamation"></i> کسٹمر اور رقم لازمی ہے' : '<i class="fa-solid fa-triangle-exclamation"></i> Customer and Amount are required','warn');return;}
+  const payObj={amount:amt,date,note,method,time:new Date().toISOString()};
   c.payments.push(payObj);
   const paid=c.payments.reduce((s,p)=>s+p.amount,0);
   if(paid>=c.mobile.remaining) c.status='done';
-  save();showToast('<i class="fa-solid fa-circle-check"></i> قسط جمع ہو گئی!');
+  save();showToast(isUrdu ? '<i class="fa-solid fa-circle-check"></i> قسط جمع ہو گئی!' : '<i class="fa-solid fa-circle-check"></i> Payment Received!');
   loadPay();renderDash();
   document.getElementById('pay-note').value='';
-  setTimeout(()=>showReceipt(id,payObj),400);
+  setTimeout(()=>showReceipt(c.id,payObj),400); // Fixed id reference to c.id
 }
 
 
@@ -2768,6 +2810,20 @@ const UI = {
   'nav-9': ['سیٹنگز','Settings'],
 };
 
+// Mobile nav labels (matches mob-ni elements order)
+const MOB_NAV_LABELS = [
+  ['ہوم','Home'],
+  ['کیلکولیٹر','Calc'],
+  ['نیا کسٹمر','New'],
+  ['کسٹمرز','Customers'],
+  ['وصولی','Payment'],
+  ['الرٹس','Alerts'],
+  ['یاددہانی','Reminders'],
+  ['رپورٹ','Report'],
+  ['گیمز','Games'],
+  ['سیٹنگز','Settings'],
+];
+
 // Elements with data-ur / data-en attributes get translated automatically.
 // For dynamic rendered content, language is passed as a flag to render functions.
 
@@ -2776,7 +2832,9 @@ function getLang(ur, en){ return isUrdu ? ur : en; }
 function applyLang(){
   const en = !isUrdu;
 
-  // 1. body direction & font
+  // 1. html dir + body direction & font
+  document.documentElement.dir = en ? 'ltr' : 'rtl';
+  document.documentElement.lang = en ? 'en' : 'ur';
   document.body.dir = en ? 'ltr' : 'rtl';
   document.body.style.fontFamily = en
     ? "'Poppins',sans-serif"
@@ -2786,40 +2844,89 @@ function applyLang(){
   const langBtn = document.getElementById('lang-btn');
   const langThumb = document.getElementById('lang-thumb');
   if(langBtn) langBtn.classList.toggle('en', en);
-  if(langThumb) langThumb.textContent = en ? 'EN' : 'اردو';
+  // Show icon only: sun/moon icon for language (globe icon)
+  if(langThumb) langThumb.textContent = en ? '🌐' : '🌐';
 
-  // 3. nav labels
+  // 3. Desktop nav labels
   const navLabels = document.querySelectorAll('.ni .nlbl');
   Object.keys(UI).forEach((k,i)=>{
     if(navLabels[i]){
-      // preserve badge spans inside label
       const badge = navLabels[i].querySelector('.badge-count');
       navLabels[i].textContent = UI[k][en?1:0];
       if(badge) navLabels[i].appendChild(badge);
     }
   });
 
-  // 4. All elements with data-ur / data-en
+  // 4. Mobile nav labels
+  const mobNavItems = document.querySelectorAll('.mob-ni span');
+  MOB_NAV_LABELS.forEach((labels, i)=>{
+    if(mobNavItems[i]) mobNavItems[i].textContent = labels[en?1:0];
+  });
+
+  // 5. All elements with data-ur / data-en
   document.querySelectorAll('[data-ur]').forEach(el=>{
     el.textContent = en ? (el.dataset.en||el.dataset.ur) : el.dataset.ur;
   });
 
-  // 5. Shop name
+  // 5.1 Update placeholders
+  document.querySelectorAll('[data-placeholder-ur]').forEach(el=>{
+    el.placeholder = en ? (el.dataset.placeholderEn || el.dataset.placeholderUr) : el.dataset.placeholderUr;
+  });
+
+  // 6. Update calculator result texts if visible
+  _updateCalcLangTexts(en);
+
+  // 6.1 Re-render dynamic lists so they translate immediately
+  if(typeof renderCustomers === 'function') renderCustomers();
+  if(typeof renderAlerts === 'function') renderAlerts();
+
+  // 7. Shop name
   applyShopName();
 
-  // 6. Save preference
+  // 8. Header nav direction: LTR = home on left, RTL = home on right
+  const hdrNav = document.querySelector('.hdr-nav');
+  if(hdrNav){
+    hdrNav.style.flexDirection = en ? 'row' : 'row';
+    // In LTR, justify-content start pushes home to left
+    hdrNav.style.justifyContent = '';
+  }
+  // Mobile dropdown direction
+  const mobDropdown = document.getElementById('hdr-mobile-dropdown');
+  if(mobDropdown) mobDropdown.dir = en ? 'ltr' : 'rtl';
+
+  // 9. Save preference
   localStorage.setItem('sms_lang', en ? 'en' : 'ur');
 
-  // 7. Re-render active screen with new language
+  // 10. Re-render active screen with new language
   const active = document.querySelector('.screen.active');
   if(active){
     const id = active.id.replace('sc-','');
     if(id==='dash') renderDash();
+    else if(id==='calc'){ if(typeof calcIC==='function') calcIC(); }
     else if(id==='customers') renderCustomers();
     else if(id==='alerts') renderAlerts();
     else if(id==='reminders') renderReminders();
     else if(id==='report') renderReport();
     else if(id==='pay') popPaySel();
+  }
+}
+
+// Update calc result label texts based on language
+function _updateCalcLangTexts(en){
+  const cres = document.getElementById('cres');
+  if(!cres || cres.style.display==='none') return;
+  // Labels inside calc result rows - they use data-ur/data-en if present,
+  // otherwise we keep them as-is. For hardcoded Urdu strings in calc:
+  const crMo = document.getElementById('cr-mo');
+  const crMarkup = document.getElementById('cr-markup');
+  if(crMo){
+    const months = parseInt(document.getElementById('m-months')?.value)||0;
+    if(months>0) crMo.textContent = months + (en ? ' months' : ' ماہ');
+  }
+  if(crMarkup){
+    const txt = crMarkup.textContent||'';
+    if(txt === 'بغیر مارک اپ') crMarkup.textContent = en ? 'No Markup' : 'بغیر مارک اپ';
+    else if(txt === 'No Markup') crMarkup.textContent = en ? 'No Markup' : 'بغیر مارک اپ';
   }
 }
 

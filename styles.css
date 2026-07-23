@@ -233,6 +233,35 @@ body::before{
 }
 .mob-ni.active i{color:#fff;}
 
+/* MOBILE CONTROLS ROW (theme + lang) */
+.mob-controls-row{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+.mob-ctrl-btn{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:10px 8px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;
+  color:#CBD5E1;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  font-family:inherit;
+}
+.mob-ctrl-btn:hover{
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+}
+.mob-ctrl-btn i{ font-size:15px; color:#38BDF8; }
+
 @media(max-width:992px){
   .hdr-nav{display:none;}
   .hdr-menu-btn{display:flex;}
@@ -627,6 +656,16 @@ body.dark .ts-thumb {
 .lang-switch.en .ls-thumb {
   transform: translateX(-22px);
 }
+
+/* Icon-only lang switch — show globe emoji */
+.ls-thumb { font-size: 13px; }
+
+/* ══ LTR LAYOUT (English mode) — home button aligns left ══ */
+html[dir="ltr"] .hdr-main { direction: ltr; }
+html[dir="ltr"] .hdr-nav { order: 0; justify-content: flex-start; }
+html[dir="ltr"] .brand { order: -1; }
+html[dir="ltr"] .hdr-controls { order: 1; }
+html[dir="ltr"] .mob-nav-grid { direction: ltr; }
 
 /* ══ RESPONSIVE HEADER & ALIGNMENT (mobile screens <= 600px) ══ */
 @media(max-width:600px){
