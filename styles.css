@@ -1383,10 +1383,33 @@ input, select, textarea {
   .fgrid{grid-template-columns:1fr;}
   .dgrid{grid-template-columns:1fr 1fr;}
   .hdr-controls .pill { display: none; }
-  .hdr-controls .lang-switch { display: none; }
-  .hdr-controls .theme-switch { display: none; }
   .hdr-logout-btn { padding: 6px; }
   .hdr-controls { gap: 4px; }
+  
+  /* Make switches smaller on very small screens to fit */
+  .theme-switch .ts-track, .lang-switch .ls-track{
+    width:38px;
+    height:20px;
+  }
+  .ts-thumb{
+    width:14px;
+    height:14px;
+  }
+  body.dark .ts-thumb{
+    transform:translateX(-18px);
+  }
+  .ls-thumb{
+    width:20px;
+    height:14px;
+    font-size:7px;
+  }
+  .lang-switch.en .ls-thumb{
+    transform:translateX(-14px);
+  }
+}
+@media (max-width:360px){
+  .brand-text .sname{max-width:80px;} /* Prevent wrap on 320px screens */
+  .hdr-logout-btn{padding: 4px 6px;}
 }
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .toggle-sw{position:relative;display:inline-block;width:46px;height:26px;}
