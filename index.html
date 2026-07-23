@@ -312,7 +312,7 @@
 
           <!-- INSTALLMENT PLANS -->
           <div class="sdiv"><span><i class="fa-solid fa-calendar-days"></i> انسٹالمنٹ پلان منتخب کریں</span></div>
-          <div class="plans-grid" id="plans-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="plans-grid" id="plans-grid">
             <div class="plan-card" onclick="selectPlan(2,this)"><div class="pm">2</div><div class="pl">ماہ</div><div class="pp" id="pp-2">—</div></div>
             <div class="plan-card" onclick="selectPlan(4,this)"><div class="pm">4</div><div class="pl">ماہ</div><div class="pp" id="pp-4">—</div></div>
             <div class="plan-card selected" onclick="selectPlan(6,this)"><div class="pm">6</div><div class="pl">ماہ</div><div class="pp" id="pp-6">—</div></div>
@@ -830,7 +830,7 @@
     <div class="card">
       <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> لیٹ پیمنٹ الرٹس</h3></div>
       <div class="cb" style="padding:0;">
-        <div id="alerts-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--bd);"></div>
+        <div id="alerts-summary" class="resp-grid-3" style="gap:0;border-bottom:1px solid var(--bd);"></div>
       </div>
     </div>
     <div id="alerts-list"></div>
@@ -859,7 +859,7 @@
             <div class="fg" style="flex:1;min-width:120px;"><label>تا تاریخ</label><input type="date" id="rpt-to"></div>
             <button class="btn bp" style="padding:8px 11px;font-size:12px;" onclick="renderCollectionRange()"><i class="fa-solid fa-magnifying-glass"></i> حساب لگائیں</button>
           </div>
-          <div id="rpt-range-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:14px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;"></div>
+          <div id="rpt-range-summary" class="resp-grid-2" style="gap:0;margin-top:14px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;"></div>
         </div>
       </div>
       <div class="card">
@@ -868,7 +868,7 @@
           <select id="rpt-year" onchange="renderReport()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-size:13px;"></select>
         </div>
         <div class="cb" style="padding:0;">
-          <div id="rpt-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;"></div>
+          <div id="rpt-summary" class="resp-grid-3"></div>
         </div>
       </div>
       <div class="card">
@@ -897,7 +897,7 @@
       <div class="card">
         <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> بقایا جات کی تفصیل (Defaulter Ledger)</h3></div>
         <div class="cb" style="padding:0;">
-          <div id="rpt-defaulter-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--bd);"></div>
+          <div id="rpt-defaulter-summary" class="resp-grid-2" style="gap:0;border-bottom:1px solid var(--bd);"></div>
           <div id="rpt-defaulter-list"></div>
         </div>
       </div>
@@ -908,7 +908,7 @@
       <div class="card">
         <div class="ch"><h3><i class="fa-solid fa-chart-pie"></i> کاروبار کا خلاصہ (Business Overview)</h3></div>
         <div class="cb" style="padding:0;">
-          <div id="rpt-overview-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0;"></div>
+          <div id="rpt-overview-grid" class="resp-grid-2" style="gap:0;"></div>
         </div>
       </div>
     </div>
