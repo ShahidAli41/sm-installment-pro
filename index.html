@@ -2980,8 +2980,14 @@ function _doLoggedOutUI(){
   }
   _refreshAllViews();
   const overlay = document.getElementById('auth-overlay');
-  if(overlay) overlay.style.display = 'none';
-  showSc('dash');
+  if(overlay) {
+    if(!hadCustomers) {
+      overlay.style.display = 'flex'; // Force login if empty/logged out
+    } else {
+      overlay.style.display = 'none';
+      showSc('dash');
+    }
+  }
   _updatePinUI();
 }
 
@@ -3292,10 +3298,9 @@ async function authLogout(){
   //    fire and confirm the blank state, harmless if it runs twice)
   if(_fbAuth){ _fbAuth.signOut().catch(e=>console.warn('[signOut]', e.message)); }
 
-  // 5. Keep the main app screens available after logout.
+  // 5. Show the login screen after logout so the user knows they are logged out
   const overlay = document.getElementById('auth-overlay');
-  if(overlay) overlay.style.display = 'none';
-  showSc('dash');
+  if(overlay) overlay.style.display = 'flex';
 }
 
 // ── LOGIN SYNC: safely fetch this account's data from Firebase ──
@@ -5109,8 +5114,8 @@ function calcIC(){
     <tr>
       <td>Rs. ${fmt(price)}</td>
       <td>Rs. ${fmt(adv)}</td>
-      <td>${markupPct}%<br><small style="color:var(--a1)">Rs.${fmt(markupAmt)}</small></td>
-      <td>Rs. ${fmt(installmentBase)}</td>
+      <td>${markupPct}%</td>
+      <td>Rs. ${fmt(markupAmt)}</td>
       <td>${months}</td>
       <td><strong>Rs. ${fmt(total)}</strong></td>
       <td class="ic-big">Rs. ${fmt(totalMinusAdv)}</td>
