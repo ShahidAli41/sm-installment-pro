@@ -1488,68 +1488,6 @@ input, select, textarea {
 .sig-step-dot{width:9px;height:9px;border-radius:50%;background:#CFD8DC;transition:all .2s;}
 .sig-step-dot.active{background:#1565C0;width:22px;border-radius:5px;}
 .sig-clear{padding:12px;border-radius:10px;border:1px solid #CFD8DC;background:#ECEFF1;color:#37474F;font-weight:700;cursor:pointer;}
-
-/* ════════════════════════════════════════════════════════════════
-   ADDITIVE ONLY — nothing above this block has been touched/edited.
-   1) 3D depth/shadow effect on existing Font Awesome icons
-      (icon colors are 100% unchanged, just added shadow/bevel depth)
-   2) Small mobile overflow safety-net (guards only, no visual change
-      to anything that already fits correctly)
-   ════════════════════════════════════════════════════════════════ */
-
-/* ---- 3D depth effect for icons (color untouched) ---- */
-i[class*="fa-"]{
-  filter:drop-shadow(0 1px 0 rgba(255,255,255,.35)) drop-shadow(0 2px 2px rgba(0,0,0,.28));
-  transition:transform .15s ease;
-}
-body.dark i[class*="fa-"]{
-  filter:drop-shadow(0 1px 0 rgba(255,255,255,.08)) drop-shadow(0 2px 3px rgba(0,0,0,.55));
-}
-button i[class*="fa-"]:active,
-a i[class*="fa-"]:active,
-.ni:active i[class*="fa-"]{
-  transform:translateY(1px) scale(.94);
-}
-
-/* ---- Mobile overflow safety-net (guard rails only) ---- */
-img,svg,video,canvas{max-width:100%;height:auto;}
-table{max-width:100%;}
-
-/* ---- Cute colourful 3D badge icons for the nav tabs
-        (Dashboard / Customer / New / Report / Settings etc.) ---- */
-.ni .nico, .mob-ni i{
-  display:inline-flex;align-items:center;justify-content:center;
-  border-radius:50%;
-  color:#fff;
-  box-shadow:0 3px 6px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -2px 3px rgba(0,0,0,.15);
-  transition:transform .2s ease, box-shadow .2s ease;
-}
-.ni .nico{width:26px;height:26px;font-size:12px;}
-.mob-ni i{width:36px;height:36px;font-size:15px;}
-.ni:hover .nico, .mob-ni:hover i{transform:scale(1.12) rotate(-4deg);}
-.ni:active .nico, .mob-ni:active i{transform:scale(.92);}
-.ni.active .nico{background:rgba(255,255,255,.22) !important;box-shadow:0 2px 5px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.6) !important;}
-.mob-ni.active i{background:rgba(255,255,255,.22) !important;}
-
-.ni[onclick="showSc('dash')"] .nico, .mob-ni[onclick="navMobileGo('dash')"] i{background:linear-gradient(145deg,#64B5F6,#1565C0);}
-.ni[onclick="showSc('calc')"] .nico, .mob-ni[onclick="navMobileGo('calc')"] i{background:linear-gradient(145deg,#BA68C8,#6A1B9A);}
-.ni[onclick="showSc('add')"] .nico, .mob-ni[onclick="navMobileGo('add')"] i{background:linear-gradient(145deg,#81C784,#2E7D32);}
-.ni[onclick="showSc('customers')"] .nico, .mob-ni[onclick="navMobileGo('customers')"] i{background:linear-gradient(145deg,#FFB74D,#EF6C00);}
-.ni[onclick="showSc('pay')"] .nico, .mob-ni[onclick="navMobileGo('pay')"] i{background:linear-gradient(145deg,#4DD0E1,#00838F);}
-.ni[onclick="showSc('alerts')"] .nico, .mob-ni[onclick="navMobileGo('alerts')"] i{background:linear-gradient(145deg,#EF5350,#B71C1C);}
-.ni[onclick="showSc('reminders')"] .nico, .mob-ni[onclick="navMobileGo('reminders')"] i{background:linear-gradient(145deg,#FFCA28,#EF6C00);}
-.ni[onclick="showSc('report')"] .nico, .mob-ni[onclick="navMobileGo('report')"] i{background:linear-gradient(145deg,#7986CB,#283593);}
-.mob-ni[onclick="navMobileGo('games')"] i{background:linear-gradient(145deg,#F06292,#AD1457);}
-.ni[onclick="showSc('about')"] .nico, .mob-ni[onclick="navMobileGo('about')"] i{background:linear-gradient(145deg,#90A4AE,#37474F);}
-
-/* ---- REAL BUG FIX (from video): form fields (Add-Customer etc.) were
-        wider than the screen on narrow phones and got cut off, because
-        CSS Grid items don't shrink below their content's natural size
-        by default. This restores proper shrinking without changing any
-        layout, spacing, or design. ---- */
-input,select,textarea{width:100%;}
-.fg, .fgrid>*, .cinfo>*, .dgrid>*, .stock-info>*, .alert-info>*,
-.plans-grid>*, .ic-mini-grid>*{min-width:0;}
 </Style>
 
 
