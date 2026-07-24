@@ -1541,6 +1541,15 @@ table{max-width:100%;}
 .ni[onclick="showSc('report')"] .nico, .mob-ni[onclick="navMobileGo('report')"] i{background:linear-gradient(145deg,#7986CB,#283593);}
 .mob-ni[onclick="navMobileGo('games')"] i{background:linear-gradient(145deg,#F06292,#AD1457);}
 .ni[onclick="showSc('about')"] .nico, .mob-ni[onclick="navMobileGo('about')"] i{background:linear-gradient(145deg,#90A4AE,#37474F);}
+
+/* ---- REAL BUG FIX (from video): form fields (Add-Customer etc.) were
+        wider than the screen on narrow phones and got cut off, because
+        CSS Grid items don't shrink below their content's natural size
+        by default. This restores proper shrinking without changing any
+        layout, spacing, or design. ---- */
+input,select,textarea{width:100%;}
+.fg, .fgrid>*, .cinfo>*, .dgrid>*, .stock-info>*, .alert-info>*,
+.plans-grid>*, .ic-mini-grid>*{min-width:0;}
 </Style>
 
 
