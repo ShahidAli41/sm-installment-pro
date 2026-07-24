@@ -6472,7 +6472,7 @@ function openGame(which){
 function closeGame(){
   document.getElementById('game-player').classList.remove('open');
   const frame = document.getElementById('game-frame');
-  frame.srcdoc = '<!DOCTYPE html><html><body></body></html>';
+  frame.srcdoc = '<!DOCTYPE html><html' + '><body' + '></body' + '></html' + '>';
   frame.src = 'about:blank';
 }
 
