@@ -3,24 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<script>
-/* Re-assert the mobile viewport after everything (fonts/CDN scripts) has
-   finished loading. Some Android WebView builds (used by APK-wrapper tools)
-   compute the initial page scale too early — before render-blocking
-   scripts/fonts finish — and end up showing a zoomed-out desktop-style
-   layout even though this page's CSS is fully responsive. This forces the
-   correct scale again once loading settles. Safe no-op in normal browsers. */
-(function(){
-  function fixViewport(){
-    var m = document.querySelector('meta[name="viewport"]');
-    if(m){ m.setAttribute('content','width=device-width, initial-scale=1.0, maximum-scale=1.0'); }
-  }
-  fixViewport();
-  document.addEventListener('DOMContentLoaded', fixViewport);
-  window.addEventListener('load', fixViewport);
-  setTimeout(fixViewport, 1200);
-})();
-</script>
 <title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -7794,4 +7776,38 @@ applyShopProfile();
 // This runs BEFORE Firebase loads so the dashboard is never empty.
 // Firebase will merge/overwrite with cloud data in the background.
 
-renderCustome
+renderCustomers();
+renderAlerts();
+showSc('dash');
+
+// ── Logo injection (splash screen only — header logo is now pure CSS) ──
+const _splashLogoEl = document.getElementById('auth-splash-logo');
+if(_splashLogoEl) _splashLogoEl.src = SM_PRO_LOGO_B64;
+
+// ── Auth & Firebase (non-blocking) ──
+// initAuthOverlay respects cached session — won't hide dashboard if
+// the user was already logged in.
+initAuthOverlay();
+initBackupUI();
+
+// Load Firebase after the UI is already visible (non-blocking)
+setTimeout(()=>{ loadFirebaseSDK(); }, 100);
+
+_navInit();
+_updatePinUI();
+
+
+
+
+
+
+//  FIREBASE CONFIG & INIT
+// ══════════════════════════════════════════════════════════════
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  if(typeof applyLang === 'function') applyLang();
+  if(typeof renderDash === 'function') renderDash();
+});
+</script>
+</html>
