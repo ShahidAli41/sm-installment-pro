@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: gap: https://ssl.gstatic.com;">
 <title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -17,6 +18,37 @@
      emails silently failing to send on some devices). -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+     <!-- APK & WebView Compatibility Fixes -->
+<script>
+  // DOM Storage & LocalStorage Check for Android WebView
+  (function optimizeWebView() {
+    try {
+      var testKey = '__test_storage__';
+      window.localStorage.setItem(testKey, testKey);
+      window.localStorage.removeItem(testKey);
+    } catch (e) {
+      console.warn("DOM Storage Access is restricted by WebView settings:", e);
+    }
+  })();
+
+  // Firebase Persistence Setup for Native WebView
+  function setupFirebasePersistence() {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(function() {
+          console.log("Firebase LOCAL Persistence activated for APK.");
+        })
+        .catch(function(error) {
+          console.error("Firebase persistence error:", error);
+        });
+    }
+  }
+
+  // Ensure execution after scripts load
+  document.addEventListener("DOMContentLoaded", function() {
+    setupFirebasePersistence();
+  });
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
 
