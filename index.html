@@ -3311,12 +3311,6 @@ function _refreshAllViews(){
 
 // ── LOGOUT: hard reset, then blank UI back to Login Screen ─────
 async function authLogout(){
-  const mobile = window.safeLS.getItem('sms_session_uid');
-  if(!mobile) {
-    showToast('<i class="fa-solid fa-triangle-exclamation"></i> آپ نے لاگ ان نہیں کیا ہوا، مقامی ڈیٹا محفوظ ہے۔', 'warn');
-    return;
-  }
-  
   const ok = (typeof swalConfirm === 'function')
     ? await swalConfirm('لاگ آؤٹ کرنا ہے؟', 'آپ کا موجودہ لاگ ان سیشن ختم ہو جائے گا', 'warning', 'جی ہاں، لاگ آؤٹ کریں', 'منسوخ کریں')
     : confirm('لاگ آؤٹ کرنا ہے؟');
@@ -3349,10 +3343,9 @@ async function authLogout(){
   //    fire and confirm the blank state, harmless if it runs twice)
   if(_fbAuth){ _fbAuth.signOut().catch(e=>console.warn('[signOut]', e.message)); }
 
-  // 5. Keep the main app screens available after logout.
+  // 5. Show login screen overlay so user can log in or register
   const overlay = document.getElementById('auth-overlay');
-  if(overlay) overlay.style.display = 'none';
-  showSc('dash');
+  if(overlay) overlay.style.display = 'flex';
 }
 
 // ── LOGIN SYNC: safely fetch this account's data from Firebase ──
