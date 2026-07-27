@@ -13,6 +13,7 @@
 <title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="styles.css">
 
@@ -1536,6 +1537,11 @@ input, select, textarea {
 .toggle-sw input:checked+.toggle-track:before{transform:translateX(20px);}
 #sig-wizard{display:none;}
 #sig-wizard.open{display:flex;}
+#terms-wizard{display:none;}
+#terms-wizard.open{display:flex;}
+#terms-wizard-list .tw-item{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px dashed #EAD98C;font-size:13.5px;line-height:1.9;color:#3a2f00;}
+#terms-wizard-list .tw-item:last-child{border-bottom:none;}
+#terms-wizard-list .tw-bullet{flex-shrink:0;color:#B8860B;font-weight:900;margin-top:2px;}
 .sig-step-dot{width:9px;height:9px;border-radius:50%;background:#CFD8DC;transition:all .2s;}
 .sig-step-dot.active{background:#1565C0;width:22px;border-radius:5px;}
 .sig-clear{padding:12px;border-radius:10px;border:1px solid #CFD8DC;background:#ECEFF1;color:#37474F;font-weight:700;cursor:pointer;}
@@ -2814,6 +2820,32 @@ input, select, textarea {
   </div>
 </div>
 
+<!-- TERMS & CONDITIONS STEP — shown right after the customer/item/plan
+     details are saved, and BEFORE the signature wizard opens. The
+     customer & guarantor read these terms first, then tap "اگلا" to
+     move on to the shopkeeper/customer signature pads. -->
+<div id="terms-wizard" style="position:fixed;inset:0;background:#ffffff;z-index:10001;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;flex-shrink:0;background:linear-gradient(135deg,#0A2472,#1565C0);">
+    <h3 style="color:#fff;margin:0;font-size:15px;font-weight:900;"><i class="fa-solid fa-file-contract"></i> شرائط و ضوابط</h3>
+    <button onclick="cancelTermsModal()" style="background:none;border:none;font-size:19px;color:#fff;cursor:pointer;line-height:1;"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div style="text-align:center;font-size:12.5px;color:#546E7A;padding:10px 16px 0;flex-shrink:0;">
+    براہ مہربانی نیچے دی گئی تمام شرائط غور سے پڑھ لیں، پھر "اگلا" دبا کر دستخط کے مرحلے پر جائیں
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:14px 16px 20px;min-height:0;">
+    <div id="terms-wizard-list" style="background:#fffef5;border:1px solid #F0E4B8;border-radius:14px;padding:16px 18px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+      <!-- populated by renderTermsWizardList() -->
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;padding:14px;border-top:1px solid #eee;flex-shrink:0;">
+    <button class="btn ba" style="flex:1;" onclick="cancelTermsModal()"><i class="fa-solid fa-arrow-right"></i> پیچھے</button>
+    <button class="btn bp" style="flex:2;" onclick="proceedFromTermsToSignatures()">اگلا (دستخط کی طرف) <i class="fa-solid fa-arrow-left"></i></button>
+  </div>
+</div>
+
 <!-- DUAL DIGITAL SIGNATURE MODAL — shown when saving a new installment
      agreement. White background as requested, two touch-drawable pads. -->
 <!-- FULL-SCREEN DUAL SIGNATURE WIZARD
@@ -4054,10 +4086,46 @@ function saveCustomer(){
     return;
   }
 
-  // New agreement — hold the assembled data and collect BOTH signatures
-  // (shopkeeper + customer) before it's actually created.
+  // New agreement — hold the assembled data, show Terms & Conditions
+  // first, and only once accepted collect BOTH signatures (shopkeeper +
+  // customer) before it's actually created.
   _pendingCustomerData = data;
+  openTermsModal();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TERMS & CONDITIONS STEP — shown after item/plan details are
+//  saved and BEFORE the signature wizard.
+// ══════════════════════════════════════════════════════════════
+function renderTermsWizardList(){
+  const box = document.getElementById('terms-wizard-list');
+  if(!box) return;
+  const lines = (termsConditions || DEFAULT_TERMS_CONDITIONS)
+    .split('\n')
+    .map(l => l.replace(/^[•\-*]\s*/, '').trim())
+    .filter(l => l.length > 0);
+  box.innerHTML = lines.map(l =>
+    `<div class="tw-item"><span class="tw-bullet"><i class="fa-solid fa-circle" style="font-size:6px;"></i></span><span>${l}</span></div>`
+  ).join('');
+}
+
+function openTermsModal(){
+  renderTermsWizardList();
+  openMod('terms-wizard');
+}
+
+// User read the terms and tapped "اگلا" — move on to the signature pads.
+function proceedFromTermsToSignatures(){
+  closeMod('terms-wizard');
   openSignatureModal();
+}
+
+// User backed out of the terms step — cancel the pending save, same
+// behaviour as backing out of the signature step.
+function cancelTermsModal(){
+  closeMod('terms-wizard');
+  _pendingCustomerData = null;
+  showToast('↩️ منسوخ — فارم محفوظ ہے، دوبارہ "محفوظ کریں" دبائیں');
 }
 
 // Finishes creating a new customer record once both signature pads
@@ -5304,10 +5372,18 @@ function resetReminderTemplates(){
 //  embedded automatically into every new contract / customer ledger.
 // ══════════════════════════════
 const DEFAULT_TERMS_CONDITIONS =
-`۱۔ خریدار مقررہ تاریخ پر قسط ادا کرنے کا پابند ہے۔
-۲۔* تمام اقساط کی مکمل ادائیگی تک پروڈکٹ کی اصل ملکیت دکان دار/کمپنی کی رہے گی۔
-۳۔ جب تک مکمل ادائیگی نہ ہو موبائل دکاندار کی امانت ہے۔
-۴۔ یہ معاہدہ دونوں فریقین کی رضامندی سے ہے۔`;
+`• تمام اقساط کی مکمل ادائیگی تک پروڈکٹ کی اصل ملکیت دکان دار/کمپنی کی رہے گی۔
+• مکمل ادائیگی سے پہلے سامان آگے بیچنے، گروی رکھنے یا بغیر اطلاع منتقل کرنے کی اجازت نہیں ہوگی۔
+• کسٹمر کی عدم ادائیگی یا غائب ہونے کی صورت میں تمام بقایا اقساط کی ادائیگی کا پابند ضامن ہو گا۔
+• ہر ماہ کی طے شدہ تاریخ تک قسط کی ادائیگی لازمی ہوگی۔
+• مسلسل ۲ اقساط نہ دینے کی صورت میں بقیہ تمام رقم فوراً واجب الادا ہوگی یا سامان واپس قبضہ میں لے لیا جائے گا۔
+• عدم ادائیگی پر سامان واپس لینے کی صورت میں استعمال شدہ حالت کی کٹوتی کے بعد ہی حساب کیا جائے گا۔
+• سامان کی وارنٹی برانڈ/سروس سینٹر کے ذریعے ہوگی، خرابی کی وجہ سے قسط نہیں روکی جا سکے گی۔
+• کسٹمر اپنا گھر، دکان یا فون نمبر تبدیل کرنے سے پہلے دکان دار کو مطلع کرنے کا پابند ہوگا۔
+• کسٹمر اور ضامن کی طرف سے فراہم کردہ تمام معلومات اور شناختی کارڈ کاپی کی درستگی لازمی ہے۔
+• ضمانت کے طور پر فراہم کردہ چیک/اشٹام پیپر مکمل ادائیگی کے بعد واپس کر دیا جائے گا۔
+• فراڈ، جعلی معلومات یا عدم ادائیگی کی صورت میں دکان دار کو قانونی کارروائی کا مکمل حق حاصل ہوگا۔
+• کسٹمر اور ضامن ان تمام شرائط کو پڑھ کر اور سمجھ کر بلا دباؤ اپنے دستخط و انگوٹھا درج کر رہے ہیں۔`;
 
 let termsConditions = window.safeLS.getItem('sms_terms_conditions') || DEFAULT_TERMS_CONDITIONS;
 let tcEmbedEnabled   = window.safeLS.getItem('sms_tc_embed') !== '0'; // default ON
