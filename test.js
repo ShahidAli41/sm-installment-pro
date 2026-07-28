@@ -163,13 +163,13 @@ function _doLoggedOutUI(){
 
   // Only clear data if we had none to begin with (genuine new logout).
   // If records exist, keep them so the user does not lose data.
-  if(!hadCustomers){
-    _resetLocalUserData();
-  }
+  _resetLocalUserData();
   _refreshAllViews();
   const overlay = document.getElementById('auth-overlay');
-  if(overlay) overlay.style.display = 'none';
-  showSc('dash');
+  if(overlay) {
+    overlay.style.display = 'flex';
+    showAuthMode('login');
+  }
   _updatePinUI();
 }
 
@@ -263,23 +263,20 @@ function _friendlyAuthError(e){
 // Firebase finishes loading (see _initFirebase). This just sets the
 // default visible tab so there's no flash of the wrong form.
 function initAuthOverlay(){
-  // Keep the main app visible by default so the dashboard and function
-  // screens can be used immediately. The auth overlay is only shown when
-  // the user explicitly wants to sign in or when a later auth flow needs it.
   const cachedUid = window.safeLS.getItem('sms_session_uid');
-  const hasLocalData = customers.length > 0;
   const overlay   = document.getElementById('auth-overlay');
 
-  if(overlay) overlay.style.display = 'none';
   _refreshAllViews();
 
-  if(cachedUid || hasLocalData){
+  if(cachedUid){
+    if(overlay) overlay.style.display = 'none';
     showSc('dash');
-    return;
+  } else {
+    if(overlay) {
+      overlay.style.display = 'flex';
+      showAuthMode('login');
+    }
   }
-
-  // Fresh device / first run: show the app screens immediately.
-  showSc('dash');
 }
 
 function showAuthMode(mode){
@@ -480,10 +477,9 @@ async function authLogout(){
   //    fire and confirm the blank state, harmless if it runs twice)
   if(_fbAuth){ _fbAuth.signOut().catch(e=>console.warn('[signOut]', e.message)); }
 
-  // 5. Keep the main app screens available after logout.
+  // 5. Show login screen overlay so user can log in or register
   const overlay = document.getElementById('auth-overlay');
-  if(overlay) overlay.style.display = 'none';
-  showSc('dash');
+  if(overlay) overlay.style.display = 'flex';
 }
 
 // ── LOGIN SYNC: safely fetch this account's data from Firebase ──
@@ -1140,6 +1136,7 @@ function getSpecValue(){
 
 function saveCustomer(){
   const name  = document.getElementById('c-name').value.trim();
+  const fatherName = document.getElementById('c-father-name').value.trim();
   const phone = document.getElementById('c-phone').value.trim();
   const price = parseFloat(document.getElementById('m-price').value)||0;
   const category = getCategoryValue();
@@ -1169,7 +1166,7 @@ function saveCustomer(){
   const editId = document.getElementById('edit-id').value;
 
   const data = {
-    name, phone,
+    name, fatherName, phone,
     cnic:  document.getElementById('c-cnic').value.trim(),
     email: document.getElementById('c-email').value.trim(),
     wa:    document.getElementById('c-wa').value.trim()||phone,
@@ -1195,10 +1192,46 @@ function saveCustomer(){
     return;
   }
 
-  // New agreement — hold the assembled data and collect BOTH signatures
-  // (shopkeeper + customer) before it's actually created.
+  // New agreement — hold the assembled data, show Terms & Conditions
+  // first, and only once accepted collect BOTH signatures (shopkeeper +
+  // customer) before it's actually created.
   _pendingCustomerData = data;
+  openTermsModal();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TERMS & CONDITIONS STEP — shown after item/plan details are
+//  saved and BEFORE the signature wizard.
+// ══════════════════════════════════════════════════════════════
+function renderTermsWizardList(){
+  const box = document.getElementById('terms-wizard-list');
+  if(!box) return;
+  const lines = (termsConditions || DEFAULT_TERMS_CONDITIONS)
+    .split('\n')
+    .map(l => l.replace(/^[•\-*]\s*/, '').trim())
+    .filter(l => l.length > 0);
+  box.innerHTML = lines.map(l =>
+    `<div class="tw-item"><span class="tw-bullet"><i class="fa-solid fa-circle" style="font-size:6px;"></i></span><span>${l}</span></div>`
+  ).join('');
+}
+
+function openTermsModal(){
+  renderTermsWizardList();
+  openMod('terms-wizard');
+}
+
+// User read the terms and tapped "اگلا" — move on to the signature pads.
+function proceedFromTermsToSignatures(){
+  closeMod('terms-wizard');
   openSignatureModal();
+}
+
+// User backed out of the terms step — cancel the pending save, same
+// behaviour as backing out of the signature step.
+function cancelTermsModal(){
+  closeMod('terms-wizard');
+  _pendingCustomerData = null;
+  showToast('↩️ منسوخ — فارم محفوظ ہے، دوبارہ "محفوظ کریں" دبائیں');
 }
 
 // Finishes creating a new customer record once both signature pads
@@ -1234,7 +1267,7 @@ function finalizeAgreementWithSignatures(){
   closeMod('sig-wizard');
   showToast('<i class="fa-solid fa-circle-check"></i> معاہدہ دستخط کے ساتھ محفوظ ہو گیا!');
 
-  save(); clearForm();
+  save(); clearForm(); refreshReuseLists();
   renderDash();
   renderCustomers(); // show the full up-to-date list immediately (not just on search)
 
@@ -1446,6 +1479,7 @@ function editCustomer(id){
   if(!c.grNo){ const badgeEl=document.getElementById('c-gr-badge-text'); if(badgeEl) badgeEl.textContent='—'; }
 
   document.getElementById('c-name').value  = c.name||'';
+  document.getElementById('c-father-name').value = c.fatherName||'';
   document.getElementById('c-phone').value = c.phone||'';
   document.getElementById('c-cnic').value  = c.cnic||'';
   document.getElementById('c-email').value = c.email||'';
@@ -1526,7 +1560,7 @@ function _refreshGrBadge(explicitNo){
 }
 
 function clearForm(){
-  ['c-name','c-phone','c-cnic','c-email','c-wa','c-addr','g-name','g-phone','g-cnic','m-model','m-imei','m-engine-no','m-price','m-adv','m-markup','m-start','m-months-manual','m-monthly-manual','m-category-other','m-item-other','m-brand-other','m-spec-other'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['c-name','c-father-name','c-phone','c-cnic','c-email','c-wa','c-addr','g-name','g-phone','g-cnic','m-model','m-imei','m-engine-no','m-price','m-adv','m-markup','m-start','m-months-manual','m-monthly-manual','m-category-other','m-item-other','m-brand-other','m-spec-other'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('edit-id').value='';
   _modelTouched = false;
   setCategory('موبائل فونز اینڈ گیجٹس');
@@ -1540,6 +1574,123 @@ function clearForm(){
   setMarkupType('pct');
   _resetCustomerGpsFields();
   _refreshGrBadge();
+  clearCustomerReuse();
+  clearGuarantorReuse();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CUSTOMER & GUARANTOR REUSE (auto-fill from existing records)
+//  Lets the shopkeeper pick a previously-saved customer or guarantor
+//  from a searchable list so their basic details (name, CNIC, phone,
+//  address, GPS) don't need to be re-typed for a new item/agreement.
+//  Purely a form-filling convenience — it always creates a brand new
+//  customer record on save; it never merges or edits existing ones.
+// ══════════════════════════════════════════════════════════════
+let _customerReuseMap = {};   // label -> customer object (most recent one per phone)
+let _guarantorReuseMap = {};  // label -> guarantor object {name,phone,cnic}
+
+function _reuseLabelForCustomer(c){
+  const bits = [c.name||'—'];
+  if(c.phone) bits.push(c.phone);
+  if(c.cnic) bits.push(c.cnic);
+  return bits.join(' — ');
+}
+function _reuseLabelForGuarantor(g){
+  const bits = [g.name||'—'];
+  if(g.phone) bits.push(g.phone);
+  if(g.cnic) bits.push(g.cnic);
+  return bits.join(' — ');
+}
+
+// Rebuilds both datalists from the current `customers` array. Call this
+// whenever the add-customer screen is opened and whenever the customers
+// array changes (after saving, deleting, or cloud-syncing), so the list
+// never goes stale.
+function refreshReuseLists(){
+  // ── Customers: de-duplicate by phone (fallback to name), keep the
+  // most recently added record for each person ──
+  _customerReuseMap = {};
+  const seenCust = {};
+  customers.forEach(c=>{
+    if(!c || !c.name) return;
+    const key = (c.phone || c.cnic || c.name).trim().toLowerCase();
+    seenCust[key] = c; // later entries overwrite earlier ones (most recent wins)
+  });
+  Object.values(seenCust).forEach(c=>{ _customerReuseMap[_reuseLabelForCustomer(c)] = c; });
+  const custList = document.getElementById('customer-reuse-list');
+  if(custList){
+    custList.innerHTML = Object.keys(_customerReuseMap).sort().map(lbl=>`<option value="${lbl.replace(/"/g,'&quot;')}">`).join('');
+  }
+
+  // ── Guarantors: pulled from every customer's guarantor field,
+  // de-duplicated by phone (fallback to name) ──
+  _guarantorReuseMap = {};
+  const seenGuar = {};
+  customers.forEach(c=>{
+    const g = c && c.guarantor;
+    if(!g || !g.name) return;
+    const key = (g.phone || g.cnic || g.name).trim().toLowerCase();
+    seenGuar[key] = g;
+  });
+  Object.values(seenGuar).forEach(g=>{ _guarantorReuseMap[_reuseLabelForGuarantor(g)] = g; });
+  const guarList = document.getElementById('guarantor-reuse-list');
+  if(guarList){
+    guarList.innerHTML = Object.keys(_guarantorReuseMap).sort().map(lbl=>`<option value="${lbl.replace(/"/g,'&quot;')}">`).join('');
+  }
+}
+
+// Fired on every keystroke in the customer-reuse search box. Once the
+// typed text exactly matches one of the datalist options (i.e. the
+// person picked a suggestion), auto-fills the customer info fields.
+function onCustomerReuseInput(){
+  const input = document.getElementById('customer-reuse-input');
+  const status = document.getElementById('customer-reuse-status');
+  if(!input) return;
+  const match = _customerReuseMap[input.value];
+  if(!match){ if(status) status.textContent=''; return; }
+  document.getElementById('c-name').value = match.name||'';
+  document.getElementById('c-father-name').value = match.fatherName||'';
+  document.getElementById('c-phone').value = match.phone||'';
+  document.getElementById('c-cnic').value = match.cnic||'';
+  document.getElementById('c-email').value = match.email||'';
+  document.getElementById('c-wa').value = match.wa||'';
+  document.getElementById('c-addr').value = match.addr||'';
+  if(match.gps && match.gps.lat && match.gps.lng){
+    document.getElementById('c-gps-lat').value = match.gps.lat;
+    document.getElementById('c-gps-lng').value = match.gps.lng;
+    const gpsDisplay = document.getElementById('c-gps-display');
+    if(gpsDisplay) gpsDisplay.value = `${match.gps.lat}, ${match.gps.lng}`;
+  }
+  if(status) status.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--suc,#2e7d32);"></i> کسٹمر کی معلومات خودکار فل ہو گئیں';
+}
+
+function clearCustomerReuse(){
+  const input = document.getElementById('customer-reuse-input');
+  const status = document.getElementById('customer-reuse-status');
+  if(input) input.value='';
+  if(status) status.textContent='';
+}
+
+// Same idea as onCustomerReuseInput(), but only touches the guarantor
+// fields — independent of whichever customer is selected above, since
+// the same guarantor can back completely different customers.
+function onGuarantorReuseInput(){
+  const input = document.getElementById('guarantor-reuse-input');
+  const status = document.getElementById('guarantor-reuse-status');
+  if(!input) return;
+  const match = _guarantorReuseMap[input.value];
+  if(!match){ if(status) status.textContent=''; return; }
+  document.getElementById('g-name').value = match.name||'';
+  document.getElementById('g-phone').value = match.phone||'';
+  document.getElementById('g-cnic').value = match.cnic||'';
+  if(status) status.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--suc,#2e7d32);"></i> ضامن کی معلومات خودکار فل ہو گئیں';
+}
+
+function clearGuarantorReuse(){
+  const input = document.getElementById('guarantor-reuse-input');
+  const status = document.getElementById('guarantor-reuse-status');
+  if(input) input.value='';
+  if(status) status.textContent='';
 }
 
 // ══════════════════════════════
@@ -1627,6 +1778,8 @@ function showDetail(id){
       <span class="pst spaid">ادا <i class="fa-solid fa-circle-check"></i></span>
     </div>`).join(''):'<div style="text-align:center;padding:16px;color:var(--t2);">ابھی کوئی ادائیگی نہیں</div>';
 
+  const overdueMonths = _calcOverdueMonths(c);
+
   document.getElementById('md-title').textContent=c.name+' — تفصیل';
   document.getElementById('mod-body').innerHTML=`
     <div class="rcpt">
@@ -1652,14 +1805,19 @@ function showDetail(id){
       <div class="rrow"><span>⏳ باقی</span><strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
       <div class="pbar" style="margin:10px 0;"><div class="pfill" style="width:${pct}%"></div></div>
     </div>
+    ${overdueMonths>=2?`<div style="margin-top:12px;background:#FFF3F0;border:1px solid #FFAB9D;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#D32F2F;font-size:18px;"></i>
+      <div style="font-size:12.5px;color:#B71C1C;font-weight:700;">مسلسل ${overdueMonths} ماہ کی قسط ادا نہیں ہوئی — تنبیہ نامہ جاری کیا جا سکتا ہے</div>
+    </div>`:''}
     <div class="sdiv" style="margin:14px 0 10px;"><span><i class="fa-solid fa-scroll"></i> ادائیگی تاریخ</span></div>
     <div>${ph}</div>
-    <div class="bgrp" style="margin-top:14px;">
+    <div class="bgrp" style="margin-top:14px;flex-wrap:wrap;">
       <button class="btn bp bsm" onclick="closeMod('mod-detail');editCustomer(${c.id})"><i class="fa-solid fa-pen"></i> ایڈٹ</button>
       <button class="btn ba bsm" onclick="closeMod('mod-detail');openLedger(${c.id})"><i class="fa-solid fa-chart-simple"></i> لیجر</button>
       <button class="btn bwa bsm" onclick="closeMod('mod-detail');openMsg(${c.id},'wa')"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
       <button class="btn bmail bsm" onclick="closeMod('mod-detail');openMsg(${c.id},'mail')"><i class="fa-solid fa-envelope"></i> میل</button>
       <button class="btn bg bsm" onclick="closeMod('mod-detail');showAgreement(${c.id})"><i class="fa-solid fa-file-signature"></i> معاہدہ</button>
+      ${overdueMonths>=2?`<button class="btn bsm" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="closeMod('mod-detail');showOverdueNotice(${c.id})"><i class="fa-solid fa-triangle-exclamation"></i> تنبیہ نامہ</button>`:''}
     </div>`;
   openMod('mod-detail');
 }
@@ -2373,13 +2531,203 @@ function showReceipt(custId, payObj){
   lastReceiptData={c,payObj,paid,rem,dateStr};
   openMod('mod-receipt');
 }
+// ══════════════════════════════════════════════════════════════
+//  SHARED PDF ENGINE HELPERS
+//  Used by every "پی ڈی ایف" button in the app (receipt, agreement,
+//  overdue notice). Two fixes bundled here:
+//   1. _waitForPdfLibs() — on a slow connection html2canvas/jsPDF from
+//      the CDN can still be loading the very first time a PDF button
+//      is tapped; instead of failing immediately we wait a moment.
+//   2. _fallbackTextPdf() — if rendering the styled HTML into an image
+//      fails for any reason (e.g. an unsupported CSS color function,
+//      or html2canvas choking on a particular device), we still build
+//      a plain, text-only PDF from the same data so the shopkeeper
+//      always ends up with a usable file instead of nothing at all.
+// ══════════════════════════════════════════════════════════════
+function _waitForPdfLibs(timeoutMs){
+  timeoutMs = timeoutMs || 4000;
+  return new Promise(resolve=>{
+    const start = Date.now();
+    (function check(){
+      if(typeof html2canvas!=='undefined' && window.jspdf && window.jspdf.jsPDF){ resolve(true); return; }
+      if(Date.now()-start > timeoutMs){ resolve(false); return; }
+      setTimeout(check, 150);
+    })();
+  });
+}
+// Builds a simple, reliably-rendering PDF straight from data (no HTML
+// rasterization involved) as a last-resort fallback. Labels are kept in
+// English because jsPDF's built-in fonts can't render Urdu glyphs —
+// this is only meant as a safety net, not a replacement for the normal
+// styled PDF.
+function _fallbackTextPdf(title, rows, footerText){
+  if(!window.jspdf || !window.jspdf.jsPDF) return null;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  let y = 50;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
+  pdf.text(String(title||''), pageW/2, y, {align:'center'});
+  y += 14;
+  pdf.setFontSize(9); pdf.setFont('helvetica','italic');
+  pdf.text('(Simplified PDF — auto-generated because the styled version failed to render)', pageW/2, y, {align:'center'});
+  y += 22;
+  pdf.setLineWidth(0.75);
+  pdf.line(40, y, pageW-40, y);
+  y += 20;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+  (rows||[]).forEach(r=>{
+    if(y > pageH-60){ pdf.addPage(); y = 50; }
+    pdf.setFont('helvetica','bold');
+    pdf.text(String(r.label||''), 40, y);
+    pdf.setFont('helvetica','normal');
+    pdf.text(String(r.value==null||r.value===''?'-':r.value), 220, y);
+    y += 20;
+  });
+  if(footerText){
+    if(y > pageH-80){ pdf.addPage(); y = 50; }
+    y += 16;
+    pdf.setFont('helvetica','italic'); pdf.setFontSize(9);
+    pdf.text(String(footerText), 40, y, {maxWidth: pageW-80});
+  }
+  return pdf.output('blob');
+}
+// Wraps html2canvas with retry + logging so a failure tells us WHY
+// instead of just silently returning null. Returns the canvas, or
+// throws with a descriptive message the caller can log/report.
+async function _captureElementCanvas(content){
+  const ready = await _waitForPdfLibs();
+  if(!ready) throw new Error('PDF libraries (html2canvas/jsPDF) did not load in time — check internet connection');
+  if(!content) throw new Error('Content element not found in DOM');
+  try{
+    return await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false});
+  }catch(err){
+    console.error('html2canvas failed:', err);
+    throw err;
+  }
+}
+// ── Renders #receipt-content into a real PDF file, same approach used
+// for the agreement PDF, so it works even inside Android WebView apps
+// where window.print() often does nothing. ──
+async function _generateReceiptPdfBlob(){
+  const content=document.getElementById('receipt-content');
+  try{
+    const canvas = await _captureElementCanvas(content);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const imgW = pageW;
+    const imgH = canvas.height * imgW / canvas.width;
+    pdf.addImage(imgData,'JPEG',0,0,imgW,imgH);
+    return pdf.output('blob');
+  }catch(err){
+    console.error('Receipt PDF: styled render failed, falling back to text PDF:', err);
+    if(!lastReceiptData) return null;
+    const {c,payObj,paid,rem,dateStr} = lastReceiptData;
+    return _fallbackTextPdf(`${shopProfile.name} - Payment Receipt`, [
+      {label:'Date', value:dateStr},
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'Item Model', value:c.mobile?.model},
+      {label:'Paid Today', value:'Rs. '+fmt(payObj?payObj.amount:0)},
+      {label:'Total Paid', value:'Rs. '+fmt(paid)},
+      {label:'Remaining', value:'Rs. '+fmt(rem)},
+    ], shopProfile.phone);
+  }
+}
 function printReceipt(){
   const content=document.getElementById('receipt-content');
   if(!content)return;
-  let pa=document.getElementById('print-area');
-  if(!pa){pa=document.createElement('div');pa.id='print-area';document.body.appendChild(pa);}
-  pa.innerHTML=content.outerHTML;
-  window.print();
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> پرنٹ / PDF تیار ہو رہا ہے...');
+  (async ()=>{
+    try{
+      const blob = await _generateReceiptPdfBlob();
+      if(blob){
+        const url = URL.createObjectURL(blob);
+        const fileName = `Receipt-${(lastReceiptData?.c?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+        let dialogOpened = false;
+        try{
+          let frame = document.getElementById('receipt-print-frame');
+          if(!frame){
+            frame = document.createElement('iframe');
+            frame.id = 'receipt-print-frame';
+            frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+            document.body.appendChild(frame);
+          }
+          await new Promise((resolve)=>{
+            let done=false;
+            frame.onload = ()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
+            frame.src = url;
+            setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
+          });
+        }catch(e){ console.error(e); }
+        const a=document.createElement('a');
+        a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+        showToast('<i class="fa-solid fa-file-pdf"></i> رسید PDF محفوظ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ''));
+        return;
+      }
+    }catch(e){ console.error(e); }
+    // last-resort fallback: old browser print
+    let pa=document.getElementById('print-area');
+    if(!pa){pa=document.createElement('div');pa.id='print-area';document.body.appendChild(pa);}
+    pa.innerHTML=content.outerHTML;
+    window.print();
+  })();
+}
+// ── "پی ڈی ایف" button in the receipt popup — shares (or downloads)
+// a real PDF copy of the payment receipt. ──
+async function sendReceiptPDF(){
+  if(!lastReceiptData)return;
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> PDF تیار ہو رہا ہے...');
+  try{
+    const blob = await _generateReceiptPdfBlob();
+    if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
+    const {c}=lastReceiptData;
+    const fileName = `Receipt-${(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+    const file = new File([blob], fileName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({ files:[file], title: `${shopProfile.name} — رسید`, text: `${c.name} کی ادائیگی رسید` });
+        showToast('<i class="fa-solid fa-circle-check"></i> رسید PDF بھیج دی گئی');
+      }catch(shareErr){
+        if(shareErr && shareErr.name === 'AbortError') return;
+        throw shareErr;
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    showToast('<i class="fa-solid fa-file-pdf"></i> رسید PDF ڈاؤن لوڈ ہو گئی');
+  }catch(e){
+    console.error(e);
+    showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
+  }
+}
+// ── "ای میل" button in the receipt popup — opens the device's mail
+// app with the customer's email pre-filled and the receipt details
+// written out in the body. ──
+function emailReceipt(){
+  if(!lastReceiptData)return;
+  const {c,payObj,paid,rem,dateStr}=lastReceiptData;
+  if(!c.email){ showToast('<i class="fa-solid fa-triangle-exclamation"></i> اس کسٹمر کی ای میل درج نہیں ہے', 'warn'); return; }
+  const subject = `${shopProfile.name} — ادائیگی رسید`;
+  const body =
+`${shopProfile.name}
+${dateStr}
+
+نام: ${c.name}
+موبائل: ${c.mobile.model}
+آج ادا: Rs. ${fmt(payObj?payObj.amount:0)}
+کل ادا: Rs. ${fmt(paid)}
+باقی رقم: Rs. ${fmt(rem)}
+
+${shopProfile.phone}`;
+  window.location.href = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function shareReceipt(){
   if(!lastReceiptData)return;
@@ -2445,10 +2793,18 @@ function resetReminderTemplates(){
 //  embedded automatically into every new contract / customer ledger.
 // ══════════════════════════════
 const DEFAULT_TERMS_CONDITIONS =
-`۱۔ خریدار مقررہ تاریخ پر قسط ادا کرنے کا پابند ہے۔
-۲۔ تاخیر کی صورت میں فریقین مل کر حل نکالیں گے۔
-۳۔ جب تک مکمل ادائیگی نہ ہو موبائل دکاندار کی امانت ہے۔
-۴۔ یہ معاہدہ دونوں فریقین کی رضامندی سے ہے۔`;
+`• تمام اقساط کی مکمل ادائیگی تک پروڈکٹ کی اصل ملکیت دکان دار/کمپنی کی رہے گی۔
+• مکمل ادائیگی سے پہلے سامان آگے بیچنے، گروی رکھنے یا بغیر اطلاع منتقل کرنے کی اجازت نہیں ہوگی۔
+• کسٹمر کی عدم ادائیگی یا غائب ہونے کی صورت میں تمام بقایا اقساط کی ادائیگی کا پابند ضامن ہو گا۔
+• ہر ماہ کی طے شدہ تاریخ تک قسط کی ادائیگی لازمی ہوگی۔
+• مسلسل ۲ اقساط نہ دینے کی صورت میں بقیہ تمام رقم فوراً واجب الادا ہوگی یا سامان واپس قبضہ میں لے لیا جائے گا۔
+• عدم ادائیگی پر سامان واپس لینے کی صورت میں استعمال شدہ حالت کی کٹوتی کے بعد ہی حساب کیا جائے گا۔
+• سامان کی وارنٹی برانڈ/سروس سینٹر کے ذریعے ہوگی، خرابی کی وجہ سے قسط نہیں روکی جا سکے گی۔
+• کسٹمر اپنا گھر، دکان یا فون نمبر تبدیل کرنے سے پہلے دکان دار کو مطلع کرنے کا پابند ہوگا۔
+• کسٹمر اور ضامن کی طرف سے فراہم کردہ تمام معلومات اور شناختی کارڈ کاپی کی درستگی لازمی ہے۔
+• ضمانت کے طور پر فراہم کردہ چیک/اشٹام پیپر مکمل ادائیگی کے بعد واپس کر دیا جائے گا۔
+• فراڈ، جعلی معلومات یا عدم ادائیگی کی صورت میں دکان دار کو قانونی کارروائی کا مکمل حق حاصل ہوگا۔
+• کسٹمر اور ضامن ان تمام شرائط کو پڑھ کر اور سمجھ کر بلا دباؤ اپنے دستخط و انگوٹھا درج کر رہے ہیں۔`;
 
 let termsConditions = window.safeLS.getItem('sms_terms_conditions') || DEFAULT_TERMS_CONDITIONS;
 let tcEmbedEnabled   = window.safeLS.getItem('sms_tc_embed') !== '0'; // default ON
@@ -2484,6 +2840,28 @@ function saveTcEmbedSetting(checked){
 // ══════════════════════════════
 //  LATE PAYMENT ALERTS
 // ══════════════════════════════
+// Counts how many monthly installments SHOULD have been paid by today
+// (based on the plan's start date + due day, capped at total months)
+// versus how many actually HAVE been paid — the difference is the
+// number of consecutive overdue/missed months. Used both for the
+// Alerts screen and for deciding when the 2-Month Overdue Warning
+// Notice becomes available for a customer.
+function _calcOverdueMonths(c){
+  if(!c || !c.mobile || c.status!=='active') return 0;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const startD=new Date(c.mobile.startDate||c.createdAt||today);
+  const dueDay=c.mobile.dueDay||10;
+  const totalMonths=c.mobile.months||0;
+  let expected=0;
+  for(let m=1; m<=totalMonths; m++){
+    const due=new Date(startD);
+    due.setMonth(due.getMonth()+m);
+    due.setDate(dueDay);
+    if(due<=today) expected=m; else break;
+  }
+  const paidCount=(c.payments||[]).length;
+  return Math.max(0, expected-paidCount);
+}
 function renderAlerts(){
   const today=new Date();today.setHours(0,0,0,0);
   const list=[];
@@ -2809,7 +3187,7 @@ function showSc(n){
     document.querySelectorAll('.mob-ni')[nm[n]]?.classList.add('active');
   }
   if(n==='dash') renderDash();
-  if(n==='add') goToAddStep(1);
+  if(n==='add'){ goToAddStep(1); refreshReuseLists(); }
   if(n==='customers'){
     const srchEl = document.getElementById('srch');
     if(srchEl) srchEl.value = '';
@@ -3976,8 +4354,215 @@ function showAgreement(id){
 // nothing because the WebView has no print handler at all). ──
 async function _generateAgreementPdfBlob(){
   const content=document.getElementById('agreement-content');
-  if(!content || typeof html2canvas==='undefined' || !window.jspdf) return null;
-  const canvas = await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+  try{
+    const canvas = await _captureElementCanvas(content);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = canvas.height * imgW / canvas.width;
+    let heightLeft = imgH, position = 0;
+    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+    heightLeft -= pageH;
+    while(heightLeft > 0){
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+      heightLeft -= pageH;
+    }
+    return pdf.output('blob');
+  }catch(err){
+    console.error('Agreement PDF: styled render failed, falling back to text PDF:', err);
+    const c = agreementCust;
+    if(!c) return null;
+    return _fallbackTextPdf(`${shopProfile.name} - Installment Agreement`, [
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'CNIC', value:c.cnic},
+      {label:'Address', value:c.addr},
+      {label:'Guarantor', value:c.guarantor?.name},
+      {label:'Guarantor Phone', value:c.guarantor?.phone},
+      {label:'Item', value:c.mobile?.item || c.mobile?.itemType},
+      {label:'Model', value:c.mobile?.model},
+      {label:'Total Price', value:'Rs. '+fmt(c.mobile?.total||c.mobile?.price)},
+      {label:'Advance', value:'Rs. '+fmt(c.mobile?.advance)},
+      {label:'Monthly Installment', value:'Rs. '+fmt(c.mobile?.monthly)},
+      {label:'Months', value:c.mobile?.months},
+      {label:'Start Date', value:c.mobile?.startDate},
+    ], shopProfile.phone);
+  }
+}
+async function printAgreement(){
+  const content=document.getElementById('agreement-content');
+  if(!content)return;
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> پرنٹ / PDF تیار ہو رہا ہے...');
+  try{
+    const blob = await _generateAgreementPdfBlob();
+    if(blob){
+      const url = URL.createObjectURL(blob);
+      const fileName = `Agreement-${(agreementCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+
+      // 1) Try to pop the OS/browser print dialog via a hidden iframe
+      //    pointed at the generated PDF — works in normal browsers and
+      //    many WebViews that do support printing.
+      let dialogOpened = false;
+      try{
+        let frame = document.getElementById('agreement-print-frame');
+        if(!frame){
+          frame = document.createElement('iframe');
+          frame.id = 'agreement-print-frame';
+          frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+          document.body.appendChild(frame);
+        }
+        await new Promise((resolve)=>{
+          let done = false;
+          frame.onload = ()=>{
+            if(done) return; done = true;
+            try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened = true; }catch(e){}
+            resolve();
+          };
+          frame.src = url;
+          setTimeout(()=>{ if(!done){ done = true; resolve(); } }, 1200); // never hang if onload doesn't fire
+        });
+      }catch(e){ console.error(e); }
+
+      // 2) ALWAYS also save the real PDF file — this is the guaranteed
+      //    path that works even inside Android WebView apps with no
+      //    print handler at all, so the person always ends up with a
+      //    real, working .pdf they can open, print, or forward.
+      const a=document.createElement('a');
+      a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+      showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ' — اسے کھول کر پرنٹ کریں'));
+      return;
+    }
+  }catch(e){ console.error(e); }
+  showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn');
+}
+// ── "PDF بھیجیں" — builds a real PDF (with both signatures) and
+// hands it to the device share sheet so the user can attach it
+// directly inside WhatsApp (or any other app). ──
+async function sendAgreementPDFviaWhatsApp(){
+  if(!agreementCust)return;
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> PDF تیار ہو رہا ہے...');
+  try{
+    const blob = await _generateAgreementPdfBlob();
+    if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
+    const fileName = `Agreement-${(agreementCust.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+    const file = new File([blob], fileName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({
+          files:[file],
+          title: `${shopProfile.name} — قسط معاہدہ`,
+          text: `${agreementCust.name} کے لیے قسط معاہدہ`
+        });
+        showToast('<i class="fa-solid fa-circle-check"></i> PDF بھیج دی گئی');
+      }catch(shareErr){
+        if(shareErr && shareErr.name === 'AbortError') return; // user simply cancelled the share sheet
+        throw shareErr;
+      }
+      return;
+    }
+    // Web Share API for files isn't supported on this device/WebView —
+    // download the real PDF only. We deliberately do NOT also fire a
+    // separate plain-text WhatsApp message here anymore: that was the
+    // exact bug — this button looked like it "just sends a text"
+    // instead of actually producing the PDF.
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی — واٹس ایپ چیٹ کھول کر اسے فائل کے طور پر اٹیچ کر دیں');
+  }catch(e){
+    console.error(e);
+    showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  2-MONTH OVERDUE WARNING NOTICE (تنبیہ نامہ برائے عدم ادائیگیِ قسط)
+//  Only meant to be triggered for customers with 2+ consecutive
+//  overdue/unpaid installment months — see _calcOverdueMonths().
+// ══════════════════════════════════════════════════════════════
+let overdueNoticeCust = null; // customer currently shown in the notice modal
+
+function showOverdueNotice(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c)return;
+  const overdueMonths = _calcOverdueMonths(c);
+  if(overdueMonths<2){
+    showToast('<i class="fa-solid fa-circle-info"></i> اس کسٹمر کی مسلسل 2 ماہ کی قسط واجب الادا نہیں ہے', 'warn');
+    return;
+  }
+  overdueNoticeCust = c;
+
+  const paid=c.payments.reduce((s,p)=>s+p.amount,0);
+  const totalDues=Math.max(0,c.mobile.remaining-paid);
+  const overdueAmount=overdueMonths*c.mobile.monthly;
+
+  const today=new Date();
+  const dateStr=`${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+  const deadline=new Date(today); deadline.setDate(deadline.getDate()+7);
+  const deadlineStr=`${deadline.getDate()}/${deadline.getMonth()+1}/${deadline.getFullYear()}`;
+
+  document.getElementById('overdue-notice-body').innerHTML=`
+  <div id="overdue-notice-content" style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:16px;line-height:2.2;font-size:13px;">
+    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px;">
+      <div style="font-size:20px;font-weight:900;"><i class="fa-solid fa-mobile-screen-button"></i> ${shopProfile.name}</div>
+      <div style="font-size:12px;"><i class="fa-solid fa-phone"></i> ${shopProfile.phone}${shopProfile.email?' | '+shopProfile.email:''}</div>
+      ${shopProfile.address?`<div style="font-size:12px;">📍 ${shopProfile.address}</div>`:''}
+      <div style="font-size:17px;font-weight:900;margin-top:8px;color:#B71C1C;">تنبیہ نامہ برائے عدم ادائیگیِ قسط</div>
+      <div style="font-size:12px;">تاریخ: ${dateStr}${c.grNo?` &nbsp;|&nbsp; معاہدہ نمبر: <b>${_formatGr(c.grNo)}</b>`:''}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:12px;">
+      <div style="border:1px solid #ccc;padding:6px 10px;"><b>خریدار کا نام:</b><br>${c.name}</div>
+      <div style="border:1px solid #ccc;padding:6px 10px;"><b>والد کا نام:</b><br>${c.fatherName||'—'}</div>
+      <div style="border:1px solid #ccc;padding:6px 10px;"><b>CNIC:</b><br>${c.cnic||'—'}</div>
+      <div style="border:1px solid #ccc;padding:6px 10px;"><b>موبائل نمبر:</b><br>${c.phone}</div>
+      <div style="border:1px solid #ccc;padding:6px 10px;grid-column:1/-1;"><b>پتہ:</b><br>${c.addr||'—'}</div>
+    </div>
+
+    <div style="border:2px solid #B71C1C;border-radius:6px;overflow:hidden;margin-bottom:12px;">
+      <div style="background:#B71C1C;color:#fff;padding:8px 12px;font-weight:800;text-align:center;font-size:14px;">تفصیلاتِ واجب الادا</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;">
+        <div style="padding:6px 12px;border-bottom:1px solid #eee;border-left:1px solid #eee;"><b>آئٹم:</b> ${c.mobile.item||c.mobile.model||'—'}</div>
+        <div style="padding:6px 12px;border-bottom:1px solid #eee;"><b>ماہانہ قسط:</b> Rs. ${fmt(c.mobile.monthly)}</div>
+        <div style="padding:6px 12px;border-bottom:1px solid #eee;border-left:1px solid #eee;"><b>واجب الادا ماہ:</b> <span style="color:#B71C1C;font-weight:800;">${overdueMonths} ماہ</span></div>
+        <div style="padding:6px 12px;border-bottom:1px solid #eee;"><b>واجب الادا اقساط کی رقم:</b> Rs. ${fmt(overdueAmount)}</div>
+        <div style="padding:6px 12px;border-left:1px solid #eee;grid-column:1/-1;background:#FFF3F0;"><b>کل بقایا رقم (Total Dues):</b> <span style="color:#B71C1C;font-weight:900;font-size:14px;">Rs. ${fmt(totalDues)}</span></div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:12px;text-align:justify;">
+      محترم <b>${c.name}</b> صاحب/صاحبہ،<br><br>
+      آپ کو مطلع کیا جاتا ہے کہ مذکورہ بالا معاہدے کے تحت آپ کی جانب سے مسلسل <b>${overdueMonths} ماہ</b> سے قسط کی ادائیگی نہیں کی گئی، جو معاہدے کی صریح خلاف ورزی ہے۔ لہٰذا آپ کو اس نوٹس کی وصولی سے <b>سات (۷) دن</b> کے اندر اندر، یعنی بتاریخ <b>${deadlineStr}</b> تک، مکمل بقایا رقم دکان پر جمع کروانے کی ہدایت کی جاتی ہے۔<br><br>
+      <b>بصورتِ عدم ادائیگی درج ذیل کارروائی عمل میں لائی جائے گی:</b><br>
+      ۱۔ خریدی گئی مذکورہ اشیاء واپس اپنی تحویل/قبضہ میں لے لی جائیں گی۔<br>
+      ۲۔ عدالت/متعلقہ فورم میں قانونی کارروائی کا آغاز کیا جائے گا، جس کے تمام اخراجات کسٹمر کے ذمہ ہوں گے۔<br>
+      ۳۔ معاہدے کے مطابق ضامن سے رابطہ کر کے بقایا رقم کی وصولی کی جائے گی۔<br><br>
+      اس نوٹس کو سنجیدگی سے لیتے ہوئے مقررہ مدت میں ادائیگی یقینی بنائیں، تاکہ کسی بھی ناخوشگوار صورتحال سے بچا جا سکے۔
+    </div>
+
+    ${c.guarantor?.name?`<div style="border:1px solid #ccc;padding:10px 12px;margin-bottom:12px;font-size:12px;border-radius:4px;background:#fffef0;">
+      <b>ضامن کی تفصیل (مطلع کیا جا رہا ہے):</b><br>نام: ${c.guarantor.name} &nbsp;|&nbsp; نمبر: ${c.guarantor.phone||'—'}${c.guarantor.cnic?` &nbsp;|&nbsp; CNIC: ${c.guarantor.cnic}`:''}
+    </div>`:''}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;text-align:center;">
+      <div style="padding-top:6px;"><div style="border-top:1px solid #000;padding-top:6px;"></div><div style="margin-top:4px;"><b>دکاندار کے دستخط</b><br><small>${shopProfile.name}</small></div></div>
+      <div style="padding-top:6px;"><div style="border-top:1px solid #000;padding-top:6px;"></div><div style="margin-top:4px;"><b>تاریخِ اجراء</b><br><small>${dateStr}</small></div></div>
+    </div>
+  </div>`;
+  openMod('mod-overdue-notice');
+}
+
+async function _generateOverdueNoticePdfBlob(){
+  const content=document.getElementById('overdue-notice-content');
+  try{
+  const canvas = await _captureElementCanvas(content);
   const imgData = canvas.toDataURL('image/jpeg', 0.95);
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','pt','a4');
@@ -3995,66 +4580,166 @@ async function _generateAgreementPdfBlob(){
     heightLeft -= pageH;
   }
   return pdf.output('blob');
+  }catch(err){
+    console.error('Overdue Notice PDF: styled render failed, falling back to text PDF:', err);
+    const c = overdueNoticeCust;
+    if(!c) return null;
+    const overdueMonths = _calcOverdueMonths(c);
+    const paid = c.payments.reduce((s,p)=>s+p.amount,0);
+    const totalDues = Math.max(0, c.mobile.remaining-paid);
+    return _fallbackTextPdf(`${shopProfile.name} - Overdue Notice`, [
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'Item Model', value:c.mobile?.model},
+      {label:'Months Overdue', value:overdueMonths},
+      {label:'Total Dues', value:'Rs. '+fmt(totalDues)},
+    ], shopProfile.phone);
+  }
 }
-async function printAgreement(){
-  const content=document.getElementById('agreement-content');
+
+async function printOverdueNotice(){
+  const content=document.getElementById('overdue-notice-content');
   if(!content)return;
-  showToast('<i class="fa-solid fa-spinner fa-spin"></i> پرنٹ تیار ہو رہا ہے...');
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> پرنٹ / PDF تیار ہو رہا ہے...');
   try{
-    const blob = await _generateAgreementPdfBlob();
+    const blob = await _generateOverdueNoticePdfBlob();
     if(blob){
       const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      if(win){
-        setTimeout(()=>URL.revokeObjectURL(url), 60000);
-        return;
-      }
-      // popup blocked — fall back to a direct download so the user
-      // can open it in their PDF viewer and print from there.
-      const a=document.createElement('a');
-      a.href=url; a.download='Agreement.pdf'; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی — اسے کھول کر پرنٹ کریں');
-      return;
-    }
-  }catch(e){ console.error(e); }
-  // last-resort fallback: old browser print (works on desktop browsers)
-  let pa=document.getElementById('print-area');
-  pa.innerHTML=content.outerHTML;
-  window.print();
-}
-// ── "PDF بھیجیں" — builds a real PDF (with both signatures) and
-// hands it to the device share sheet so the user can attach it
-// directly inside WhatsApp (or any other app). ──
-async function sendAgreementPDFviaWhatsApp(){
-  if(!agreementCust)return;
-  showToast('<i class="fa-solid fa-spinner fa-spin"></i> PDF تیار ہو رہا ہے...');
-  try{
-    const blob = await _generateAgreementPdfBlob();
-    if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
-    const fileName = `Agreement-${(agreementCust.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
-    const file = new File([blob], fileName, {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({
-        files:[file],
-        title: `${shopProfile.name} — قسط معاہدہ`,
-        text: `${agreementCust.name} کے لیے قسط معاہدہ`
-      });
-    } else {
-      // Web Share API with files not available — download the PDF so
-      // it can be attached manually, then open WhatsApp chat as well.
-      const url = URL.createObjectURL(blob);
+      const fileName = `Warning-Notice-${(overdueNoticeCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+      let dialogOpened=false;
+      try{
+        let frame=document.getElementById('overdue-notice-print-frame');
+        if(!frame){
+          frame=document.createElement('iframe');
+          frame.id='overdue-notice-print-frame';
+          frame.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+          document.body.appendChild(frame);
+        }
+        await new Promise((resolve)=>{
+          let done=false;
+          frame.onload=()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
+          frame.src=url;
+          setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
+        });
+      }catch(e){ console.error(e); }
       const a=document.createElement('a');
       a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی — واٹس ایپ چیٹ میں اٹیچ کر کے بھیج دیں');
-      shareAgreement();
+      showToast('<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF محفوظ ہو گئی' + (dialogOpened?' — پرنٹ ڈائیلاگ بھی کھل گیا':''));
+      return;
     }
+  }catch(e){ console.error(e); }
+  showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn');
+}
+
+async function sendOverdueNoticePDF(){
+  if(!overdueNoticeCust)return;
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> PDF تیار ہو رہا ہے...');
+  try{
+    const blob = await _generateOverdueNoticePdfBlob();
+    if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
+    const c=overdueNoticeCust;
+    const fileName = `Warning-Notice-${(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+    const file = new File([blob], fileName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({ files:[file], title:`${shopProfile.name} — تنبیہ نامہ`, text:`${c.name} کے لیے تنبیہ نامہ` });
+        showToast('<i class="fa-solid fa-circle-check"></i> تنبیہ نامہ بھیج دیا گیا');
+      }catch(shareErr){
+        if(shareErr && shareErr.name==='AbortError') return;
+        throw shareErr;
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    showToast('<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF ڈاؤن لوڈ ہو گئی');
   }catch(e){
     console.error(e);
     showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
   }
 }
+
+// Sends the notice as a plain WhatsApp text message (quick alternative
+// to the PDF, e.g. when the customer's WhatsApp can't receive files).
+function shareOverdueNoticeWA(){
+  if(!overdueNoticeCust)return;
+  const c=overdueNoticeCust;
+  const overdueMonths=_calcOverdueMonths(c);
+  const paid=c.payments.reduce((s,p)=>s+p.amount,0);
+  const totalDues=Math.max(0,c.mobile.remaining-paid);
+  const today=new Date();
+  const deadline=new Date(today); deadline.setDate(deadline.getDate()+7);
+  const deadlineStr=`${deadline.getDate()}/${deadline.getMonth()+1}/${deadline.getFullYear()}`;
+  const txt = `⚠️ *${shopProfile.name} — تنبیہ نامہ برائے عدم ادائیگیِ قسط*\n\n`+
+    `محترم ${c.name} صاحب،\nآپ کی مسلسل ${overdueMonths} ماہ کی قسط واجب الادا ہے۔\n\n`+
+    `کل بقایا رقم: Rs. ${fmt(totalDues)}\nآخری تاریخ: ${deadlineStr}\n\n`+
+    `مقررہ مدت میں ادائیگی نہ ہونے کی صورت میں سامان واپس لینے، قانونی کارروائی اور ضامن سے رابطے کا اختیار محفوظ ہے۔\n\n`+
+    `${shopProfile.phone}`;
+  const n=(c.wa||c.phone).replace(/[^0-9]/g,'');
+  const i=n.startsWith('0')?'92'+n.slice(1):n;
+  window.open(`https://wa.me/${i}?text=${encodeURIComponent(_cleanWaText(txt))}`,'_blank');
+}
+
+// Copies the full formal notice text to clipboard (for pasting into
+// SMS, email, or any other app).
+function copyOverdueNoticeText(){
+  if(!overdueNoticeCust)return;
+  const c=overdueNoticeCust;
+  const overdueMonths=_calcOverdueMonths(c);
+  const paid=c.payments.reduce((s,p)=>s+p.amount,0);
+  const totalDues=Math.max(0,c.mobile.remaining-paid);
+  const overdueAmount=overdueMonths*c.mobile.monthly;
+  const today=new Date();
+  const dateStr=`${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+  const deadline=new Date(today); deadline.setDate(deadline.getDate()+7);
+  const deadlineStr=`${deadline.getDate()}/${deadline.getMonth()+1}/${deadline.getFullYear()}`;
+  const txt =
+`${shopProfile.name}
+${shopProfile.phone}
+تنبیہ نامہ برائے عدم ادائیگیِ قسط — ${dateStr}
+
+نام: ${c.name}
+والد کا نام: ${c.fatherName||'—'}
+CNIC: ${c.cnic||'—'}
+نمبر: ${c.phone}
+پتہ: ${c.addr||'—'}
+معاہدہ نمبر: ${c.grNo?_formatGr(c.grNo):'—'}
+آئٹم: ${c.mobile.item||c.mobile.model||'—'}
+ماہانہ قسط: Rs. ${fmt(c.mobile.monthly)}
+واجب الادا ماہ: ${overdueMonths}
+واجب الادا اقساط کی رقم: Rs. ${fmt(overdueAmount)}
+کل بقایا رقم: Rs. ${fmt(totalDues)}
+
+محترم ${c.name} صاحب/صاحبہ،
+آپ کو مطلع کیا جاتا ہے کہ مذکورہ بالا معاہدے کے تحت آپ کی جانب سے مسلسل ${overdueMonths} ماہ سے قسط کی ادائیگی نہیں کی گئی، جو معاہدے کی صریح خلاف ورزی ہے۔ لہٰذا آپ کو اس نوٹس کی وصولی سے سات (۷) دن کے اندر اندر، یعنی بتاریخ ${deadlineStr} تک، مکمل بقایا رقم دکان پر جمع کروانے کی ہدایت کی جاتی ہے۔
+
+بصورتِ عدم ادائیگی درج ذیل کارروائی عمل میں لائی جائے گی:
+۱۔ خریدی گئی مذکورہ اشیاء واپس اپنی تحویل/قبضہ میں لے لی جائیں گی۔
+۲۔ عدالت/متعلقہ فورم میں قانونی کارروائی کا آغاز کیا جائے گا۔
+۳۔ معاہدے کے مطابق ضامن سے رابطہ کر کے بقایا رقم کی وصولی کی جائے گی۔
+
+${c.guarantor?.name?`ضامن: ${c.guarantor.name} | ${c.guarantor.phone||'—'}`:''}`;
+
+  const finish = ()=> showToast('<i class="fa-solid fa-circle-check"></i> تنبیہ نامہ کاپی ہو گیا');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(finish).catch(()=>{
+      _fallbackCopyText(txt); finish();
+    });
+  } else {
+    _fallbackCopyText(txt); finish();
+  }
+}
+function _fallbackCopyText(txt){
+  const ta=document.createElement('textarea');
+  ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+
 // ── For customers whose number doesn't have WhatsApp — sends the
 // same agreement summary as a normal SMS to the same number. ──
 function shareAgreementSMS(){
@@ -4935,3 +5620,15 @@ window.addEventListener('DOMContentLoaded', () => {
   if(typeof applyLang === 'function') applyLang();
   if(typeof renderDash === 'function') renderDash();
 });
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(registration => {
+      registration.update();
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }).catch(err => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
