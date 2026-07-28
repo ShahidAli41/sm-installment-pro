@@ -1694,6 +1694,16 @@ input, select, textarea {
             <div class="gr-badge-label" data-ur="کسٹمر رجسٹریشن نمبر (خودکار)" data-en="Customer Registration No. (Auto)">کسٹمر رجسٹریشن نمبر (خودکار)</div>
           </div>
 
+          <div class="fg full" id="customer-reuse-wrap" style="margin-bottom:8px;">
+            <label><i class="fa-solid fa-clock-rotate-left"></i> <span data-ur="پرانا کسٹمر منتخب کریں (خودکار فل)" data-en="Reuse Existing Customer (Auto-fill)">پرانا کسٹمر منتخب کریں (خودکار فل)</span></label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="customer-reuse-input" list="customer-reuse-list" placeholder="🔍 نام یا نمبر لکھ کر پرانا کسٹمر تلاش کریں..." oninput="onCustomerReuseInput()" style="flex:1;">
+              <button type="button" class="btn ba" style="width:auto;padding:0 14px;white-space:nowrap;" onclick="clearCustomerReuse()" title="صاف کریں"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <datalist id="customer-reuse-list"></datalist>
+            <div id="customer-reuse-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+          </div>
+
           <div class="sdiv"><span><i class="fa-solid fa-user"></i> <span data-ur="کسٹمر کی معلومات" data-en="Customer Info">کسٹمر کی معلومات</span></span></div>
           <div class="fgrid">
             <div class="fg"><label><i class="fa-solid fa-user"></i> <span data-ur="نام" data-en="Name">نام</span></label><input id="c-name" placeholder="محمد علی"></div>
@@ -1718,6 +1728,15 @@ input, select, textarea {
           </div>
 
           <div class="sdiv"><span><i class="fa-solid fa-handshake"></i> <span data-ur="ضامن" data-en="Guarantor">ضامن</span></span></div>
+          <div class="fg full" id="guarantor-reuse-wrap" style="margin-bottom:8px;">
+            <label><i class="fa-solid fa-clock-rotate-left"></i> <span data-ur="پرانا ضامن منتخب کریں (خودکار فل)" data-en="Reuse Existing Guarantor (Auto-fill)">پرانا ضامن منتخب کریں (خودکار فل)</span></label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="guarantor-reuse-input" list="guarantor-reuse-list" placeholder="🔍 نام یا نمبر لکھ کر پرانا ضامن تلاش کریں..." oninput="onGuarantorReuseInput()" style="flex:1;">
+              <button type="button" class="btn ba" style="width:auto;padding:0 14px;white-space:nowrap;" onclick="clearGuarantorReuse()" title="صاف کریں"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <datalist id="guarantor-reuse-list"></datalist>
+            <div id="guarantor-reuse-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+          </div>
           <div class="fgrid">
             <div class="fg"><label><i class="fa-solid fa-user-shield"></i> <span data-ur="ضامن نام" data-en="Guarantor Name">ضامن نام</span></label><input id="g-name" placeholder="ضامن کا نام"></div>
             <div class="fg"><label><i class="fa-solid fa-phone"></i> <span data-ur="ضامن نمبر" data-en="Guarantor No.">ضامن نمبر</span></label><input type="tel" id="g-phone" placeholder="03009876543"></div>
@@ -4182,7 +4201,7 @@ function finalizeAgreementWithSignatures(){
   closeMod('sig-wizard');
   showToast('<i class="fa-solid fa-circle-check"></i> معاہدہ دستخط کے ساتھ محفوظ ہو گیا!');
 
-  save(); clearForm();
+  save(); clearForm(); refreshReuseLists();
   renderDash();
   renderCustomers(); // show the full up-to-date list immediately (not just on search)
 
@@ -4489,6 +4508,123 @@ function clearForm(){
   setMarkupType('pct');
   _resetCustomerGpsFields();
   _refreshGrBadge();
+  clearCustomerReuse();
+  clearGuarantorReuse();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CUSTOMER & GUARANTOR REUSE (auto-fill from existing records)
+//  Lets the shopkeeper pick a previously-saved customer or guarantor
+//  from a searchable list so their basic details (name, CNIC, phone,
+//  address, GPS) don't need to be re-typed for a new item/agreement.
+//  Purely a form-filling convenience — it always creates a brand new
+//  customer record on save; it never merges or edits existing ones.
+// ══════════════════════════════════════════════════════════════
+let _customerReuseMap = {};   // label -> customer object (most recent one per phone)
+let _guarantorReuseMap = {};  // label -> guarantor object {name,phone,cnic}
+
+function _reuseLabelForCustomer(c){
+  const bits = [c.name||'—'];
+  if(c.phone) bits.push(c.phone);
+  if(c.cnic) bits.push(c.cnic);
+  return bits.join(' — ');
+}
+function _reuseLabelForGuarantor(g){
+  const bits = [g.name||'—'];
+  if(g.phone) bits.push(g.phone);
+  if(g.cnic) bits.push(g.cnic);
+  return bits.join(' — ');
+}
+
+// Rebuilds both datalists from the current `customers` array. Call this
+// whenever the add-customer screen is opened and whenever the customers
+// array changes (after saving, deleting, or cloud-syncing), so the list
+// never goes stale.
+function refreshReuseLists(){
+  // ── Customers: de-duplicate by phone (fallback to name), keep the
+  // most recently added record for each person ──
+  _customerReuseMap = {};
+  const seenCust = {};
+  customers.forEach(c=>{
+    if(!c || !c.name) return;
+    const key = (c.phone || c.cnic || c.name).trim().toLowerCase();
+    seenCust[key] = c; // later entries overwrite earlier ones (most recent wins)
+  });
+  Object.values(seenCust).forEach(c=>{ _customerReuseMap[_reuseLabelForCustomer(c)] = c; });
+  const custList = document.getElementById('customer-reuse-list');
+  if(custList){
+    custList.innerHTML = Object.keys(_customerReuseMap).sort().map(lbl=>`<option value="${lbl.replace(/"/g,'&quot;')}">`).join('');
+  }
+
+  // ── Guarantors: pulled from every customer's guarantor field,
+  // de-duplicated by phone (fallback to name) ──
+  _guarantorReuseMap = {};
+  const seenGuar = {};
+  customers.forEach(c=>{
+    const g = c && c.guarantor;
+    if(!g || !g.name) return;
+    const key = (g.phone || g.cnic || g.name).trim().toLowerCase();
+    seenGuar[key] = g;
+  });
+  Object.values(seenGuar).forEach(g=>{ _guarantorReuseMap[_reuseLabelForGuarantor(g)] = g; });
+  const guarList = document.getElementById('guarantor-reuse-list');
+  if(guarList){
+    guarList.innerHTML = Object.keys(_guarantorReuseMap).sort().map(lbl=>`<option value="${lbl.replace(/"/g,'&quot;')}">`).join('');
+  }
+}
+
+// Fired on every keystroke in the customer-reuse search box. Once the
+// typed text exactly matches one of the datalist options (i.e. the
+// person picked a suggestion), auto-fills the customer info fields.
+function onCustomerReuseInput(){
+  const input = document.getElementById('customer-reuse-input');
+  const status = document.getElementById('customer-reuse-status');
+  if(!input) return;
+  const match = _customerReuseMap[input.value];
+  if(!match){ if(status) status.textContent=''; return; }
+  document.getElementById('c-name').value = match.name||'';
+  document.getElementById('c-father-name').value = match.fatherName||'';
+  document.getElementById('c-phone').value = match.phone||'';
+  document.getElementById('c-cnic').value = match.cnic||'';
+  document.getElementById('c-email').value = match.email||'';
+  document.getElementById('c-wa').value = match.wa||'';
+  document.getElementById('c-addr').value = match.addr||'';
+  if(match.gps && match.gps.lat && match.gps.lng){
+    document.getElementById('c-gps-lat').value = match.gps.lat;
+    document.getElementById('c-gps-lng').value = match.gps.lng;
+    const gpsDisplay = document.getElementById('c-gps-display');
+    if(gpsDisplay) gpsDisplay.value = `${match.gps.lat}, ${match.gps.lng}`;
+  }
+  if(status) status.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--suc,#2e7d32);"></i> کسٹمر کی معلومات خودکار فل ہو گئیں';
+}
+
+function clearCustomerReuse(){
+  const input = document.getElementById('customer-reuse-input');
+  const status = document.getElementById('customer-reuse-status');
+  if(input) input.value='';
+  if(status) status.textContent='';
+}
+
+// Same idea as onCustomerReuseInput(), but only touches the guarantor
+// fields — independent of whichever customer is selected above, since
+// the same guarantor can back completely different customers.
+function onGuarantorReuseInput(){
+  const input = document.getElementById('guarantor-reuse-input');
+  const status = document.getElementById('guarantor-reuse-status');
+  if(!input) return;
+  const match = _guarantorReuseMap[input.value];
+  if(!match){ if(status) status.textContent=''; return; }
+  document.getElementById('g-name').value = match.name||'';
+  document.getElementById('g-phone').value = match.phone||'';
+  document.getElementById('g-cnic').value = match.cnic||'';
+  if(status) status.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--suc,#2e7d32);"></i> ضامن کی معلومات خودکار فل ہو گئیں';
+}
+
+function clearGuarantorReuse(){
+  const input = document.getElementById('guarantor-reuse-input');
+  const status = document.getElementById('guarantor-reuse-status');
+  if(input) input.value='';
+  if(status) status.textContent='';
 }
 
 // ══════════════════════════════
@@ -5329,21 +5465,111 @@ function showReceipt(custId, payObj){
   lastReceiptData={c,payObj,paid,rem,dateStr};
   openMod('mod-receipt');
 }
+// ══════════════════════════════════════════════════════════════
+//  SHARED PDF ENGINE HELPERS
+//  Used by every "پی ڈی ایف" button in the app (receipt, agreement,
+//  overdue notice). Two fixes bundled here:
+//   1. _waitForPdfLibs() — on a slow connection html2canvas/jsPDF from
+//      the CDN can still be loading the very first time a PDF button
+//      is tapped; instead of failing immediately we wait a moment.
+//   2. _fallbackTextPdf() — if rendering the styled HTML into an image
+//      fails for any reason (e.g. an unsupported CSS color function,
+//      or html2canvas choking on a particular device), we still build
+//      a plain, text-only PDF from the same data so the shopkeeper
+//      always ends up with a usable file instead of nothing at all.
+// ══════════════════════════════════════════════════════════════
+function _waitForPdfLibs(timeoutMs){
+  timeoutMs = timeoutMs || 4000;
+  return new Promise(resolve=>{
+    const start = Date.now();
+    (function check(){
+      if(typeof html2canvas!=='undefined' && window.jspdf && window.jspdf.jsPDF){ resolve(true); return; }
+      if(Date.now()-start > timeoutMs){ resolve(false); return; }
+      setTimeout(check, 150);
+    })();
+  });
+}
+// Builds a simple, reliably-rendering PDF straight from data (no HTML
+// rasterization involved) as a last-resort fallback. Labels are kept in
+// English because jsPDF's built-in fonts can't render Urdu glyphs —
+// this is only meant as a safety net, not a replacement for the normal
+// styled PDF.
+function _fallbackTextPdf(title, rows, footerText){
+  if(!window.jspdf || !window.jspdf.jsPDF) return null;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  let y = 50;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
+  pdf.text(String(title||''), pageW/2, y, {align:'center'});
+  y += 14;
+  pdf.setFontSize(9); pdf.setFont('helvetica','italic');
+  pdf.text('(Simplified PDF — auto-generated because the styled version failed to render)', pageW/2, y, {align:'center'});
+  y += 22;
+  pdf.setLineWidth(0.75);
+  pdf.line(40, y, pageW-40, y);
+  y += 20;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+  (rows||[]).forEach(r=>{
+    if(y > pageH-60){ pdf.addPage(); y = 50; }
+    pdf.setFont('helvetica','bold');
+    pdf.text(String(r.label||''), 40, y);
+    pdf.setFont('helvetica','normal');
+    pdf.text(String(r.value==null||r.value===''?'-':r.value), 220, y);
+    y += 20;
+  });
+  if(footerText){
+    if(y > pageH-80){ pdf.addPage(); y = 50; }
+    y += 16;
+    pdf.setFont('helvetica','italic'); pdf.setFontSize(9);
+    pdf.text(String(footerText), 40, y, {maxWidth: pageW-80});
+  }
+  return pdf.output('blob');
+}
+// Wraps html2canvas with retry + logging so a failure tells us WHY
+// instead of just silently returning null. Returns the canvas, or
+// throws with a descriptive message the caller can log/report.
+async function _captureElementCanvas(content){
+  const ready = await _waitForPdfLibs();
+  if(!ready) throw new Error('PDF libraries (html2canvas/jsPDF) did not load in time — check internet connection');
+  if(!content) throw new Error('Content element not found in DOM');
+  try{
+    return await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false});
+  }catch(err){
+    console.error('html2canvas failed:', err);
+    throw err;
+  }
+}
 // ── Renders #receipt-content into a real PDF file, same approach used
 // for the agreement PDF, so it works even inside Android WebView apps
 // where window.print() often does nothing. ──
 async function _generateReceiptPdfBlob(){
   const content=document.getElementById('receipt-content');
-  if(!content || typeof html2canvas==='undefined' || !window.jspdf) return null;
-  const canvas = await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','pt','a4');
-  const pageW = pdf.internal.pageSize.getWidth();
-  const imgW = pageW;
-  const imgH = canvas.height * imgW / canvas.width;
-  pdf.addImage(imgData,'JPEG',0,0,imgW,imgH);
-  return pdf.output('blob');
+  try{
+    const canvas = await _captureElementCanvas(content);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const imgW = pageW;
+    const imgH = canvas.height * imgW / canvas.width;
+    pdf.addImage(imgData,'JPEG',0,0,imgW,imgH);
+    return pdf.output('blob');
+  }catch(err){
+    console.error('Receipt PDF: styled render failed, falling back to text PDF:', err);
+    if(!lastReceiptData) return null;
+    const {c,payObj,paid,rem,dateStr} = lastReceiptData;
+    return _fallbackTextPdf(`${shopProfile.name} - Payment Receipt`, [
+      {label:'Date', value:dateStr},
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'Item Model', value:c.mobile?.model},
+      {label:'Paid Today', value:'Rs. '+fmt(payObj?payObj.amount:0)},
+      {label:'Total Paid', value:'Rs. '+fmt(paid)},
+      {label:'Remaining', value:'Rs. '+fmt(rem)},
+    ], shopProfile.phone);
+  }
 }
 function printReceipt(){
   const content=document.getElementById('receipt-content');
@@ -5895,7 +6121,7 @@ function showSc(n){
     document.querySelectorAll('.mob-ni')[nm[n]]?.classList.add('active');
   }
   if(n==='dash') renderDash();
-  if(n==='add') goToAddStep(1);
+  if(n==='add'){ goToAddStep(1); refreshReuseLists(); }
   if(n==='customers'){
     const srchEl = document.getElementById('srch');
     if(srchEl) srchEl.value = '';
@@ -7062,25 +7288,45 @@ function showAgreement(id){
 // nothing because the WebView has no print handler at all). ──
 async function _generateAgreementPdfBlob(){
   const content=document.getElementById('agreement-content');
-  if(!content || typeof html2canvas==='undefined' || !window.jspdf) return null;
-  const canvas = await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','pt','a4');
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW;
-  const imgH = canvas.height * imgW / canvas.width;
-  let heightLeft = imgH, position = 0;
-  pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-  heightLeft -= pageH;
-  while(heightLeft > 0){
-    position = heightLeft - imgH;
-    pdf.addPage();
+  try{
+    const canvas = await _captureElementCanvas(content);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = canvas.height * imgW / canvas.width;
+    let heightLeft = imgH, position = 0;
     pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
     heightLeft -= pageH;
+    while(heightLeft > 0){
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+      heightLeft -= pageH;
+    }
+    return pdf.output('blob');
+  }catch(err){
+    console.error('Agreement PDF: styled render failed, falling back to text PDF:', err);
+    const c = agreementCust;
+    if(!c) return null;
+    return _fallbackTextPdf(`${shopProfile.name} - Installment Agreement`, [
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'CNIC', value:c.cnic},
+      {label:'Address', value:c.addr},
+      {label:'Guarantor', value:c.guarantor?.name},
+      {label:'Guarantor Phone', value:c.guarantor?.phone},
+      {label:'Item', value:c.mobile?.item || c.mobile?.itemType},
+      {label:'Model', value:c.mobile?.model},
+      {label:'Total Price', value:'Rs. '+fmt(c.mobile?.total||c.mobile?.price)},
+      {label:'Advance', value:'Rs. '+fmt(c.mobile?.advance)},
+      {label:'Monthly Installment', value:'Rs. '+fmt(c.mobile?.monthly)},
+      {label:'Months', value:c.mobile?.months},
+      {label:'Start Date', value:c.mobile?.startDate},
+    ], shopProfile.phone);
   }
-  return pdf.output('blob');
 }
 async function printAgreement(){
   const content=document.getElementById('agreement-content');
@@ -7249,8 +7495,8 @@ function showOverdueNotice(id){
 
 async function _generateOverdueNoticePdfBlob(){
   const content=document.getElementById('overdue-notice-content');
-  if(!content || typeof html2canvas==='undefined' || !window.jspdf) return null;
-  const canvas = await html2canvas(content, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+  try{
+  const canvas = await _captureElementCanvas(content);
   const imgData = canvas.toDataURL('image/jpeg', 0.95);
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','pt','a4');
@@ -7268,6 +7514,21 @@ async function _generateOverdueNoticePdfBlob(){
     heightLeft -= pageH;
   }
   return pdf.output('blob');
+  }catch(err){
+    console.error('Overdue Notice PDF: styled render failed, falling back to text PDF:', err);
+    const c = overdueNoticeCust;
+    if(!c) return null;
+    const overdueMonths = _calcOverdueMonths(c);
+    const paid = c.payments.reduce((s,p)=>s+p.amount,0);
+    const totalDues = Math.max(0, c.mobile.remaining-paid);
+    return _fallbackTextPdf(`${shopProfile.name} - Overdue Notice`, [
+      {label:'Customer', value:c.name},
+      {label:'Phone', value:c.phone},
+      {label:'Item Model', value:c.mobile?.model},
+      {label:'Months Overdue', value:overdueMonths},
+      {label:'Total Dues', value:'Rs. '+fmt(totalDues)},
+    ], shopProfile.phone);
+  }
 }
 
 async function printOverdueNotice(){
