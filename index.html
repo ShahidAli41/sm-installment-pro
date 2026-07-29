@@ -2017,6 +2017,129 @@ input, select, textarea {
 
 
 
+<style>
+/* ══════════════════════════════════════════════════════════════
+   IMEI / BARCODE CAMERA SCANNER — namespaced with "isc-" prefix
+   so nothing here collides with the app's existing .card/.status/
+   .result/.modal classes etc. Only the Dynamsoft-required class
+   names (dce-video-container, dce-scanarea, dce-bg-loading,
+   dce-bg-camera, dce-sel-camera, dce-sel-resolution) are kept
+   as-is because the SDK looks for those specific class names.
+   ══════════════════════════════════════════════════════════════ */
+
+/* --- small camera button next to the ID/IMEI input field --- */
+.isc-input-row{display:flex;gap:8px;align-items:stretch;}
+.isc-input-row input{flex:1;min-width:0;}
+.isc-scan-btn{
+  flex-shrink:0;width:44px;border:none;border-radius:var(--rads);cursor:pointer;
+  background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;font-size:16px;
+  box-shadow:0 3px 10px rgba(21,101,192,0.35);transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+}
+.isc-scan-btn:hover{transform:translateY(-1px);}
+.isc-scan-btn:active{transform:translateY(1px);}
+
+/* --- full-screen scanner overlay --- */
+#iscOverlay{
+  position:fixed;inset:0;z-index:999990;display:none;overflow:hidden;
+  font-family:'Poppins','Inter',sans-serif;direction:ltr;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(255,107,107,0.20), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(63,224,208,0.18), transparent 55%),
+    radial-gradient(1000px 700px at 50% 120%, rgba(255,217,61,0.10), transparent 60%),
+    linear-gradient(160deg, #0f0c29, #26214a 55%, #1b1830);
+}
+#iscOverlay.isc-active{display:block;}
+.isc-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.35;pointer-events:none;z-index:0;}
+.isc-blob.isc-b1{width:300px;height:300px;background:#ff6b6b;top:-100px;left:-80px;}
+.isc-blob.isc-b2{width:220px;height:220px;background:#3fe0d0;bottom:-90px;right:-70px;}
+
+.isc-scanner{width:100%;height:100%;min-width:100px;min-height:100px;background:#050508;position:absolute;left:0;top:0;z-index:1;}
+.isc-scanner .dce-bg-loading{animation:isc-rotate 1s linear infinite;width:40%;height:40%;position:absolute;margin:auto;left:0;top:0;right:0;bottom:0;fill:#3fe0d0;}
+@keyframes isc-rotate{from{transform:rotate(0turn);}to{transform:rotate(1turn);}}
+.isc-scanner .dce-bg-camera{display:none;width:40%;height:40%;position:absolute;margin:auto;left:0;top:0;right:0;bottom:0;fill:#5a5f7a;}
+.isc-scanner .dce-video-container{position:absolute;left:0;top:0;width:100%;height:100%;}
+.isc-scanner .dce-scanarea{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;}
+
+.isc-scan-decor{
+  position:absolute;left:0;top:25%;width:100%;height:10%;pointer-events:none;z-index:5;
+  transition:left .2s ease,width .2s ease,top .2s ease,height .2s ease;
+  border:2px solid #3fe0d0;border-radius:16px;
+  box-shadow:0 0 0 2000px rgba(5,5,8,.55),0 0 24px rgba(63,224,208,.55);
+}
+.isc-scan-decor .isc-corner{position:absolute;width:20px;height:20px;border-color:#ffd93d;}
+.isc-scan-decor .isc-tl{top:-2px;left:-2px;border-top:4px solid;border-left:4px solid;border-radius:16px 0 0 0;}
+.isc-scan-decor .isc-tr{top:-2px;right:-2px;border-top:4px solid;border-right:4px solid;border-radius:0 16px 0 0;}
+.isc-scan-decor .isc-bl{bottom:-2px;left:-2px;border-bottom:4px solid;border-left:4px solid;border-radius:0 0 0 16px;}
+.isc-scan-decor .isc-br{bottom:-2px;right:-2px;border-bottom:4px solid;border-right:4px solid;border-radius:0 0 16px 0;}
+.isc-scan-decor .isc-sweep{
+  position:absolute;left:6%;right:6%;height:2px;top:10%;
+  background:linear-gradient(90deg,transparent,#ffd93d,transparent);
+  animation:isc-sweep 2s ease-in-out infinite;
+}
+@keyframes isc-sweep{0%,100%{top:10%;}50%{top:82%;}}
+@media (prefers-reduced-motion:reduce){ .isc-scan-decor .isc-sweep, .isc-scanner .dce-bg-loading{animation:none;} }
+
+.isc-topbar{
+  position:absolute;left:0;top:0;width:100%;z-index:6;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 14px 0;box-sizing:border-box;
+}
+.isc-mode-select{
+  font-family:'Inter',sans-serif;font-size:12px;padding:9px 12px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(15,12,41,.8);color:#f3f4fb;cursor:pointer;
+}
+.isc-mode-select option{background:#1b1830;color:#f3f4fb;}
+.isc-close-btn{
+  flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+  background:rgba(15,12,41,.8);color:#f3f4fb;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.isc-status-line{
+  position:absolute;left:0;top:64px;width:100%;text-align:center;z-index:6;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:#a3a8c4;
+  padding:0 14px;box-sizing:border-box;min-height:16px;
+}
+.isc-sel-container{position:absolute;left:14px;top:100px;z-index:6;display:flex;gap:8px;flex-wrap:wrap;max-width:80%;}
+.isc-sel-container select{
+  font-family:'Inter',sans-serif;font-size:11px;padding:6px 8px;border-radius:8px;max-width:150px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(15,12,41,.75);color:#f3f4fb;
+}
+.isc-loading-msg{
+  position:absolute;left:0;top:50%;width:100%;transform:translateY(-50%);text-align:center;z-index:4;
+  font-family:'Inter',sans-serif;color:#e6e9f7;font-size:13px;padding:0 24px;box-sizing:border-box;
+}
+
+.isc-modal-window{
+  display:none;position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:100%;max-width:480px;z-index:99999;
+  background:linear-gradient(180deg,#1e1a3a,#14112a);
+  border:1px solid rgba(255,255,255,.12);border-bottom:none;
+  border-radius:22px 22px 0 0;
+  padding:20px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:0 -20px 50px rgba(0,0,0,.5);box-sizing:border-box;
+}
+.isc-modal-window.isc-active{display:block;animation:isc-slideUp .25s ease;}
+@keyframes isc-slideUp{from{transform:translate(-50%,30px);opacity:0;}to{transform:translate(-50%,0);opacity:1;}}
+.isc-mw-label{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:#ffd93d;margin-bottom:8px;
+}
+.isc-overflow{max-height:26vh;overflow:auto;}
+#isc-scan-result{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;
+  background:rgba(255,217,61,.08);border:1px solid rgba(255,217,61,.3);
+  border-radius:12px;padding:14px;margin:0 0 14px;white-space:pre-wrap;word-break:break-all;
+}
+.isc-modal-actions{display:flex;gap:10px;}
+.isc-correct-btn,.isc-rescan-btn{
+  flex:1;padding:13px;border-radius:12px;border:none;cursor:pointer;
+  font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;
+}
+.isc-correct-btn{color:#0d1f1c;background:linear-gradient(180deg,#6ff5e4,#3fe0d0);box-shadow:0 6px 0 #1f9e91,0 10px 18px rgba(63,224,208,.3);}
+.isc-correct-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #1f9e91;}
+.isc-rescan-btn{color:#f3f4fb;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);}
+</style>
 </head>
 <body>
 
@@ -2300,7 +2423,10 @@ input, select, textarea {
             <!-- LEVEL 6 — Serial / Engine -->
             <div class="fg">
               <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> <span data-ur="سیریل / شناخت نمبر" data-en="Serial / ID No.">سیریل / شناخت نمبر</span></label>
-              <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
+              <div class="isc-input-row">
+                <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
+                <button type="button" class="isc-scan-btn" id="iscOpenBtn" title="کیمرے سے اسکین کریں" aria-label="Scan IMEI with camera"><i class="fa-solid fa-camera"></i></button>
+              </div>
             </div>
             <div class="fg" id="m-engine-box" style="display:none;">
               <label><i class="fa-solid fa-gear"></i> <span data-ur="انجن نمبر" data-en="Engine No.">انجن نمبر</span></label>
@@ -3414,7 +3540,295 @@ input, select, textarea {
 
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════════════════════════════════════════════
+     IMEI / BARCODE CAMERA SCANNER OVERLAY
+     Opened by the camera button (#iscOpenBtn) next to the
+     Serial/ID/IMEI field (#m-imei). Dynamsoft libraries are
+     lazy-loaded on first use so the main app isn't slowed down.
+     ══════════════════════════════════════════════════════════════ -->
+<div id="iscOverlay">
+  <div class="isc-blob isc-b1"></div>
+  <div class="isc-blob isc-b2"></div>
 
+  <div id="iscScanner" class="isc-scanner">
+    <svg class="dce-bg-loading" viewBox="0 0 1792 1792"><path d="M1760 896q0 176-68.5 336t-184 275.5-275.5 184-336 68.5-336-68.5-275.5-184-184-275.5-68.5-336q0-213 97-398.5t265-305.5 374-151v228q-221 45-366.5 221t-145.5 406q0 130 51 248.5t136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5q0-230-145.5-406t-366.5-221v-228q206 31 374 151t265 305.5 97 398.5z"/></svg>
+    <svg class="dce-bg-camera" viewBox="0 0 2048 1792"><path d="M1024 672q119 0 203.5 84.5t84.5 203.5-84.5 203.5-203.5 84.5-203.5-84.5-84.5-203.5 84.5-203.5 203.5-84.5zm704-416q106 0 181 75t75 181v896q0 106-75 181t-181 75h-1408q-106 0-181-75t-75-181v-896q0-106 75-181t181-75h224l51-136q19-49 69.5-84.5t103.5-35.5h512q53 0 103.5 35.5t69.5 84.5l51 136h224zm-704 1152q185 0 316.5-131.5t131.5-316.5-131.5-316.5-316.5-131.5-316.5 131.5-131.5 316.5 131.5 316.5 316.5 131.5z"/></svg>
+    <div class="dce-video-container"></div>
+    <div class="dce-scanarea"></div>
+
+    <div class="isc-scan-decor" id="iscScanDecor">
+      <div class="isc-corner isc-tl"></div>
+      <div class="isc-corner isc-tr"></div>
+      <div class="isc-corner isc-bl"></div>
+      <div class="isc-corner isc-br"></div>
+      <div class="isc-sweep"></div>
+    </div>
+
+    <div class="isc-sel-container">
+      <select class="dce-sel-camera"></select>
+      <select class="dce-sel-resolution"></select>
+    </div>
+  </div>
+
+  <div class="isc-topbar">
+    <select id="iscModeSel" class="isc-mode-select">
+      <option value="0">🔲 بار کوڈ اسکین</option>
+      <option value="1">🔤 نمبر پڑھیں (OCR)</option>
+    </select>
+    <button type="button" class="isc-close-btn" id="iscCloseBtn" aria-label="بند کریں"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="isc-status-line" id="iscStatus"></div>
+  <div class="isc-loading-msg" id="iscLoadingMsg" style="display:none;"></div>
+
+  <div class="isc-modal-window" id="iscModal">
+    <div class="isc-mw-label">اسکین کا نتیجہ</div>
+    <div class="isc-overflow"><pre id="isc-scan-result"></pre></div>
+    <div class="isc-modal-actions">
+      <button type="button" class="isc-correct-btn" id="iscCorrectBtn">✓ درست ہے</button>
+      <button type="button" class="isc-rescan-btn" id="iscRescanBtn">دوبارہ اسکین کریں</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DCE_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-camera-enhancer@3.2.0/dist/dce.js";
+  var DBR_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.2/dist/dbr.js";
+  var DLR_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-label-recognizer@2.2.11/dist/dlr.js";
+  var LICENSE = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==";
+
+  var camera, reader, recognizer, loopTimer = null, processing = false;
+  var sdkReady = false, sdkLoading = false;
+
+  function loadScript(src){
+    return new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ reject(new Error('Failed to load ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function setLoadingMsg(text){
+    var el = document.getElementById('iscLoadingMsg');
+    if (!el) return;
+    if (text){ el.textContent = text; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  }
+
+  function setStatus(text){
+    var el = document.getElementById('iscStatus');
+    if (el) el.textContent = text || '';
+  }
+
+  async function ensureSdk(){
+    if (sdkReady) return true;
+    if (sdkLoading){
+      await new Promise(function(res){
+        var check = setInterval(function(){ if (sdkReady || !sdkLoading){ clearInterval(check); res(); } }, 120);
+      });
+      return sdkReady;
+    }
+    sdkLoading = true;
+    setLoadingMsg('اسکینر لوڈ ہو رہا ہے...');
+    try{
+      await loadScript(DCE_SRC);
+      await loadScript(DBR_SRC);
+      await loadScript(DLR_SRC);
+
+      Dynamsoft.DBR.BarcodeScanner.license = LICENSE;
+      Dynamsoft.DLR.LabelRecognizer.license = LICENSE;
+      Dynamsoft.DBR.BarcodeScanner.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.2/dist/";
+      Dynamsoft.DLR.LabelRecognizer.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-label-recognizer@2.2.11/dist/";
+      Dynamsoft.DCE.CameraEnhancer.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-camera-enhancer@3.2.0/dist/";
+
+      setLoadingMsg('کیمرہ شروع ہو رہا ہے...');
+      camera = await Dynamsoft.DCE.CameraEnhancer.createInstance();
+      await camera.setUIElement(document.getElementById('iscScanner'));
+      setScanRegion(0, 25, 100, 35);
+
+      reader = await Dynamsoft.DBR.BarcodeReader.createInstance();
+      var settings = await reader.getRuntimeSettings();
+      settings.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128;
+      await reader.updateRuntimeSettings(settings);
+
+      recognizer = await Dynamsoft.DLR.LabelRecognizer.createInstance();
+      await recognizer.updateRuntimeSettingsFromString("number");
+
+      sdkReady = true;
+      setLoadingMsg(null);
+      return true;
+    } catch(err){
+      console.error('IMEI scanner failed to load:', err);
+      setLoadingMsg('اسکینر لوڈ نہیں ہو سکا۔ انٹرنیٹ کنکشن چیک کریں۔');
+      return false;
+    } finally {
+      sdkLoading = false;
+    }
+  }
+
+  function setScanRegion(left, top, right, bottom){
+    if (!camera) return;
+    camera.setScanRegion({
+      regionLeft: left, regionTop: top, regionRight: right, regionBottom: bottom,
+      regionMeasuredByPercentage: 1
+    });
+    var decor = document.getElementById('iscScanDecor');
+    if (decor){
+      decor.style.left = left + '%';
+      decor.style.top = top + '%';
+      decor.style.width = (right - left) + '%';
+      decor.style.height = (bottom - top) + '%';
+    }
+  }
+
+  function whiteSpacesRemoved(str){ return str.split(' ').join(''); }
+
+  // https://en.wikipedia.org/wiki/International_Mobile_Equipment_Identity#Check_digit_computation
+  function verifyCheckDigit(imei){
+    var checkDigit = imei.substring(imei.length - 1);
+    var rest = imei.substring(0, imei.length - 1);
+    var digits = rest.split('');
+    var sum = 0;
+    for (var i = 0; i < digits.length; i++){
+      var digit = parseInt(digits[i], 10);
+      var numbers;
+      if ((i + 1) % 2 === 0){ numbers = (digit * 2).toString().split(''); }
+      else { numbers = [digit]; }
+      for (var j = 0; j < numbers.length; j++){ sum += parseInt(numbers[j], 10); }
+    }
+    return (sum + parseInt(checkDigit, 10)) % 10 === 0;
+  }
+
+  function imeiValid(v){
+    if (isNaN(v)) return false;
+    if (v.length >= 15 && v.length <= 17) return verifyCheckDigit(v);
+    return false;
+  }
+
+  async function captureAndDecode(){
+    if (!camera || !reader || processing) return;
+    if (camera.isOpen() === false) return;
+    var frame = camera.getFrame();
+    if (!frame) return;
+    processing = true;
+    try{
+      var results = await reader.decode(frame);
+      for (var i = 0; i < results.length; i++){
+        if (imeiValid(results[i].barcodeText)){ onDetected(results[i].barcodeText); break; }
+      }
+    } finally { processing = false; }
+  }
+
+  async function captureAndRecognize(){
+    if (!camera || !recognizer || processing) return;
+    if (camera.isOpen() === false) return;
+    var frame = camera.getFrame();
+    if (!frame) return;
+    processing = true;
+    try{
+      var results = await recognizer.recognize(frame);
+      for (var i = 0; i < results.length; i++){
+        var lineResults = results[i].lineResults;
+        for (var j = 0; j < lineResults.length; j++){
+          var text = whiteSpacesRemoved(lineResults[j].text);
+          if (imeiValid(text)){ onDetected(text); return; }
+        }
+      }
+    } finally { processing = false; }
+  }
+
+  function currentModeIsBarcode(){
+    var sel = document.getElementById('iscModeSel');
+    return !sel || sel.value === '0';
+  }
+
+  function startLoop(){
+    stopLoop();
+    var isBarcode = currentModeIsBarcode();
+    loopTimer = setInterval(isBarcode ? captureAndDecode : captureAndRecognize, isBarcode ? 100 : 500);
+  }
+  function stopLoop(){
+    if (loopTimer) clearInterval(loopTimer);
+    loopTimer = null; processing = false;
+  }
+
+  function onDetected(text){
+    stopLoop();
+    var resEl = document.getElementById('isc-scan-result');
+    if (resEl) resEl.textContent = text;
+    var modal = document.getElementById('iscModal');
+    if (modal) modal.classList.add('isc-active');
+  }
+
+  function onModeChange(){
+    if (currentModeIsBarcode()) setScanRegion(0, 25, 100, 35);
+    else setScanRegion(25, 25, 75, 35);
+    if (camera && camera.isOpen()) startLoop();
+  }
+
+  async function openScanner(){
+    var overlay = document.getElementById('iscOverlay');
+    overlay.classList.add('isc-active');
+    setStatus('');
+    var ok = await ensureSdk();
+    if (!ok) return;
+    try{
+      setStatus('بار کوڈ یا پرنٹ شدہ نمبر کو فریم میں لائیں');
+      await camera.open(true);
+      startLoop();
+    } catch(err){
+      console.error('Camera open error:', err);
+      setStatus('کیمرہ نہیں کھل سکا۔ کیمرے کی اجازت چیک کریں۔');
+    }
+  }
+
+  function closeScanner(){
+    stopLoop();
+    var modal = document.getElementById('iscModal');
+    if (modal) modal.classList.remove('isc-active');
+    if (camera){ try{ camera.close(true); }catch(e){} }
+    var overlay = document.getElementById('iscOverlay');
+    if (overlay) overlay.classList.remove('isc-active');
+  }
+
+  function acceptResult(){
+    var resEl = document.getElementById('isc-scan-result');
+    var text = resEl ? resEl.textContent : '';
+    var input = document.getElementById('m-imei');
+    if (input && text){
+      input.value = text;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    closeScanner();
+  }
+
+  function rescan(){
+    var modal = document.getElementById('iscModal');
+    if (modal) modal.classList.remove('isc-active');
+    startLoop();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var openBtn = document.getElementById('iscOpenBtn');
+    if (openBtn) openBtn.addEventListener('click', function(ev){ ev.preventDefault(); openScanner(); });
+
+    var closeBtn = document.getElementById('iscCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeScanner);
+
+    var modeSel = document.getElementById('iscModeSel');
+    if (modeSel) modeSel.addEventListener('change', onModeChange);
+
+    var correctBtn = document.getElementById('iscCorrectBtn');
+    if (correctBtn) correctBtn.addEventListener('click', acceptResult);
+
+    var rescanBtn = document.getElementById('iscRescanBtn');
+    if (rescanBtn) rescanBtn.addEventListener('click', rescan);
+  });
+})();
+</script>
 
 </body>
 
