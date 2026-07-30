@@ -8378,6 +8378,11 @@ const DRIVE_MEDIA_SCOPE  = 'https://www.googleapis.com/auth/drive.file';
 const DRIVE_FULL_SCOPE   = DRIVE_SCOPE + ' ' + DRIVE_MEDIA_SCOPE;
 const MEDIA_FOLDER_NAME  = 'Installment App Data';
 
+/* ── Google OAuth Client ID ──────────────────────────────────────
+   Hardcoded so the user is NEVER asked to enter/configure a Client
+   ID. One tap "Sign in with Google" is all they ever see. ──────── */
+const GOOGLE_CLIENT_ID = '921282040411-65lsuko7t8ep0ug0tbt1sc1ftkh8385o.apps.googleusercontent.com';
+
 /* ─── State ──────────────────────────────────────────────────── */
 let _gsiClient     = null;   // GSI token client instance
 let _accessToken   = null;   // current OAuth bearer token
@@ -8423,15 +8428,14 @@ function _clearToken(){
   window.safeLS.removeItem('sms_gtoken');
 }
 function _tokenOK(){ return !!_accessToken && Date.now() < _tokenExpiry; }
-function _getClientId(){ return (window.safeLS.getItem('sms_gclientid') || '').trim(); }
+function _getClientId(){ return GOOGLE_CLIENT_ID; } // hardcoded — user is never asked for this
 function _authHeader(){ return { Authorization: 'Bearer ' + _accessToken }; }
 
 /* ════════════════════════════════════════════════════════════════
    GOOGLE SIGN-IN  (GSI implicit flow — no redirect)
    ════════════════════════════════════════════════════════════════ */
 async function gDriveSignIn(){
-  const cid = _getClientId();
-  if(!cid){ _openClientIdModal(); return; }
+  const cid = GOOGLE_CLIENT_ID;
 
   // Show spinner while loading GSI
   _uiShowSigningIn(true);
@@ -9121,93 +9125,6 @@ function clearAllData(){
   if(typeof renderAlerts    === 'function') renderAlerts();
   if(typeof renderCustomers === 'function') try{ renderCustomers(); }catch(e){}
   showToast('<i class="fa-solid fa-trash"></i> تمام ڈیٹا صاف ہو گیا', 'warn');
-}
-
-/* ════════════════════════════════════════════════════════════════
-   CLIENT-ID MODAL
-   (Opens inside existing #mod-agreement so no new DOM needed)
-   ════════════════════════════════════════════════════════════════ */
-function _openClientIdModal(){
-  const savedCid = _getClientId();
-  document.getElementById('agreement-body').innerHTML = `
-    <div style="font-family:'Poppins',sans-serif;direction:ltr;padding:2px;">
-
-      <!-- Header -->
-      <div style="background:linear-gradient(135deg,#1A73E8,#0D47A1);border-radius:14px;padding:18px;color:#fff;text-align:center;margin-bottom:18px;">
-        <div style="font-size:40px;margin-bottom:8px;"><i class="fa-solid fa-cloud"></i></div>
-        <div style="font-weight:800;font-size:17px;letter-spacing:.3px;">Google Drive Setup</div>
-        <div style="font-size:11px;opacity:.75;margin-top:4px;">One-time configuration</div>
-      </div>
-
-      <!-- Instructions -->
-      <ol style="font-size:12px;color:#37474F;line-height:2.2;padding-left:18px;margin-bottom:16px;">
-        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:#1A73E8;font-weight:700;">console.cloud.google.com</a></li>
-        <li>Create a project → <b>APIs &amp; Services</b> → <b>Enable</b> Google Drive API</li>
-        <li><b>Credentials</b> → <b>Create OAuth 2.0 Client ID</b> → Web Application</li>
-        <li>Add your app's URL to <b>Authorized JavaScript Origins</b></li>
-        <li>Copy the <b>Client ID</b> and paste below</li>
-      </ol>
-
-      <!-- Warning -->
-      <div style="background:#FFF3E0;border-left:3px solid #FF6F00;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:#E65100;">
-        For APK builds add <code>file://</code> and <code>http://localhost</code> to Authorized Origins.
-      </div>
-
-      <!-- Input -->
-      <label style="font-size:11px;font-weight:700;color:#0D47A1;display:block;margin-bottom:6px;">
-        OAuth 2.0 Client ID:
-      </label>
-      <input
-        id="gclient-input"
-        type="text"
-        value="${savedCid}"
-        autocomplete="off"
-        spellcheck="false"
-        style="width:100%;padding:11px 13px;border:1.5px solid #BBDEFB;border-radius:9px;font-size:12px;direction:ltr;box-sizing:border-box;outline:none;font-family:monospace;"
-        placeholder="000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
-        oninput="document.getElementById('gclient-err').textContent=''">
-      <div id="gclient-err" style="color:#E53935;font-size:11px;min-height:18px;margin:5px 0 14px;"></div>
-
-      <!-- Buttons -->
-      <div style="display:flex;gap:10px;">
-        <button
-          onclick="_applyClientId()"
-          style="flex:1;padding:9px;background:linear-gradient(135deg,#1A73E8,#0D47A1);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.3px;">
-          <i class="fa-solid fa-floppy-disk"></i> Save &amp; Connect
-        </button>
-        <button
-          onclick="closeMod('mod-agreement')"
-          style="flex:1;padding:9px;background:#ECEFF1;color:#546E7A;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">
-          ✕ Cancel
-        </button>
-      </div>
-
-      <!-- Tip -->
-      <div style="margin-top:14px;padding:10px 13px;background:#E8F5E9;border-left:3px solid #43A047;border-radius:8px;font-size:11px;color:#2E7D32;">
-        💡 <b>Tip:</b> Without Google, Local Export/Import provides complete offline backup!
-      </div>
-    </div>`;
-  openMod('mod-agreement');
-}
-
-function _applyClientId(){
-  const input = document.getElementById('gclient-input');
-  const errEl = document.getElementById('gclient-err');
-  const val   = (input ? input.value : '').trim();
-
-  if(!val){
-    if(errEl) errEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Client ID خالی نہیں چھوڑ سکتے';
-    return;
-  }
-  if(!val.endsWith('.apps.googleusercontent.com')){
-    if(errEl) errEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> درست Client ID .apps.googleusercontent.com پر ختم ہوتی ہے';
-    return;
-  }
-
-  window.safeLS.setItem('sms_gclientid', val);
-  closeMod('mod-agreement');
-  showToast('<i class="fa-solid fa-circle-check"></i> Client ID محفوظ! Google Sign-In شروع ہو رہا ہے…');
-  setTimeout(gDriveSignIn, 350);
 }
 
 /* ════════════════════════════════════════════════════════════════
