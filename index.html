@@ -2017,129 +2017,6 @@ input, select, textarea {
 
 
 
-<style>
-/* ══════════════════════════════════════════════════════════════
-   IMEI / BARCODE CAMERA SCANNER — namespaced with "isc-" prefix
-   so nothing here collides with the app's existing .card/.status/
-   .result/.modal classes etc. Only the Dynamsoft-required class
-   names (dce-video-container, dce-scanarea, dce-bg-loading,
-   dce-bg-camera, dce-sel-camera, dce-sel-resolution) are kept
-   as-is because the SDK looks for those specific class names.
-   ══════════════════════════════════════════════════════════════ */
-
-/* --- small camera button next to the ID/IMEI input field --- */
-.isc-input-row{display:flex;gap:8px;align-items:stretch;}
-.isc-input-row input{flex:1;min-width:0;}
-.isc-scan-btn{
-  flex-shrink:0;width:44px;border:none;border-radius:var(--rads);cursor:pointer;
-  background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;font-size:16px;
-  box-shadow:0 3px 10px rgba(21,101,192,0.35);transition:all .2s;
-  display:flex;align-items:center;justify-content:center;
-}
-.isc-scan-btn:hover{transform:translateY(-1px);}
-.isc-scan-btn:active{transform:translateY(1px);}
-
-/* --- full-screen scanner overlay --- */
-#iscOverlay{
-  position:fixed;inset:0;z-index:999990;display:none;overflow:hidden;
-  font-family:'Poppins','Inter',sans-serif;direction:ltr;
-  background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(255,107,107,0.20), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, rgba(63,224,208,0.18), transparent 55%),
-    radial-gradient(1000px 700px at 50% 120%, rgba(255,217,61,0.10), transparent 60%),
-    linear-gradient(160deg, #0f0c29, #26214a 55%, #1b1830);
-}
-#iscOverlay.isc-active{display:block;}
-.isc-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.35;pointer-events:none;z-index:0;}
-.isc-blob.isc-b1{width:300px;height:300px;background:#ff6b6b;top:-100px;left:-80px;}
-.isc-blob.isc-b2{width:220px;height:220px;background:#3fe0d0;bottom:-90px;right:-70px;}
-
-.isc-scanner{width:100%;height:100%;min-width:100px;min-height:100px;background:#050508;position:absolute;left:0;top:0;z-index:1;}
-.isc-scanner .dce-bg-loading{animation:isc-rotate 1s linear infinite;width:40%;height:40%;position:absolute;margin:auto;left:0;top:0;right:0;bottom:0;fill:#3fe0d0;}
-@keyframes isc-rotate{from{transform:rotate(0turn);}to{transform:rotate(1turn);}}
-.isc-scanner .dce-bg-camera{display:none;width:40%;height:40%;position:absolute;margin:auto;left:0;top:0;right:0;bottom:0;fill:#5a5f7a;}
-.isc-scanner .dce-video-container{position:absolute;left:0;top:0;width:100%;height:100%;}
-.isc-scanner .dce-scanarea{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;}
-
-.isc-scan-decor{
-  position:absolute;left:0;top:25%;width:100%;height:10%;pointer-events:none;z-index:5;
-  transition:left .2s ease,width .2s ease,top .2s ease,height .2s ease;
-  border:2px solid #3fe0d0;border-radius:16px;
-  box-shadow:0 0 0 2000px rgba(5,5,8,.55),0 0 24px rgba(63,224,208,.55);
-}
-.isc-scan-decor .isc-corner{position:absolute;width:20px;height:20px;border-color:#ffd93d;}
-.isc-scan-decor .isc-tl{top:-2px;left:-2px;border-top:4px solid;border-left:4px solid;border-radius:16px 0 0 0;}
-.isc-scan-decor .isc-tr{top:-2px;right:-2px;border-top:4px solid;border-right:4px solid;border-radius:0 16px 0 0;}
-.isc-scan-decor .isc-bl{bottom:-2px;left:-2px;border-bottom:4px solid;border-left:4px solid;border-radius:0 0 0 16px;}
-.isc-scan-decor .isc-br{bottom:-2px;right:-2px;border-bottom:4px solid;border-right:4px solid;border-radius:0 0 16px 0;}
-.isc-scan-decor .isc-sweep{
-  position:absolute;left:6%;right:6%;height:2px;top:10%;
-  background:linear-gradient(90deg,transparent,#ffd93d,transparent);
-  animation:isc-sweep 2s ease-in-out infinite;
-}
-@keyframes isc-sweep{0%,100%{top:10%;}50%{top:82%;}}
-@media (prefers-reduced-motion:reduce){ .isc-scan-decor .isc-sweep, .isc-scanner .dce-bg-loading{animation:none;} }
-
-.isc-topbar{
-  position:absolute;left:0;top:0;width:100%;z-index:6;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:14px 14px 0;box-sizing:border-box;
-}
-.isc-mode-select{
-  font-family:'Inter',sans-serif;font-size:12px;padding:9px 12px;border-radius:10px;
-  border:1px solid rgba(255,255,255,.2);background:rgba(15,12,41,.8);color:#f3f4fb;cursor:pointer;
-}
-.isc-mode-select option{background:#1b1830;color:#f3f4fb;}
-.isc-close-btn{
-  flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
-  background:rgba(15,12,41,.8);color:#f3f4fb;font-size:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-.isc-status-line{
-  position:absolute;left:0;top:64px;width:100%;text-align:center;z-index:6;
-  font-family:'JetBrains Mono',monospace;font-size:12px;color:#a3a8c4;
-  padding:0 14px;box-sizing:border-box;min-height:16px;
-}
-.isc-sel-container{position:absolute;left:14px;top:100px;z-index:6;display:flex;gap:8px;flex-wrap:wrap;max-width:80%;}
-.isc-sel-container select{
-  font-family:'Inter',sans-serif;font-size:11px;padding:6px 8px;border-radius:8px;max-width:150px;
-  border:1px solid rgba(255,255,255,.2);background:rgba(15,12,41,.75);color:#f3f4fb;
-}
-.isc-loading-msg{
-  position:absolute;left:0;top:50%;width:100%;transform:translateY(-50%);text-align:center;z-index:4;
-  font-family:'Inter',sans-serif;color:#e6e9f7;font-size:13px;padding:0 24px;box-sizing:border-box;
-}
-
-.isc-modal-window{
-  display:none;position:absolute;left:50%;bottom:0;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:99999;
-  background:linear-gradient(180deg,#1e1a3a,#14112a);
-  border:1px solid rgba(255,255,255,.12);border-bottom:none;
-  border-radius:22px 22px 0 0;
-  padding:20px 18px calc(18px + env(safe-area-inset-bottom));
-  box-shadow:0 -20px 50px rgba(0,0,0,.5);box-sizing:border-box;
-}
-.isc-modal-window.isc-active{display:block;animation:isc-slideUp .25s ease;}
-@keyframes isc-slideUp{from{transform:translate(-50%,30px);opacity:0;}to{transform:translate(-50%,0);opacity:1;}}
-.isc-mw-label{
-  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-  color:#ffd93d;margin-bottom:8px;
-}
-.isc-overflow{max-height:26vh;overflow:auto;}
-#isc-scan-result{
-  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;
-  background:rgba(255,217,61,.08);border:1px solid rgba(255,217,61,.3);
-  border-radius:12px;padding:14px;margin:0 0 14px;white-space:pre-wrap;word-break:break-all;
-}
-.isc-modal-actions{display:flex;gap:10px;}
-.isc-correct-btn,.isc-rescan-btn{
-  flex:1;padding:13px;border-radius:12px;border:none;cursor:pointer;
-  font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;
-}
-.isc-correct-btn{color:#0d1f1c;background:linear-gradient(180deg,#6ff5e4,#3fe0d0);box-shadow:0 6px 0 #1f9e91,0 10px 18px rgba(63,224,208,.3);}
-.isc-correct-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #1f9e91;}
-.isc-rescan-btn{color:#f3f4fb;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);}
-</style>
 </head>
 <body>
 
@@ -2316,6 +2193,21 @@ input, select, textarea {
               <input type="hidden" id="c-gps-lat" value="">
               <input type="hidden" id="c-gps-lng" value="">
             </div>
+
+            <!-- CUSTOMER PHOTO — captured via camera, auto-uploaded to the
+                 user's Google Drive folder "Installment App Data" -->
+            <div class="fg full">
+              <label><i class="fa-solid fa-camera"></i> <span data-ur="کسٹمر کی تصویر" data-en="Customer Photo">کسٹمر کی تصویر</span></label>
+              <input type="file" id="c-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleCustomerPhotoCapture(event)">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="document.getElementById('c-photo-input').click()">
+                  <i class="fa-solid fa-camera"></i> <span data-ur="کیمرہ سے تصویر لیں" data-en="Take Photo">کیمرہ سے تصویر لیں</span>
+                </button>
+                <img id="c-photo-preview" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:10px;border:1.5px solid var(--bd);">
+                <button type="button" class="btn ba" style="width:auto;padding:0 10px;white-space:nowrap;" title="دوبارہ اپ لوڈ کریں" onclick="retryDriveUpload('c-photo-input')"><i class="fa-solid fa-arrows-rotate"></i></button>
+              </div>
+              <div id="c-photo-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+            </div>
           </div>
 
           <div class="sdiv"><span><i class="fa-solid fa-handshake"></i> <span data-ur="ضامن" data-en="Guarantor">ضامن</span></span></div>
@@ -2423,10 +2315,7 @@ input, select, textarea {
             <!-- LEVEL 6 — Serial / Engine -->
             <div class="fg">
               <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> <span data-ur="سیریل / شناخت نمبر" data-en="Serial / ID No.">سیریل / شناخت نمبر</span></label>
-              <div class="isc-input-row">
-                <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
-                <button type="button" class="isc-scan-btn" id="iscOpenBtn" title="کیمرے سے اسکین کریں" aria-label="Scan IMEI with camera"><i class="fa-solid fa-camera"></i></button>
-              </div>
+              <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
             </div>
             <div class="fg" id="m-engine-box" style="display:none;">
               <label><i class="fa-solid fa-gear"></i> <span data-ur="انجن نمبر" data-en="Engine No.">انجن نمبر</span></label>
@@ -2434,6 +2323,21 @@ input, select, textarea {
             </div>
             <div class="fg"><label><i class="fa-solid fa-money-bill"></i> <span data-ur="آئٹم اصل قیمت (Rs.)" data-en="Item Price (Rs.)">آئٹم اصل قیمت (Rs.)</span></label><input type="number" id="m-price" placeholder="85000" oninput="calc()"></div>
             <div class="fg"><label><i class="fa-solid fa-credit-card"></i> <span data-ur="ایڈوانس (Rs.)" data-en="Advance (Rs.)">ایڈوانس (Rs.)</span></label><input type="number" id="m-adv" placeholder="10000" oninput="calc()"></div>
+
+            <!-- PRODUCT PHOTO — captured via camera, auto-uploaded to the
+                 user's Google Drive folder "Installment App Data" -->
+            <div class="fg full">
+              <label><i class="fa-solid fa-camera"></i> <span data-ur="پروڈکٹ کی تصویر" data-en="Product Photo">پروڈکٹ کی تصویر</span></label>
+              <input type="file" id="m-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleProductPhotoCapture(event)">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="document.getElementById('m-photo-input').click()">
+                  <i class="fa-solid fa-camera"></i> <span data-ur="کیمرہ سے تصویر لیں" data-en="Take Photo">کیمرہ سے تصویر لیں</span>
+                </button>
+                <img id="m-photo-preview" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:10px;border:1.5px solid var(--bd);">
+                <button type="button" class="btn ba" style="width:auto;padding:0 10px;white-space:nowrap;" title="دوبارہ اپ لوڈ کریں" onclick="retryDriveUpload('m-photo-input')"><i class="fa-solid fa-arrows-rotate"></i></button>
+              </div>
+              <div id="m-photo-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
+            </div>
 
             <div class="fg full" id="m-extra-wrap" style="display:none;">
               <div class="sdiv" style="margin:4px 0 10px;"><span><i class="fa-solid fa-sliders"></i> <span data-ur="اضافی تفصیل" data-en="Extra Details">اضافی تفصیل</span></span></div>
@@ -2512,6 +2416,32 @@ input, select, textarea {
               <span class="cl" style="font-weight:700;"><i class="fa-solid fa-sack-dollar"></i> <span data-ur="ماہانہ قسط" data-en="Monthly Installment">ماہانہ قسط</span></span>
               <span class="cv big" id="cr-mon">—</span>
             </div>
+          </div>
+
+          <!-- GOOGLE DRIVE CONNECT — one-tap sign-in so the 3 photos below
+               (and any already captured on steps 1 & 2) can auto-upload to
+               the user's own "Installment App Data" Drive folder. -->
+          <div class="sdiv"><span><i class="fa-solid fa-cloud"></i> <span data-ur="گوگل ڈرائیو" data-en="Google Drive">گوگل ڈرائیو</span></span></div>
+          <div class="fg full" style="margin-bottom:6px;">
+            <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="gDriveSignIn()">
+              <span style="font-size:16px;">🔑</span> <span data-ur="Google سے Sign In کریں" data-en="Sign in with Google">Google سے Sign In کریں</span>
+            </button>
+            <div style="font-size:11px;color:var(--t2);margin-top:6px;" data-ur="تصاویر آپ کی اپنی گوگل ڈرائیو کے فولڈر 'Installment App Data' میں خودکار محفوظ ہوں گی" data-en="Photos are auto-saved to your own Google Drive folder 'Installment App Data'">تصاویر آپ کی اپنی گوگل ڈرائیو کے فولڈر 'Installment App Data' میں خودکار محفوظ ہوں گی</div>
+          </div>
+
+          <!-- FIRST INSTALLMENT RECEIPT PHOTO — captured via camera,
+               auto-uploaded to the user's Google Drive folder. -->
+          <div class="fg full">
+            <label><i class="fa-solid fa-receipt"></i> <span data-ur="پہلی قسط کی رسید کی تصویر" data-en="First Installment Receipt Photo">پہلی قسط کی رسید کی تصویر</span></label>
+            <input type="file" id="r-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleReceiptPhotoCapture(event)">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <button type="button" class="btn bp" style="width:auto;padding:0 16px;white-space:nowrap;" onclick="document.getElementById('r-photo-input').click()">
+                <i class="fa-solid fa-camera"></i> <span data-ur="رسید کی تصویر لیں" data-en="Take Receipt Photo">رسید کی تصویر لیں</span>
+              </button>
+              <img id="r-photo-preview" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:10px;border:1.5px solid var(--bd);">
+              <button type="button" class="btn ba" style="width:auto;padding:0 10px;white-space:nowrap;" title="دوبارہ اپ لوڈ کریں" onclick="retryDriveUpload('r-photo-input')"><i class="fa-solid fa-arrows-rotate"></i></button>
+            </div>
+            <div id="r-photo-status" style="font-size:11px;color:var(--t2);margin-top:4px;"></div>
           </div>
 
           <div style="margin-top:16px;display:flex;gap:10px;">
@@ -3540,295 +3470,7 @@ input, select, textarea {
 
 <div class="toast" id="toast"></div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     IMEI / BARCODE CAMERA SCANNER OVERLAY
-     Opened by the camera button (#iscOpenBtn) next to the
-     Serial/ID/IMEI field (#m-imei). Dynamsoft libraries are
-     lazy-loaded on first use so the main app isn't slowed down.
-     ══════════════════════════════════════════════════════════════ -->
-<div id="iscOverlay">
-  <div class="isc-blob isc-b1"></div>
-  <div class="isc-blob isc-b2"></div>
 
-  <div id="iscScanner" class="isc-scanner">
-    <svg class="dce-bg-loading" viewBox="0 0 1792 1792"><path d="M1760 896q0 176-68.5 336t-184 275.5-275.5 184-336 68.5-336-68.5-275.5-184-184-275.5-68.5-336q0-213 97-398.5t265-305.5 374-151v228q-221 45-366.5 221t-145.5 406q0 130 51 248.5t136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5q0-230-145.5-406t-366.5-221v-228q206 31 374 151t265 305.5 97 398.5z"/></svg>
-    <svg class="dce-bg-camera" viewBox="0 0 2048 1792"><path d="M1024 672q119 0 203.5 84.5t84.5 203.5-84.5 203.5-203.5 84.5-203.5-84.5-84.5-203.5 84.5-203.5 203.5-84.5zm704-416q106 0 181 75t75 181v896q0 106-75 181t-181 75h-1408q-106 0-181-75t-75-181v-896q0-106 75-181t181-75h224l51-136q19-49 69.5-84.5t103.5-35.5h512q53 0 103.5 35.5t69.5 84.5l51 136h224zm-704 1152q185 0 316.5-131.5t131.5-316.5-131.5-316.5-316.5-131.5-316.5 131.5-131.5 316.5 131.5 316.5 316.5 131.5z"/></svg>
-    <div class="dce-video-container"></div>
-    <div class="dce-scanarea"></div>
-
-    <div class="isc-scan-decor" id="iscScanDecor">
-      <div class="isc-corner isc-tl"></div>
-      <div class="isc-corner isc-tr"></div>
-      <div class="isc-corner isc-bl"></div>
-      <div class="isc-corner isc-br"></div>
-      <div class="isc-sweep"></div>
-    </div>
-
-    <div class="isc-sel-container">
-      <select class="dce-sel-camera"></select>
-      <select class="dce-sel-resolution"></select>
-    </div>
-  </div>
-
-  <div class="isc-topbar">
-    <select id="iscModeSel" class="isc-mode-select">
-      <option value="0">🔲 بار کوڈ اسکین</option>
-      <option value="1">🔤 نمبر پڑھیں (OCR)</option>
-    </select>
-    <button type="button" class="isc-close-btn" id="iscCloseBtn" aria-label="بند کریں"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="isc-status-line" id="iscStatus"></div>
-  <div class="isc-loading-msg" id="iscLoadingMsg" style="display:none;"></div>
-
-  <div class="isc-modal-window" id="iscModal">
-    <div class="isc-mw-label">اسکین کا نتیجہ</div>
-    <div class="isc-overflow"><pre id="isc-scan-result"></pre></div>
-    <div class="isc-modal-actions">
-      <button type="button" class="isc-correct-btn" id="iscCorrectBtn">✓ درست ہے</button>
-      <button type="button" class="isc-rescan-btn" id="iscRescanBtn">دوبارہ اسکین کریں</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  var DCE_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-camera-enhancer@3.2.0/dist/dce.js";
-  var DBR_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.2/dist/dbr.js";
-  var DLR_SRC = "https://cdn.jsdelivr.net/npm/dynamsoft-label-recognizer@2.2.11/dist/dlr.js";
-  var LICENSE = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==";
-
-  var camera, reader, recognizer, loopTimer = null, processing = false;
-  var sdkReady = false, sdkLoading = false;
-
-  function loadScript(src){
-    return new Promise(function(resolve, reject){
-      var s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = function(){ resolve(); };
-      s.onerror = function(){ reject(new Error('Failed to load ' + src)); };
-      document.head.appendChild(s);
-    });
-  }
-
-  function setLoadingMsg(text){
-    var el = document.getElementById('iscLoadingMsg');
-    if (!el) return;
-    if (text){ el.textContent = text; el.style.display = 'block'; }
-    else { el.style.display = 'none'; }
-  }
-
-  function setStatus(text){
-    var el = document.getElementById('iscStatus');
-    if (el) el.textContent = text || '';
-  }
-
-  async function ensureSdk(){
-    if (sdkReady) return true;
-    if (sdkLoading){
-      await new Promise(function(res){
-        var check = setInterval(function(){ if (sdkReady || !sdkLoading){ clearInterval(check); res(); } }, 120);
-      });
-      return sdkReady;
-    }
-    sdkLoading = true;
-    setLoadingMsg('اسکینر لوڈ ہو رہا ہے...');
-    try{
-      await loadScript(DCE_SRC);
-      await loadScript(DBR_SRC);
-      await loadScript(DLR_SRC);
-
-      Dynamsoft.DBR.BarcodeScanner.license = LICENSE;
-      Dynamsoft.DLR.LabelRecognizer.license = LICENSE;
-      Dynamsoft.DBR.BarcodeScanner.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.2/dist/";
-      Dynamsoft.DLR.LabelRecognizer.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-label-recognizer@2.2.11/dist/";
-      Dynamsoft.DCE.CameraEnhancer.engineResourcePath = "https://cdn.jsdelivr.net/npm/dynamsoft-camera-enhancer@3.2.0/dist/";
-
-      setLoadingMsg('کیمرہ شروع ہو رہا ہے...');
-      camera = await Dynamsoft.DCE.CameraEnhancer.createInstance();
-      await camera.setUIElement(document.getElementById('iscScanner'));
-      setScanRegion(0, 25, 100, 35);
-
-      reader = await Dynamsoft.DBR.BarcodeReader.createInstance();
-      var settings = await reader.getRuntimeSettings();
-      settings.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128;
-      await reader.updateRuntimeSettings(settings);
-
-      recognizer = await Dynamsoft.DLR.LabelRecognizer.createInstance();
-      await recognizer.updateRuntimeSettingsFromString("number");
-
-      sdkReady = true;
-      setLoadingMsg(null);
-      return true;
-    } catch(err){
-      console.error('IMEI scanner failed to load:', err);
-      setLoadingMsg('اسکینر لوڈ نہیں ہو سکا۔ انٹرنیٹ کنکشن چیک کریں۔');
-      return false;
-    } finally {
-      sdkLoading = false;
-    }
-  }
-
-  function setScanRegion(left, top, right, bottom){
-    if (!camera) return;
-    camera.setScanRegion({
-      regionLeft: left, regionTop: top, regionRight: right, regionBottom: bottom,
-      regionMeasuredByPercentage: 1
-    });
-    var decor = document.getElementById('iscScanDecor');
-    if (decor){
-      decor.style.left = left + '%';
-      decor.style.top = top + '%';
-      decor.style.width = (right - left) + '%';
-      decor.style.height = (bottom - top) + '%';
-    }
-  }
-
-  function whiteSpacesRemoved(str){ return str.split(' ').join(''); }
-
-  // https://en.wikipedia.org/wiki/International_Mobile_Equipment_Identity#Check_digit_computation
-  function verifyCheckDigit(imei){
-    var checkDigit = imei.substring(imei.length - 1);
-    var rest = imei.substring(0, imei.length - 1);
-    var digits = rest.split('');
-    var sum = 0;
-    for (var i = 0; i < digits.length; i++){
-      var digit = parseInt(digits[i], 10);
-      var numbers;
-      if ((i + 1) % 2 === 0){ numbers = (digit * 2).toString().split(''); }
-      else { numbers = [digit]; }
-      for (var j = 0; j < numbers.length; j++){ sum += parseInt(numbers[j], 10); }
-    }
-    return (sum + parseInt(checkDigit, 10)) % 10 === 0;
-  }
-
-  function imeiValid(v){
-    if (isNaN(v)) return false;
-    if (v.length >= 15 && v.length <= 17) return verifyCheckDigit(v);
-    return false;
-  }
-
-  async function captureAndDecode(){
-    if (!camera || !reader || processing) return;
-    if (camera.isOpen() === false) return;
-    var frame = camera.getFrame();
-    if (!frame) return;
-    processing = true;
-    try{
-      var results = await reader.decode(frame);
-      for (var i = 0; i < results.length; i++){
-        if (imeiValid(results[i].barcodeText)){ onDetected(results[i].barcodeText); break; }
-      }
-    } finally { processing = false; }
-  }
-
-  async function captureAndRecognize(){
-    if (!camera || !recognizer || processing) return;
-    if (camera.isOpen() === false) return;
-    var frame = camera.getFrame();
-    if (!frame) return;
-    processing = true;
-    try{
-      var results = await recognizer.recognize(frame);
-      for (var i = 0; i < results.length; i++){
-        var lineResults = results[i].lineResults;
-        for (var j = 0; j < lineResults.length; j++){
-          var text = whiteSpacesRemoved(lineResults[j].text);
-          if (imeiValid(text)){ onDetected(text); return; }
-        }
-      }
-    } finally { processing = false; }
-  }
-
-  function currentModeIsBarcode(){
-    var sel = document.getElementById('iscModeSel');
-    return !sel || sel.value === '0';
-  }
-
-  function startLoop(){
-    stopLoop();
-    var isBarcode = currentModeIsBarcode();
-    loopTimer = setInterval(isBarcode ? captureAndDecode : captureAndRecognize, isBarcode ? 100 : 500);
-  }
-  function stopLoop(){
-    if (loopTimer) clearInterval(loopTimer);
-    loopTimer = null; processing = false;
-  }
-
-  function onDetected(text){
-    stopLoop();
-    var resEl = document.getElementById('isc-scan-result');
-    if (resEl) resEl.textContent = text;
-    var modal = document.getElementById('iscModal');
-    if (modal) modal.classList.add('isc-active');
-  }
-
-  function onModeChange(){
-    if (currentModeIsBarcode()) setScanRegion(0, 25, 100, 35);
-    else setScanRegion(25, 25, 75, 35);
-    if (camera && camera.isOpen()) startLoop();
-  }
-
-  async function openScanner(){
-    var overlay = document.getElementById('iscOverlay');
-    overlay.classList.add('isc-active');
-    setStatus('');
-    var ok = await ensureSdk();
-    if (!ok) return;
-    try{
-      setStatus('بار کوڈ یا پرنٹ شدہ نمبر کو فریم میں لائیں');
-      await camera.open(true);
-      startLoop();
-    } catch(err){
-      console.error('Camera open error:', err);
-      setStatus('کیمرہ نہیں کھل سکا۔ کیمرے کی اجازت چیک کریں۔');
-    }
-  }
-
-  function closeScanner(){
-    stopLoop();
-    var modal = document.getElementById('iscModal');
-    if (modal) modal.classList.remove('isc-active');
-    if (camera){ try{ camera.close(true); }catch(e){} }
-    var overlay = document.getElementById('iscOverlay');
-    if (overlay) overlay.classList.remove('isc-active');
-  }
-
-  function acceptResult(){
-    var resEl = document.getElementById('isc-scan-result');
-    var text = resEl ? resEl.textContent : '';
-    var input = document.getElementById('m-imei');
-    if (input && text){
-      input.value = text;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    closeScanner();
-  }
-
-  function rescan(){
-    var modal = document.getElementById('iscModal');
-    if (modal) modal.classList.remove('isc-active');
-    startLoop();
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    var openBtn = document.getElementById('iscOpenBtn');
-    if (openBtn) openBtn.addEventListener('click', function(ev){ ev.preventDefault(); openScanner(); });
-
-    var closeBtn = document.getElementById('iscCloseBtn');
-    if (closeBtn) closeBtn.addEventListener('click', closeScanner);
-
-    var modeSel = document.getElementById('iscModeSel');
-    if (modeSel) modeSel.addEventListener('change', onModeChange);
-
-    var correctBtn = document.getElementById('iscCorrectBtn');
-    if (correctBtn) correctBtn.addEventListener('click', acceptResult);
-
-    var rescanBtn = document.getElementById('iscRescanBtn');
-    if (rescanBtn) rescanBtn.addEventListener('click', rescan);
-  });
-})();
-</script>
 
 </body>
 
@@ -5014,14 +4656,30 @@ function saveCustomer(){
     },
     guarantor:{ name:document.getElementById('g-name').value.trim(), phone:document.getElementById('g-phone').value.trim(), cnic:document.getElementById('g-cnic').value.trim() },
     mobile:{ category, item, itemType: item || category, itemBrand, itemSpec, model, imei, engineNo, extra, price, markup, markupType, markupPct: markupType==='pct'?mval:0, total, advance:adv, remaining:remain, months, monthly, startDate:startD, dueDay:parseInt(document.getElementById('m-dday').value)||10 },
+    // ── Google Drive media links (customer photo / product photo /
+    // first-installment receipt) — filled automatically as each photo
+    // is captured & auto-uploaded to the user's own Drive. Empty string
+    // if that particular photo was never captured for this agreement.
+    driveMedia: {
+      customerPhotoLink: (window._driveMedia && window._driveMedia.customerPhoto) ? window._driveMedia.customerPhoto.link : '',
+      productPhotoLink:  (window._driveMedia && window._driveMedia.productPhoto)  ? window._driveMedia.productPhoto.link  : '',
+      receiptPhotoLink:  (window._driveMedia && window._driveMedia.receiptPhoto)  ? window._driveMedia.receiptPhoto.link  : ''
+    },
   };
 
   if(editId){
     // Editing an existing agreement — save immediately, no signature step.
     const idx = customers.findIndex(c=>c.id==editId);
-    if(idx>-1){ customers[idx] = {...customers[idx], ...data}; }
+    if(idx>-1){
+      // Don't blank out previously-saved Drive links with empty ones if
+      // no new photo was captured during this edit session.
+      if(!data.driveMedia.customerPhotoLink && customers[idx].driveMedia) data.driveMedia.customerPhotoLink = customers[idx].driveMedia.customerPhotoLink || '';
+      if(!data.driveMedia.productPhotoLink  && customers[idx].driveMedia) data.driveMedia.productPhotoLink  = customers[idx].driveMedia.productPhotoLink  || '';
+      if(!data.driveMedia.receiptPhotoLink  && customers[idx].driveMedia) data.driveMedia.receiptPhotoLink  = customers[idx].driveMedia.receiptPhotoLink  || '';
+      customers[idx] = {...customers[idx], ...data};
+    }
     showToast('<i class="fa-solid fa-circle-check"></i> کسٹمر اپ ڈیٹ ہو گیا!');
-    save(); clearForm();
+    save(); clearForm(); _resetDriveMediaState();
     renderDash();
     renderCustomers();
     showSc('customers');
@@ -5104,7 +4762,7 @@ function finalizeAgreementWithSignatures(){
   closeMod('sig-wizard');
   showToast('<i class="fa-solid fa-circle-check"></i> معاہدہ دستخط کے ساتھ محفوظ ہو گیا!');
 
-  save(); clearForm(); refreshReuseLists();
+  save(); clearForm(); refreshReuseLists(); _resetDriveMediaState();
   renderDash();
   renderCustomers(); // show the full up-to-date list immediately (not just on search)
 
@@ -5431,6 +5089,7 @@ function clearForm(){
   _refreshGrBadge();
   clearCustomerReuse();
   clearGuarantorReuse();
+  _resetDriveMediaState();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -8706,12 +8365,26 @@ const DRIVE_SCOPE       = 'https://www.googleapis.com/auth/drive.appdata';
 const DRIVE_UPLOAD_URL  = 'https://www.googleapis.com/upload/drive/v3/files';
 const DRIVE_FILES_URL   = 'https://www.googleapis.com/drive/v3/files';
 
+/* ── Media (photos) scope ────────────────────────────────────────
+   drive.appdata (above) only grants access to the app's own hidden
+   folder — good for the JSON backup, but the user can never see or
+   open those files in Drive. Customer/product photos + receipts need
+   to land in a REAL, VISIBLE folder in the user's own Drive, so we
+   request the extra "drive.file" scope (access only to files this
+   app itself creates — nothing else in the user's Drive is touched).
+   Both scopes are requested together at sign-in (see gDriveSignIn
+   and initBackupUI below) so a single Google login covers both. ──── */
+const DRIVE_MEDIA_SCOPE  = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FULL_SCOPE   = DRIVE_SCOPE + ' ' + DRIVE_MEDIA_SCOPE;
+const MEDIA_FOLDER_NAME  = 'Installment App Data';
+
 /* ─── State ──────────────────────────────────────────────────── */
 let _gsiClient     = null;   // GSI token client instance
 let _accessToken   = null;   // current OAuth bearer token
 let _tokenExpiry   = 0;      // timestamp ms when token expires
 let _autoTimer     = null;   // handle for 24-h interval
 let _pendingImport = null;   // data waiting for user confirmation
+let _mediaFolderId = null;   // cached Drive folder id for "Installment App Data"
 
 /* ════════════════════════════════════════════════════════════════
    GOOGLE SCRIPTS — load GSI lazily (no blocking <script> in head)
@@ -8772,7 +8445,7 @@ async function gDriveSignIn(){
 
   _gsiClient = google.accounts.oauth2.initTokenClient({
     client_id : cid,
-    scope     : DRIVE_SCOPE,
+    scope     : DRIVE_FULL_SCOPE,
     callback  : (response)=>{
       _uiShowSigningIn(false);
       if(response.error){
@@ -9034,6 +8707,184 @@ async function gDriveRestore(){
   } catch(err){
     _closeGDriveProgress();
     showToast('<i class="fa-solid fa-circle-xmark"></i> Restore ناکام: ' + err.message, 'warn');
+  }
+}
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  GOOGLE DRIVE — CUSTOMER / PRODUCT / RECEIPT PHOTO UPLOADS    ║
+   ║  Every photo captured via the camera inputs on the Add        ║
+   ║  Customer screen is converted to a binary Blob and uploaded   ║
+   ║  straight to a REAL, visible folder ("Installment App Data")  ║
+   ║  inside the signed-in user's own Google Drive — nothing is    ║
+   ║  ever stored in Firebase Storage. Upload starts automatically ║
+   ║  the moment a photo is picked/captured; no extra tap needed.  ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+/* ─── Find (or create, once) the "Installment App Data" folder ──
+   The resulting folder id is cached both in memory and in
+   localStorage so we don't re-search Drive on every single upload. */
+async function _ensureMediaFolder(){
+  if(_mediaFolderId) return _mediaFolderId;
+
+  const cached = window.safeLS.getItem('sms_media_folder_id');
+  if(cached){ _mediaFolderId = cached; return cached; }
+
+  const q = encodeURIComponent(`name='${MEDIA_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const searchRes = await fetch(`${DRIVE_FILES_URL}?q=${q}&fields=files(id,name)`, { headers: _authHeader() });
+  if(!searchRes.ok) throw new Error('Drive folder search: HTTP ' + searchRes.status);
+  const searchJson = await searchRes.json();
+
+  if(searchJson.files && searchJson.files.length){
+    _mediaFolderId = searchJson.files[0].id;
+  } else {
+    const createRes = await fetch(DRIVE_FILES_URL, {
+      method : 'POST',
+      headers: { ..._authHeader(), 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ name: MEDIA_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+    });
+    if(!createRes.ok) throw new Error('Drive folder create: HTTP ' + createRes.status);
+    const createJson = await createRes.json();
+    _mediaFolderId = createJson.id;
+  }
+  window.safeLS.setItem('sms_media_folder_id', _mediaFolderId);
+  return _mediaFolderId;
+}
+
+/* ─── Generic image uploader ─────────────────────────────────────
+   Takes a File (from an <input type="file"> or camera capture),
+   reads it as raw binary, and uploads it via Drive's multipart
+   endpoint directly into the "Installment App Data" folder. Also
+   makes the file link-shareable (anyone-with-link → viewer) so the
+   resulting link can be pasted into a WhatsApp message or receipt
+   without the customer needing Drive access to the shop's account.
+   Returns { id, link } on success. Throws on any failure so callers
+   can show a proper error state instead of silently doing nothing. */
+async function uploadImageToDrive(file, fileNamePrefix){
+  if(!file) return null;
+  if(!_tokenOK()){
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i> پہلے Google سے Sign In کریں', 'warn');
+    gDriveSignIn();
+    return null;
+  }
+
+  const folderId = await _ensureMediaFolder();
+  const ext      = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'jpg';
+  const fileName = `${fileNamePrefix}_${Date.now()}.${ext}`;
+  const boundary = 'sms_media_' + Date.now();
+  const meta     = JSON.stringify({ name: fileName, parents: [folderId] });
+
+  // Read the picked photo as raw binary bytes (not base64 text) — this
+  // keeps the upload roughly 33% smaller/faster than a base64 body.
+  const fileBuffer = await file.arrayBuffer();
+  const metaPart   = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${file.type || 'image/jpeg'}\r\n\r\n`;
+  const closePart  = `\r\n--${boundary}--`;
+  const body       = new Blob([metaPart, new Uint8Array(fileBuffer), closePart]);
+
+  const upRes = await fetch(`${DRIVE_UPLOAD_URL}?uploadType=multipart&fields=id,webViewLink`, {
+    method : 'POST',
+    headers: { ..._authHeader(), 'Content-Type': `multipart/related; boundary=${boundary}` },
+    body
+  });
+  if(!upRes.ok) throw new Error('Drive image upload: HTTP ' + upRes.status);
+  const upJson = await upRes.json();
+
+  // Make the file link-shareable. Non-fatal if it fails (e.g. managed
+  // Workspace account that blocks link-sharing) — the file itself is
+  // still safely uploaded and reachable by the signed-in owner.
+  try{
+    await fetch(`${DRIVE_FILES_URL}/${upJson.id}/permissions`, {
+      method : 'POST',
+      headers: { ..._authHeader(), 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ role: 'reader', type: 'anyone' })
+    });
+  } catch(e){ /* sharing failed — link will just require Drive login to open */ }
+
+  return { id: upJson.id, link: upJson.webViewLink || `https://drive.google.com/file/d/${upJson.id}/view` };
+}
+
+/* ─── In-memory holder for the 3 photo links of the customer         
+   currently being added/edited. Reset via _resetDriveMediaState()
+   after every save/cancel so a stale link never leaks into the next
+   customer's record. ─────────────────────────────────────────────── */
+window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null };
+
+function _resetDriveMediaState(){
+  window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null };
+  [
+    ['c-photo-input','c-photo-preview','c-photo-status'],
+    ['m-photo-input','m-photo-preview','m-photo-status'],
+    ['r-photo-input','r-photo-preview','r-photo-status']
+  ].forEach(([inputId, previewId, statusId])=>{
+    const inputEl   = document.getElementById(inputId);
+    const previewEl = document.getElementById(previewId);
+    const statusEl  = document.getElementById(statusId);
+    if(inputEl)   inputEl.value = '';
+    if(previewEl){ previewEl.src = ''; previewEl.style.display = 'none'; }
+    if(statusEl)  statusEl.innerHTML = '';
+  });
+}
+
+/* ─── Shared preview + auto-upload logic used by all 3 capture inputs ─── */
+function _previewAndUploadToDrive(file, previewId, statusId, prefix, storeKey){
+  const previewEl = document.getElementById(previewId);
+  const statusEl  = document.getElementById(statusId);
+  if(!file) return;
+
+  if(!file.type || !file.type.startsWith('image/')){
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i> صرف تصویر منتخب کریں', 'warn');
+    return;
+  }
+
+  // Instant local preview (before the upload even starts).
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    if(previewEl){ previewEl.src = e.target.result; previewEl.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+
+  if(statusEl){
+    statusEl.innerHTML = '<span style="animation:spin 1s linear infinite;display:inline-block"><i class="fa-solid fa-arrows-rotate"></i></span> Google Drive پر اپ لوڈ ہو رہی ہے…';
+  }
+
+  uploadImageToDrive(file, prefix).then((result)=>{
+    if(!result){ if(statusEl) statusEl.innerHTML = ''; return; } // sign-in was triggered instead
+    window._driveMedia[storeKey] = result;
+    if(statusEl){
+      statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#43A047;"></i> ڈرائیو پر محفوظ — <a href="${result.link}" target="_blank" rel="noopener" style="color:#1A73E8;">لنک دیکھیں</a>`;
+    }
+    showToast('<i class="fa-solid fa-cloud-arrow-up"></i> تصویر Google Drive پر اپ لوڈ ہو گئی!');
+  }).catch((err)=>{
+    console.warn('[GDrive media upload]', err);
+    if(statusEl){
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#E53935;"></i> اپ لوڈ ناکام — دوبارہ کوشش کریں';
+    }
+    showToast('<i class="fa-solid fa-circle-xmark"></i> اپ لوڈ ناکام: ' + err.message, 'warn');
+  });
+}
+
+/* ─── The 3 handlers wired to onchange= on each camera/file input ─── */
+function handleCustomerPhotoCapture(event){
+  const file = event.target.files && event.target.files[0];
+  _previewAndUploadToDrive(file, 'c-photo-preview', 'c-photo-status', 'customer_photo', 'customerPhoto');
+}
+function handleProductPhotoCapture(event){
+  const file = event.target.files && event.target.files[0];
+  _previewAndUploadToDrive(file, 'm-photo-preview', 'm-photo-status', 'product_photo', 'productPhoto');
+}
+function handleReceiptPhotoCapture(event){
+  const file = event.target.files && event.target.files[0];
+  _previewAndUploadToDrive(file, 'r-photo-preview', 'r-photo-status', 'first_installment_receipt', 'receiptPhoto');
+}
+
+/* ─── Manual "retry / re-upload" button hook (used in the HTML next
+   to each preview so the user can force a re-upload without picking
+   the photo again, e.g. after a failed attempt). ─────────────────── */
+function retryDriveUpload(inputId){
+  const inputEl = document.getElementById(inputId);
+  if(inputEl && inputEl.files && inputEl.files[0]){
+    inputEl.dispatchEvent(new Event('change'));
+  } else if(inputEl){
+    inputEl.click();
   }
 }
 
@@ -9414,7 +9265,7 @@ function initBackupUI(){
       if(!window.google?.accounts?.oauth2) return;
       const silentClient = google.accounts.oauth2.initTokenClient({
         client_id : _getClientId(),
-        scope     : DRIVE_SCOPE,
+        scope     : DRIVE_FULL_SCOPE,
         prompt    : '',   // empty = no dialog if already authorized
         callback  : (resp)=>{
           if(resp.error) return; // silently ignore; user can manually sign in
