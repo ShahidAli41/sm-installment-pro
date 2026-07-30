@@ -8392,7 +8392,13 @@ let _pendingImport = null;   // data waiting for user confirmation
 let _mediaFolderId = null;   // cached Drive folder id for "Installment App Data"
 
 /* ════════════════════════════════════════════════════════════════
-   GOOGLE SCRIPTS — load GSI lazily (no blocking <script> in head)
+   GOOGLE IDENTITY SERVICES (GSI) LIBRARY — loaded lazily (no
+   blocking <script> tag in <head>). This is Google's client-side
+   OAuth/sign-in JS library (accounts.google.com/gsi/client) — it
+   has nothing to do with Google Apps Script / script.google.com.
+   No Apps Script web app, doPost/doGet endpoint, or deployment URL
+   is used anywhere in this file. All Drive operations below call
+   the Drive REST API v3 directly via fetch().
    ════════════════════════════════════════════════════════════════ */
 function _loadGSI(){
   return new Promise((resolve, reject)=>{
@@ -8443,7 +8449,7 @@ async function gDriveSignIn(){
     await _loadGSI();
   } catch(e){
     _uiShowSigningIn(false);
-    showToast('<i class="fa-solid fa-circle-xmark"></i> Google script لوڈ نہ ہوا۔ انٹرنیٹ چیک کریں', 'warn');
+    showToast('<i class="fa-solid fa-circle-xmark"></i> Google Sign-In لائبریری لوڈ نہ ہوئی۔ انٹرنیٹ چیک کریں', 'warn');
     return;
   }
 
@@ -9231,7 +9237,7 @@ if(_splashLogoEl) _splashLogoEl.src = SM_PRO_LOGO_B64;
 // the user was already logged in.
 initAuthOverlay();
 initBackupUI();
-co_speechnotes_plugin_fab_id:1215,127
+
 // Load Firebase after the UI is already visible (non-blocking)
 setTimeout(()=>{ loadFirebaseSDK(); }, 100);
 
