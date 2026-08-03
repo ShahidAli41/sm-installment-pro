@@ -2322,7 +2322,12 @@ input, select, textarea {
             <!-- LEVEL 6 — Serial / Engine -->
             <div class="fg">
               <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> <span data-ur="سیریل / شناخت نمبر" data-en="Serial / ID No.">سیریل / شناخت نمبر</span></label>
-              <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr">
+              <div style="display:flex;gap:8px;align-items:stretch;">
+                <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr" style="flex:1;min-width:0;">
+                <button type="button" class="btn bp" style="width:44px;flex:0 0 44px;padding:0;" title="کیمرہ سے بار کوڈ/IMEI اسکین کریں" onclick="openBarcodeScanner('m-imei')">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+              </div>
             </div>
             <div class="fg" id="m-engine-box" style="display:none;">
               <label><i class="fa-solid fa-gear"></i> <span data-ur="انجن نمبر" data-en="Engine No.">انجن نمبر</span></label>
@@ -2893,6 +2898,26 @@ input, select, textarea {
       <div id="gdrive-progress-icon" style="font-size:52px;margin-bottom:14px;animation:spin 1.5s linear infinite;"><i class="fa-solid fa-arrows-rotate"></i></div>
       <div id="gdrive-progress-txt" style="font-size:14px;font-weight:700;color:var(--p1);"></div>
       <div id="gdrive-progress-sub" style="font-size:12px;color:var(--t2);margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BARCODE / IMEI SCANNER MODAL -->
+<div class="movl" id="mod-barcode-scanner">
+  <div class="modal" style="max-width:400px;">
+    <div class="mhdr" style="background:linear-gradient(135deg,#1A73E8,#0D47A1);">
+      <h3><i class="fa-solid fa-barcode"></i> بار کوڈ / IMEI اسکینر</h3>
+      <button class="mcls" onclick="closeBarcodeScanner()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mbdy" style="text-align:center;padding:16px;">
+      <div id="barcode-scanner-video-wrap" style="position:relative;border-radius:12px;overflow:hidden;background:#000;">
+        <video id="barcode-scanner-video" autoplay playsinline muted style="width:100%;display:block;max-height:320px;object-fit:cover;"></video>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:82%;height:32%;border:2.5px solid #4CAF50;border-radius:8px;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,.35);"></div>
+      </div>
+      <div id="barcode-scanner-fallback-container" style="display:none;border-radius:12px;overflow:hidden;"></div>
+      <div id="barcode-scan-status" style="font-size:12.5px;font-weight:600;color:var(--p1);margin-top:12px;">کیمرہ شروع ہو رہا ہے…</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:6px;">بار کوڈ یا IMEI کو ہری لائن کے اندر لائیں — نمبر خود بخود خانے میں آ جائے گا اور کاپی بھی ہو جائے گا</div>
+      <button type="button" class="btn ba" style="margin-top:14px;padding:8px 16px;width:auto;" onclick="closeBarcodeScanner()"><i class="fa-solid fa-xmark"></i> منسوخ کریں</button>
     </div>
   </div>
 </div>
@@ -8351,6 +8376,149 @@ function _fallbackCopyText(txt){
   document.body.appendChild(ta); ta.select();
   try{ document.execCommand('copy'); }catch(e){}
   document.body.removeChild(ta);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BARCODE / IMEI CAMERA SCANNER
+   ────────────────────────────────────────────────────────────────
+   Opens the device camera in a live preview and reads a barcode
+   (IMEI labels are almost always Code128, but EAN/UPC/QR are also
+   supported) directly into whichever input field requested it.
+   Uses the browser's native BarcodeDetector API where available
+   (fast, no extra download); falls back to the small, well-known
+   html5-qrcode library — loaded only if/when actually needed — for
+   browsers that don't support BarcodeDetector (e.g. iOS Safari).
+   ════════════════════════════════════════════════════════════════ */
+let _barcodeScanTargetId = null;
+let _barcodeScanStream   = null;
+let _barcodeScanRAF      = null;
+let _barcodeHtml5QrCode  = null;
+
+async function openBarcodeScanner(targetInputId){
+  _barcodeScanTargetId = targetInputId || 'm-imei';
+  const statusEl = document.getElementById('barcode-scan-status');
+  if(statusEl) statusEl.textContent = 'کیمرہ شروع ہو رہا ہے…';
+  openMod('mod-barcode-scanner');
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(statusEl) statusEl.textContent = 'اس براؤزر میں کیمرہ اسکیننگ دستیاب نہیں — نمبر خود لکھیں';
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i> کیمرہ اسکیننگ سپورٹ نہیں', 'warn');
+    return;
+  }
+
+  try{
+    if('BarcodeDetector' in window){
+      await _startNativeBarcodeScan();
+    }else{
+      await _startFallbackBarcodeScan();
+    }
+  }catch(err){
+    console.error('[Barcode Scanner]', err);
+    if(statusEl) statusEl.textContent = 'کیمرہ کھولنے میں ناکامی — اجازت (permission) چیک کریں';
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i> کیمرہ تک رسائی نہیں مل سکی', 'warn');
+  }
+}
+
+async function _startNativeBarcodeScan(){
+  const video    = document.getElementById('barcode-scanner-video');
+  const statusEl = document.getElementById('barcode-scan-status');
+
+  _barcodeScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  video.srcObject = _barcodeScanStream;
+  await video.play();
+
+  let detector;
+  try{
+    detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','code_39','itf','qr_code'] });
+  }catch(e){
+    detector = new BarcodeDetector(); // some implementations reject an explicit format list
+  }
+  if(statusEl) statusEl.textContent = 'بار کوڈ / IMEI کو ہری لائن کے اندر لائیں';
+
+  const scanLoop = async ()=>{
+    if(!_barcodeScanStream) return; // scanner already closed
+    try{
+      const codes = await detector.detect(video);
+      if(codes && codes.length){ _onBarcodeScanned(codes[0].rawValue); return; }
+    }catch(e){ /* transient per-frame decode misses are normal — keep looping */ }
+    _barcodeScanRAF = requestAnimationFrame(scanLoop);
+  };
+  _barcodeScanRAF = requestAnimationFrame(scanLoop);
+}
+
+function _loadHtml5QrcodeLib(){
+  return new Promise((resolve, reject)=>{
+    if(window.Html5Qrcode){ resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+    s.onload  = resolve;
+    s.onerror = ()=> reject(new Error('Scanner library failed to load'));
+    document.head.appendChild(s);
+  });
+}
+
+async function _startFallbackBarcodeScan(){
+  const statusEl = document.getElementById('barcode-scan-status');
+  if(statusEl) statusEl.textContent = 'اسکینر لوڈ ہو رہا ہے…';
+  await _loadHtml5QrcodeLib();
+
+  document.getElementById('barcode-scanner-video-wrap').style.display = 'none';
+  const container = document.getElementById('barcode-scanner-fallback-container');
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  _barcodeHtml5QrCode = new Html5Qrcode('barcode-scanner-fallback-container');
+  if(statusEl) statusEl.textContent = 'بار کوڈ / IMEI کو کیمرے کے سامنے لائیں';
+  await _barcodeHtml5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 260, height: 140 } },
+    (decodedText)=>{ _onBarcodeScanned(decodedText); },
+    ()=>{ /* per-frame decode failure — normal, ignore */ }
+  );
+}
+
+function _onBarcodeScanned(rawValue){
+  const value = (rawValue || '').trim();
+  if(!value) return;
+
+  const input = document.getElementById(_barcodeScanTargetId || 'm-imei');
+  if(input){
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // Auto-copy the scanned number too, as requested — one less step
+  // for the person to do manually after a successful scan.
+  const finishCopy = ()=> showToast('<i class="fa-solid fa-circle-check"></i> نمبر اسکین ہو کر خانے میں آ گیا اور کاپی بھی ہو گیا!');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(value).then(finishCopy).catch(()=>{ _fallbackCopyText(value); finishCopy(); });
+  }else{
+    _fallbackCopyText(value); finishCopy();
+  }
+
+  closeBarcodeScanner();
+}
+
+function closeBarcodeScanner(){
+  if(_barcodeScanRAF){ cancelAnimationFrame(_barcodeScanRAF); _barcodeScanRAF = null; }
+  if(_barcodeScanStream){
+    _barcodeScanStream.getTracks().forEach(t=>t.stop());
+    _barcodeScanStream = null;
+  }
+  const video = document.getElementById('barcode-scanner-video');
+  if(video) video.srcObject = null;
+
+  if(_barcodeHtml5QrCode){
+    const inst = _barcodeHtml5QrCode;
+    _barcodeHtml5QrCode = null;
+    inst.stop().catch(()=>{}).finally(()=>{ try{ inst.clear(); }catch(e){} });
+  }
+  const fallbackContainer = document.getElementById('barcode-scanner-fallback-container');
+  if(fallbackContainer){ fallbackContainer.style.display = 'none'; fallbackContainer.innerHTML = ''; }
+  const videoWrap = document.getElementById('barcode-scanner-video-wrap');
+  if(videoWrap) videoWrap.style.display = '';
+
+  closeMod('mod-barcode-scanner');
 }
 
 // ── For customers whose number doesn't have WhatsApp — sends the
