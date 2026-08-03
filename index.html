@@ -449,6 +449,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
      <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+<!-- Google Identity Services (GSI) — official library for "Sign in
+     with Google" + OAuth token requests used by the Drive REST API v3
+     integration below. Loaded async/defer so it never blocks first
+     paint; _loadGSI() (further down) waits for it if the user taps
+     the sign-in button before this finishes loading. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
      <!-- APK & WebView Compatibility Fixes -->
 <script>
   // DOM Storage & LocalStorage Check for Android WebView
@@ -5047,7 +5054,7 @@ function _getGrCounter(){
   const n = parseInt(window.safeLS.getItem('sms_gr_counter')||'0', 10);
   return isNaN(n) ? 0 : n;
 }
-function _formatGr(n){ return 'GR#' + String(n).padStart(4,'0'); }
+function _formatGr(n){ return 'GR#' + String(n).padStart(5,'0'); }
 // Keeps the GR counter correct after a cloud restore/import. The counter
 // used to live only in this device's localStorage, so if data came in
 // from another device/session (cloud sync, backup import) whose customers
@@ -5071,6 +5078,41 @@ function _refreshGrBadge(explicitNo){
   if(!el) return;
   el.textContent = explicitNo != null ? _formatGr(explicitNo) : _formatGr(_getGrCounter()+1);
 }
+
+// ══════════════════════════════
+//  GR NUMBER RENUMBERING (one-time cleanup)
+//  Re-assigns GR#00001, GR#00002... to every existing customer in
+//  order of when they were added (oldest first), and resets the
+//  counter so the next NEW customer continues right after the last
+//  one. Safe to call manually any time; also auto-runs once (guarded
+//  by sms_gr_renumbered_v1) so existing customers get clean sequential
+//  numbers without the user having to find a button for it.
+// ══════════════════════════════
+function renumberAllGrNumbers(){
+  try{
+    const sorted = [...(customers||[])].sort((a,b)=>{
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : (a.id||0);
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : (b.id||0);
+      return ta - tb;
+    });
+    sorted.forEach((c, idx)=>{ c.grNo = idx + 1; });
+    // sorted holds the same object references as `customers`, so the
+    // array itself (any order) now has correct grNo values already.
+    saveLocalData();
+    window.safeLS.setItem('sms_gr_counter', String(sorted.length));
+    if(typeof renderCustomers === 'function') renderCustomers();
+    const badgeEl = document.getElementById('c-gr-badge-text');
+    if(badgeEl) _refreshGrBadge();
+    return sorted.length;
+  }catch(e){ console.warn('[GR renumber]', e.message); return 0; }
+}
+(function _autoRenumberGrOnce(){
+  try{
+    if(window.safeLS.getItem('sms_gr_renumbered_v1') === '1') return;
+    if((customers||[]).length){ renumberAllGrNumbers(); }
+    window.safeLS.setItem('sms_gr_renumbered_v1', '1');
+  }catch(e){ console.warn('[GR auto-renumber]', e.message); }
+})();
 
 function clearForm(){
   ['c-name','c-father-name','c-phone','c-cnic','c-email','c-wa','c-addr','g-name','g-phone','g-cnic','m-model','m-imei','m-engine-no','m-price','m-adv','m-markup','m-start','m-months-manual','m-monthly-manual','m-category-other','m-item-other','m-brand-other','m-spec-other'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -6045,6 +6087,42 @@ function showReceipt(custId, payObj){
   lastReceiptData={c,payObj,paid,rem,dateStr};
   openMod('mod-receipt');
 }
+/* ════════════════════════════════════════════════════════════════
+   UNIVERSAL FILE SAVE / SHARE HELPER
+   ────────────────────────────────────────────────────────────────
+   The `<a download>` click trick used for saving generated PDFs
+   works fine in a normal browser tab, but Android's embedded
+   WebView (the kind most website-to-APK wrapper tools use) very
+   often ignores it silently — there's no native DownloadListener
+   wired up in a generic wrapper, so nothing visibly happens when
+   the button is tapped. The Web Share API, by contrast, is
+   implemented by the WebView component itself and reliably opens
+   the device's native share sheet (Save to Files / WhatsApp / any
+   PDF viewer / print-to-PDF service) even inside an embedded
+   WebView — so we prefer it whenever we detect that environment.
+   Normal browsers keep the classic download-link behaviour.
+   ════════════════════════════════════════════════════════════════ */
+async function _saveOrShareBlob(blob, fileName, mimeType){
+  mimeType = mimeType || blob.type || 'application/pdf';
+  if(_isEmbeddedWebView() && navigator.share){
+    try{
+      const file = new File([blob], fileName, {type: mimeType});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({ files:[file], title: fileName });
+        return 'shared';
+      }
+    }catch(err){
+      if(err && err.name === 'AbortError') return 'shared'; // user simply closed the share sheet
+      console.error('_saveOrShareBlob: share failed, falling back to download link', err);
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  return 'downloaded';
+}
 // ══════════════════════════════════════════════════════════════
 //  SHARED PDF ENGINE HELPERS
 //  Used by every "پی ڈی ایف" button in the app (receipt, agreement,
@@ -6159,28 +6237,34 @@ function printReceipt(){
     try{
       const blob = await _generateReceiptPdfBlob();
       if(blob){
-        const url = URL.createObjectURL(blob);
         const fileName = `Receipt-${(lastReceiptData?.c?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
         let dialogOpened = false;
-        try{
-          let frame = document.getElementById('receipt-print-frame');
-          if(!frame){
-            frame = document.createElement('iframe');
-            frame.id = 'receipt-print-frame';
-            frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
-            document.body.appendChild(frame);
-          }
-          await new Promise((resolve)=>{
-            let done=false;
-            frame.onload = ()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
-            frame.src = url;
-            setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
-          });
-        }catch(e){ console.error(e); }
-        const a=document.createElement('a');
-        a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url), 60000);
-        showToast('<i class="fa-solid fa-file-pdf"></i> رسید PDF محفوظ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ''));
+        // Hidden-iframe print dialog only makes sense in a normal browser —
+        // an embedded WebView has no print handler at all, so skip
+        // straight to save/share there instead of wasting 1.2s on it.
+        if(!_isEmbeddedWebView()){
+          try{
+            const previewUrl = URL.createObjectURL(blob);
+            let frame = document.getElementById('receipt-print-frame');
+            if(!frame){
+              frame = document.createElement('iframe');
+              frame.id = 'receipt-print-frame';
+              frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+              document.body.appendChild(frame);
+            }
+            await new Promise((resolve)=>{
+              let done=false;
+              frame.onload = ()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
+              frame.src = previewUrl;
+              setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
+            });
+            setTimeout(()=>URL.revokeObjectURL(previewUrl), 60000);
+          }catch(e){ console.error(e); }
+        }
+        const result = await _saveOrShareBlob(blob, fileName);
+        showToast(result === 'shared'
+          ? '<i class="fa-solid fa-file-pdf"></i> رسید PDF شیئر کر دی گئی'
+          : '<i class="fa-solid fa-file-pdf"></i> رسید PDF محفوظ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ''));
         return;
       }
     }catch(e){ console.error(e); }
@@ -6190,8 +6274,7 @@ function printReceipt(){
     pa.innerHTML=content.outerHTML;
     window.print();
   })();
-}
-// ── "پی ڈی ایف" button in the receipt popup — shares (or downloads)
+}// ── "پی ڈی ایف" button in the receipt popup — shares (or downloads)
 // a real PDF copy of the payment receipt. ──
 async function sendReceiptPDF(){
   if(!lastReceiptData)return;
@@ -7921,41 +8004,48 @@ async function printAgreement(){
   try{
     const blob = await _generateAgreementPdfBlob();
     if(blob){
-      const url = URL.createObjectURL(blob);
       const fileName = `Agreement-${(agreementCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
 
       // 1) Try to pop the OS/browser print dialog via a hidden iframe
-      //    pointed at the generated PDF — works in normal browsers and
-      //    many WebViews that do support printing.
+      //    pointed at the generated PDF — only meaningful in a normal
+      //    browser tab; an embedded WebView has no print handler at
+      //    all, so skip this step there.
       let dialogOpened = false;
-      try{
-        let frame = document.getElementById('agreement-print-frame');
-        if(!frame){
-          frame = document.createElement('iframe');
-          frame.id = 'agreement-print-frame';
-          frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
-          document.body.appendChild(frame);
-        }
-        await new Promise((resolve)=>{
-          let done = false;
-          frame.onload = ()=>{
-            if(done) return; done = true;
-            try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened = true; }catch(e){}
-            resolve();
-          };
-          frame.src = url;
-          setTimeout(()=>{ if(!done){ done = true; resolve(); } }, 1200); // never hang if onload doesn't fire
-        });
-      }catch(e){ console.error(e); }
+      if(!_isEmbeddedWebView()){
+        try{
+          const previewUrl = URL.createObjectURL(blob);
+          let frame = document.getElementById('agreement-print-frame');
+          if(!frame){
+            frame = document.createElement('iframe');
+            frame.id = 'agreement-print-frame';
+            frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+            document.body.appendChild(frame);
+          }
+          await new Promise((resolve)=>{
+            let done = false;
+            frame.onload = ()=>{
+              if(done) return; done = true;
+              try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened = true; }catch(e){}
+              resolve();
+            };
+            frame.src = previewUrl;
+            setTimeout(()=>{ if(!done){ done = true; resolve(); } }, 1200); // never hang if onload doesn't fire
+          });
+          setTimeout(()=>URL.revokeObjectURL(previewUrl), 60000);
+        }catch(e){ console.error(e); }
+      }
 
-      // 2) ALWAYS also save the real PDF file — this is the guaranteed
-      //    path that works even inside Android WebView apps with no
-      //    print handler at all, so the person always ends up with a
-      //    real, working .pdf they can open, print, or forward.
-      const a=document.createElement('a');
-      a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ' — اسے کھول کر پرنٹ کریں'));
+      // 2) ALWAYS also save/share the real PDF file — this is the
+      //    guaranteed path that works even inside Android WebView apps
+      //    with no print handler at all, so the person always ends up
+      //    with a real, working .pdf they can open, print, or forward.
+      //    _saveOrShareBlob() automatically uses the native share sheet
+      //    inside an embedded WebView, since a plain download click is
+      //    frequently a silent no-op there.
+      const result = await _saveOrShareBlob(blob, fileName);
+      showToast(result === 'shared'
+        ? '<i class="fa-solid fa-file-pdf"></i> PDF شیئر کر دی گئی'
+        : '<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی' + (dialogOpened ? ' — پرنٹ ڈائیلاگ بھی کھل گیا' : ' — اسے کھول کر پرنٹ کریں'));
       return;
     }
   }catch(e){ console.error(e); }
@@ -8124,28 +8214,31 @@ async function printOverdueNotice(){
   try{
     const blob = await _generateOverdueNoticePdfBlob();
     if(blob){
-      const url = URL.createObjectURL(blob);
       const fileName = `Warning-Notice-${(overdueNoticeCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
       let dialogOpened=false;
-      try{
-        let frame=document.getElementById('overdue-notice-print-frame');
-        if(!frame){
-          frame=document.createElement('iframe');
-          frame.id='overdue-notice-print-frame';
-          frame.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
-          document.body.appendChild(frame);
-        }
-        await new Promise((resolve)=>{
-          let done=false;
-          frame.onload=()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
-          frame.src=url;
-          setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
-        });
-      }catch(e){ console.error(e); }
-      const a=document.createElement('a');
-      a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 60000);
-      showToast('<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF محفوظ ہو گئی' + (dialogOpened?' — پرنٹ ڈائیلاگ بھی کھل گیا':''));
+      if(!_isEmbeddedWebView()){
+        try{
+          const previewUrl=URL.createObjectURL(blob);
+          let frame=document.getElementById('overdue-notice-print-frame');
+          if(!frame){
+            frame=document.createElement('iframe');
+            frame.id='overdue-notice-print-frame';
+            frame.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+            document.body.appendChild(frame);
+          }
+          await new Promise((resolve)=>{
+            let done=false;
+            frame.onload=()=>{ if(done)return; done=true; try{ frame.contentWindow.focus(); frame.contentWindow.print(); dialogOpened=true; }catch(e){} resolve(); };
+            frame.src=previewUrl;
+            setTimeout(()=>{ if(!done){ done=true; resolve(); } }, 1200);
+          });
+          setTimeout(()=>URL.revokeObjectURL(previewUrl), 60000);
+        }catch(e){ console.error(e); }
+      }
+      const result = await _saveOrShareBlob(blob, fileName);
+      showToast(result === 'shared'
+        ? '<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF شیئر کر دی گئی'
+        : '<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF محفوظ ہو گئی' + (dialogOpened?' — پرنٹ ڈائیلاگ بھی کھل گیا':''));
       return;
     }
   }catch(e){ console.error(e); }
@@ -8402,13 +8495,31 @@ let _mediaFolderId = null;   // cached Drive folder id for "Installment App Data
    ════════════════════════════════════════════════════════════════ */
 function _loadGSI(){
   return new Promise((resolve, reject)=>{
+    // Already loaded (the <head> tag finished first) — resolve immediately.
     if(window.google?.accounts?.oauth2){ resolve(); return; }
-    const s = document.createElement('script');
-    s.src   = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.onload  = resolve;
-    s.onerror = ()=> reject(new Error('GSI script failed to load'));
-    document.head.appendChild(s);
+
+    // The <head> tag is async/defer, so on a fast tap it may still be
+    // loading. Poll briefly for it before falling back to a dynamic
+    // injection — avoids ever loading the library twice.
+    let waited = 0;
+    const poll = setInterval(()=>{
+      if(window.google?.accounts?.oauth2){
+        clearInterval(poll);
+        resolve();
+        return;
+      }
+      waited += 100;
+      if(waited >= 4000){
+        clearInterval(poll);
+        // Head tag genuinely failed (e.g. blocked/offline) — try once more.
+        const s = document.createElement('script');
+        s.src   = 'https://accounts.google.com/gsi/client';
+        s.async = true;
+        s.onload  = resolve;
+        s.onerror = ()=> reject(new Error('GSI script failed to load'));
+        document.head.appendChild(s);
+      }
+    }, 100);
   });
 }
 
@@ -8438,10 +8549,92 @@ function _getClientId(){ return GOOGLE_CLIENT_ID; } // hardcoded — user is nev
 function _authHeader(){ return { Authorization: 'Bearer ' + _accessToken }; }
 
 /* ════════════════════════════════════════════════════════════════
+   EMBEDDED WEBVIEW / APK DETECTION
+   ────────────────────────────────────────────────────────────────
+   Google's servers actively refuse to complete Sign-In inside a
+   generic embedded WebView (the kind used by most "website → APK"
+   wrapper tools) and return "Error 403: disallowed_useragent" —
+   this is enforced by Google itself, not something any client-side
+   JS trick can bypass. The supported fix is to run the OAuth step
+   as a **full top-level page navigation** (not a popup/iframe),
+   which lets a properly configured wrapper hand the google.com
+   domain off to the device's system browser / Custom Tab — the
+   environment Google does allow. We detect that environment here
+   and switch flows automatically; nothing changes for normal
+   browser visitors (GitHub Pages, Chrome, Safari, etc.).
+   ════════════════════════════════════════════════════════════════ */
+function _isEmbeddedWebView(){
+  const ua = navigator.userAgent || '';
+  // Android System WebView identifies itself with "; wv)" in the UA string
+  // (Chrome Custom Tabs and normal Chrome do NOT include this token).
+  const androidWebView = /Android/.test(ua) && /; ?wv\)/i.test(ua);
+  // Cordova / Capacitor / most no-code "web-to-app" wrapper runtimes.
+  const hybridContainer = !!(window.cordova || window.Capacitor || window.ReactNativeWebView);
+  // iOS embedded WebView (WKWebView) — real Safari and SFSafariViewController
+  // both include a "Safari" token in the UA string; a bare WKWebView (the
+  // kind wrapper apps use) does not.
+  const iosStandaloneWebView = /iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua);
+  return androidWebView || hybridContainer || iosStandaloneWebView;
+}
+
+/* Full-page OAuth redirect — used automatically inside an embedded
+   WebView/APK instead of the popup-based GSI flow above. */
+function _startRedirectOAuth(){
+  const redirectUri = location.origin + location.pathname; // must be listed EXACTLY
+                                                             // under Authorized redirect URIs
+                                                             // in Google Cloud Console
+  window.safeLS.setItem('sms_oauth_pending', '1'); // survives the full navigation
+  const params = new URLSearchParams({
+    client_id             : GOOGLE_CLIENT_ID,
+    redirect_uri           : redirectUri,
+    response_type          : 'token',
+    scope                   : DRIVE_FULL_SCOPE,
+    include_granted_scopes : 'true',
+    prompt                  : 'select_account'
+  });
+  showToast('<i class="fa-solid fa-arrow-up-right-from-square"></i> Google سائن ان کھل رہا ہے…');
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+/* Call once at startup: picks up the access_token that Google appends
+   to the URL hash after redirecting back from _startRedirectOAuth(). */
+function _checkRedirectOAuthResult(){
+  const wasPending = window.safeLS.getItem('sms_oauth_pending') === '1';
+  if(!location.hash || location.hash.indexOf('access_token=') === -1){
+    if(wasPending) window.safeLS.removeItem('sms_oauth_pending');
+    return;
+  }
+  const params      = new URLSearchParams(location.hash.substring(1));
+  const accessToken = params.get('access_token');
+  const expiresIn   = params.get('expires_in');
+  const oauthError  = params.get('error');
+
+  // Always strip the token out of the visible URL immediately.
+  history.replaceState(null, '', location.pathname + location.search);
+  window.safeLS.removeItem('sms_oauth_pending');
+
+  if(oauthError){
+    showToast('<i class="fa-solid fa-circle-xmark"></i> Sign-in ناکام: ' + oauthError, 'warn');
+    return;
+  }
+  if(accessToken){
+    _saveToken(accessToken, parseInt(expiresIn, 10) || 3600);
+    _onSignedIn();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
    GOOGLE SIGN-IN  (GSI implicit flow — no redirect)
    ════════════════════════════════════════════════════════════════ */
 async function gDriveSignIn(){
   const cid = GOOGLE_CLIENT_ID;
+
+  // Inside an APK/WebView, Google blocks the popup-based flow outright —
+  // use a full-page redirect instead (see _startRedirectOAuth above).
+  if(_isEmbeddedWebView()){
+    _startRedirectOAuth();
+    return;
+  }
 
   // Show spinner while loading GSI
   _uiShowSigningIn(true);
@@ -9173,6 +9366,7 @@ function downloadFile(blob, name){ _triggerDownload(blob, name); }
    INIT — called once at app startup
    ════════════════════════════════════════════════════════════════ */
 function initBackupUI(){
+  _checkRedirectOAuthResult(); // pick up ?access_token from a WebView redirect, if any
   _loadToken();           // restore token from localStorage
   updateStatusBar();      // show last-backup time
   _updateGDriveUI(_tokenOK()); // show/hide buttons based on token
@@ -9182,8 +9376,11 @@ function initBackupUI(){
     startAutoBackup();
   }
 
-  // Silent re-auth: if Client ID is saved but token expired, try silently
-  if(!_tokenOK() && _getClientId()){
+  // Silent re-auth: if token expired, try silently (popup-based — only
+  // meaningful in a normal browser; skipped inside an embedded WebView
+  // since Google blocks that flow there too, and a doomed popup attempt
+  // would just be wasted work).
+  if(!_tokenOK() && _getClientId() && !_isEmbeddedWebView()){
     _loadGSI().then(()=>{
       if(!window.google?.accounts?.oauth2) return;
       const silentClient = google.accounts.oauth2.initTokenClient({
