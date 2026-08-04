@@ -2322,9 +2322,13 @@ input, select, textarea {
             <!-- LEVEL 6 — Serial / Engine -->
             <div class="fg">
               <label id="m-imei-label"><i class="fa-solid fa-hashtag"></i> <span data-ur="سیریل / شناخت نمبر" data-en="Serial / ID No.">سیریل / شناخت نمبر</span></label>
-              <div style="display:flex;gap:8px;align-items:stretch;">
+              <div style="display:flex;gap:8px;align-items:center;">
                 <input id="m-imei" placeholder="مثال: IMEI، سیریل نمبر یا کوئی بھی شناختی نمبر" dir="ltr" style="flex:1;min-width:0;">
-                <button type="button" class="btn bp" style="width:44px;flex:0 0 44px;padding:0;" title="کیمرہ سے بار کوڈ/IMEI اسکین کریں" onclick="openBarcodeScanner('m-imei')">
+                <button type="button" class="btn" title="کیمرہ سے بار کوڈ/IMEI اسکین کریں" onclick="openBarcodeScanner('m-imei')"
+                  style="flex:0 0 auto;width:38px;height:38px;padding:0;border-radius:50%;
+                         display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;
+                         background:linear-gradient(135deg,var(--p2),var(--p3));
+                         box-shadow:0 3px 8px rgba(21,101,192,0.35),0 1px 0 rgba(255,255,255,0.2) inset;">
                   <i class="fa-solid fa-camera"></i>
                 </button>
               </div>
