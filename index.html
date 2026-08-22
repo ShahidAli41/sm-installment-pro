@@ -1293,6 +1293,29 @@ body.dark .mtv-card .ch{ background:linear-gradient(90deg,#062219,#0B3B2E,#0F5C4
 
 .mtv-status{ margin-top:12px; font-size:11.5px; color:var(--t2); text-align:center; }
 
+/* tap-for-sound pill — shown once the (muted) live stream is actually
+   playing, so people know one tap turns the audio on. Sits low in the
+   frame so it never blocks the picture itself. */
+.mtv-tap-play{
+  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+  z-index:6; display:flex; align-items:center; gap:8px;
+  padding:7px 16px 7px 8px; border-radius:999px; cursor:pointer;
+  background:rgba(0,0,0,0.62); backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.16);
+  box-shadow:0 8px 20px -8px rgba(0,0,0,0.7);
+  animation:mtvTapPulseIn .35s ease;
+}
+.mtv-tap-play:hover{ background:rgba(0,0,0,0.78); }
+@keyframes mtvTapPulseIn{ from{opacity:0;transform:translateX(-50%) translateY(6px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+.mtv-tap-play-btn{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,#FFD54F,#FFA000);
+  display:flex; align-items:center; justify-content:center;
+  color:#1a1400; font-size:11px;
+  box-shadow:0 3px 8px -2px rgba(255,160,0,0.6);
+}
+.mtv-tap-play-txt{ color:#fff; font-size:11.5px; font-weight:600; white-space:nowrap; }
+
 @media(max-width:480px){
   .mtv-body{ padding:12px; }
   .mtv-lang-btn{ padding:6px 13px; font-size:12px; }
@@ -2331,11 +2354,15 @@ input, select, textarea {
             <div class="mtv-tv">
               <div class="mtv-screen-frame">
                 <div class="mtv-screen">
-                  <video id="mtvPlayer" controls playsinline></video>
+                  <video id="mtvPlayer" controls playsinline muted></video>
                   <div class="mtv-glare"></div>
                   <div class="mtv-vignette"></div>
                   <div class="mtv-power-dot"></div>
                   <div class="mtv-static" id="mtvStatic"></div>
+                  <div class="mtv-tap-play" id="mtvTapPlay" onclick="mtvTapToPlay()" style="display:none;">
+                    <div class="mtv-tap-play-btn"><i class="fa-solid fa-volume-xmark" id="mtvTapPlayIcon"></i></div>
+                    <div class="mtv-tap-play-txt" id="mtvTapPlayTxt" data-ur="آواز کے لیے تھپتھپائیں" data-en="Tap for sound">آواز کے لیے تھپتھپائیں</div>
+                  </div>
                   <div class="mtv-quality-control" id="mtvQualityControl">
                     <button class="mtv-quality-btn" id="mtvQualityBtn" onclick="mtvToggleQualityMenu(event)">Auto</button>
                     <div class="mtv-quality-menu" id="mtvQualityMenu"></div>
@@ -9927,10 +9954,34 @@ document.addEventListener('click', () => {
 function mtvSelectLang(lang){
   document.querySelectorAll('.mtv-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   const ch = MTV_CHANNELS.find(c => c.lang === lang);
-  if(ch) mtvPlayChannel(ch);
+  // This call originates from a real tap/click, so the browser will
+  // allow audio to start immediately — no need for the muted-first
+  // fallback here.
+  if(ch) mtvPlayChannel(ch, true);
 }
 
-function mtvPlayChannel(ch){
+// The "tap for sound" pill: on first load the video starts muted (so
+// autoplay is never blocked and the picture is guaranteed to show),
+// and this one tap — a genuine user gesture — turns the audio on.
+function mtvTapToPlay(){
+  const video = document.getElementById('mtvPlayer');
+  const tap = document.getElementById('mtvTapPlay');
+  if(!video) return;
+  video.muted = false;
+  video.play().catch(()=>{});
+  if(tap) tap.style.display = 'none';
+}
+
+function mtvShowTapPlay(){
+  const tap = document.getElementById('mtvTapPlay');
+  if(tap) tap.style.display = 'flex';
+}
+function mtvHideTapPlay(){
+  const tap = document.getElementById('mtvTapPlay');
+  if(tap) tap.style.display = 'none';
+}
+
+function mtvPlayChannel(ch, userGesture){
   const video = document.getElementById('mtvPlayer');
   const nowPlaying = document.getElementById('mtvNowPlaying');
   const statusEl = document.getElementById('mtvStatus');
@@ -9941,6 +9992,7 @@ function mtvPlayChannel(ch){
   const qualityMenu = document.getElementById('mtvQualityMenu');
   if(!video) return;
 
+  mtvHideTapPlay();
   if(staticOv){ staticOv.classList.add('flash'); setTimeout(() => staticOv.classList.remove('flash'), 500); }
   if(biasGlow){ biasGlow.style.setProperty('--mtv-glow', ch.glow); biasGlow.style.background = `radial-gradient(ellipse at 50% 35%, ${ch.glow}, transparent 70%)`; }
 
@@ -9953,12 +10005,24 @@ function mtvPlayChannel(ch){
 
   if(mtvHls){ mtvHls.destroy(); mtvHls = null; }
 
+  const tryPlay = () => {
+    video.muted = !userGesture;
+    video.play().then(() => {
+      if(!userGesture) mtvShowTapPlay();
+    }).catch(() => {
+      // Autoplay blocked even muted (rare, strict WebViews) — fall
+      // back to a manual tap so the viewer always has a working
+      // control instead of a silently-stuck black screen.
+      mtvShowTapPlay();
+    });
+  };
+
   if(typeof Hls !== 'undefined' && Hls.isSupported()){
     mtvHls = new Hls({ startLevel:-1, capLevelToPlayerSize:true });
     mtvHls.loadSource(ch.url);
     mtvHls.attachMedia(video);
     mtvHls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(()=>{});
+      tryPlay();
       if(statusEl) statusEl.textContent = en ? 'Broadcasting live' : 'براہ راست نشر ہو رہا ہے';
       mtvBuildQualityMenu();
       mtvUpdateQualityLabel();
@@ -9970,7 +10034,7 @@ function mtvPlayChannel(ch){
   } else if(video.canPlayType('application/vnd.apple.mpegurl')){
     video.src = ch.url;
     video.addEventListener('loadedmetadata', () => {
-      video.play().catch(()=>{});
+      tryPlay();
       if(statusEl) statusEl.textContent = en ? 'Broadcasting live' : 'براہ راست نشر ہو رہا ہے';
     });
   } else if(statusEl){
@@ -9982,27 +10046,13 @@ function mtvInit(){
   if(mtvStarted) return;
   if(!document.getElementById('mtvPlayer')) return;
   mtvStarted = true;
-  mtvPlayChannel(MTV_CHANNELS[0]);
+  mtvPlayChannel(MTV_CHANNELS[0], false);
 }
-
-// Only start streaming once the Dashboard is actually visible so the
-// widget never competes for bandwidth/CPU while the app is loading or
-// the user is on another tab.
-const _mtvObserver = new MutationObserver(() => {
-  const dash = document.getElementById('sc-dash');
-  if(dash && dash.classList.contains('active')) mtvInit();
-});
-document.addEventListener('DOMContentLoaded', () => {
-  const dash = document.getElementById('sc-dash');
-  if(dash){
-    _mtvObserver.observe(dash, { attributes:true, attributeFilter:['class'] });
-    if(dash.classList.contains('active')) mtvInit();
-  }
-});
 
 window.addEventListener('DOMContentLoaded', () => {
   if(typeof applyLang === 'function') applyLang();
   if(typeof renderDash === 'function') renderDash();
+  mtvInit();
 });
 
 // PWA Service Worker Registration
