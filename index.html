@@ -1123,204 +1123,6 @@ textarea{resize:vertical;min-height:72px;}
   .dash-full-card{grid-column:auto;}
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MADANI CHANNEL LIVE — dashboard card (below "Pending
-   Installments"). Built in the app's own blue/orange theme with a
-   3D "TV set" look. Fully responsive: fluid width + aspect-ratio
-   video keep it correctly sized on mobile and in a desktop browser
-   alike, no fixed pixel dimensions anywhere.
-   ══════════════════════════════════════════════════════════════ */
-.mtv-card{ overflow:visible; }
-.mtv-card .ch{ background:linear-gradient(90deg,#0B3B2E,#0F5C46,#128a63); }
-body.dark .mtv-card .ch{ background:linear-gradient(90deg,#062219,#0B3B2E,#0F5C46) !important; }
-.mtv-live-pill{
-  display:flex;align-items:center;gap:5px;
-  background:rgba(255,255,255,0.16);
-  padding:3px 9px;border-radius:999px;
-  font-size:10.5px;font-weight:800;letter-spacing:.3px;
-  backdrop-filter:blur(3px);
-}
-.mtv-live-dot{
-  width:6px;height:6px;border-radius:50%;background:#FF5252;
-  box-shadow:0 0 0 0 rgba(255,82,82,.7);
-  animation:mtvPulse 1.7s infinite;
-}
-@keyframes mtvPulse{
-  0%{box-shadow:0 0 0 0 rgba(255,82,82,.6);}
-  70%{box-shadow:0 0 0 8px rgba(255,82,82,0);}
-  100%{box-shadow:0 0 0 0 rgba(255,82,82,0);}
-}
-
-.mtv-body{
-  padding:16px;
-  background:
-    radial-gradient(ellipse at 25% 0%,rgba(21,101,192,0.08),transparent 55%),
-    radial-gradient(ellipse at 80% 100%,rgba(255,111,0,0.07),transparent 55%);
-}
-
-.mtv-lang-row{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.mtv-lang-btn{
-  display:flex;align-items:center;gap:7px;
-  padding:7px 16px;border-radius:999px;cursor:pointer;
-  font-size:12.5px;font-weight:700;
-  border:1px solid var(--bd);
-  background:var(--card);
-  color:var(--t2);
-  transition:all .2s ease;
-  box-shadow:0 2px 8px rgba(21,101,192,0.08);
-}
-.mtv-lang-btn i{ font-size:10px; opacity:.6; }
-.mtv-lang-btn.active{
-  background:linear-gradient(135deg,var(--p1),var(--p2));
-  color:#fff; border-color:transparent;
-  box-shadow:0 8px 18px -6px rgba(21,101,192,0.55),inset 0 1px 1px rgba(255,255,255,0.35);
-}
-.mtv-lang-btn.active i{ opacity:1; }
-
-/* ---- 3D TV set, fully fluid ---- */
-.mtv-tv-wrap{ position:relative; width:100%; max-width:640px; margin:0 auto; }
-.mtv-bias-glow{
-  position:absolute; inset:-8% -6% -10%;
-  z-index:0; border-radius:32px;
-  background:radial-gradient(ellipse at 50% 35%, var(--mtv-glow,rgba(15,92,70,0.5)), transparent 70%);
-  filter:blur(26px); opacity:.8;
-  transition:background .5s ease;
-}
-.mtv-tv{
-  position:relative; z-index:1;
-  width:100%;
-  padding:clamp(8px,2.2vw,16px) clamp(8px,2.2vw,16px) 0;
-  border-radius:18px;
-  background:
-    repeating-linear-gradient(100deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px),
-    linear-gradient(155deg, #2b2f36, #14171c 55%, #060708);
-  box-shadow:
-    0 26px 54px -18px rgba(0,0,0,0.55),
-    inset 0 2px 2px rgba(255,255,255,0.08),
-    inset 0 -5px 12px rgba(0,0,0,0.55);
-  border:1px solid rgba(255,255,255,0.06);
-}
-.mtv-tv::after{
-  content:"";
-  position:absolute; top:6px; left:50%; transform:translateX(-50%);
-  width:44px; height:3px; border-radius:4px;
-  background:linear-gradient(90deg, transparent, #FFA000, transparent);
-  opacity:.55;
-}
-.mtv-screen-frame{
-  border-radius:11px; padding:clamp(4px,1vw,8px);
-  background:linear-gradient(160deg, #050505, #000);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.03);
-}
-.mtv-screen{ position:relative; border-radius:6px; overflow:hidden; background:#000; }
-.mtv-screen video{ width:100%; display:block; aspect-ratio:16/9; background:#000; object-fit:contain; }
-.mtv-glare{ position:absolute; inset:0; pointer-events:none; background:linear-gradient(120deg, rgba(255,255,255,0.08) 0%, transparent 28%); }
-.mtv-vignette{ position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 60px 14px rgba(0,0,0,0.45); }
-.mtv-power-dot{
-  position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
-  width:5px;height:5px;border-radius:50%; background:#4ade80;
-  box-shadow:0 0 5px 2px rgba(74,222,128,0.65); z-index:3;
-}
-.mtv-static{
-  position:absolute; inset:0; z-index:5; background:#000;
-  opacity:0; pointer-events:none; transition:opacity .35s ease;
-}
-.mtv-static.flash{ opacity:.85; }
-
-.mtv-bezel-bottom{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:9px 4px 12px; gap:8px;
-}
-.mtv-now-playing{ display:flex; align-items:center; gap:7px; font-size:clamp(10.5px,2.6vw,13px); color:#c7d6cf; min-width:0; }
-.mtv-now-playing span:last-child{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.mtv-dot{
-  width:7px;height:7px;border-radius:50%; background:#FFD54F; flex-shrink:0;
-  box-shadow:0 0 0 0 rgba(255,213,79,0.7); animation:mtvPulse2 1.8s infinite;
-}
-@keyframes mtvPulse2{
-  0%{ box-shadow:0 0 0 0 rgba(255,213,79,0.55); }
-  70%{ box-shadow:0 0 0 8px rgba(255,213,79,0); }
-  100%{ box-shadow:0 0 0 0 rgba(255,213,79,0); }
-}
-.mtv-brand-logo{ position:relative; width:24px; height:24px; z-index:6; flex-shrink:0; }
-.mtv-logo-ring{
-  position:absolute; inset:0; border-radius:50%;
-  background:conic-gradient(from 0deg,#FF6F00,#FFD54F,#43A047,#1E88E5,#FF6F00);
-  animation: mtvSpin 5s linear infinite;
-}
-@keyframes mtvSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
-.mtv-logo-text{
-  position:absolute; inset:2px; border-radius:50%;
-  background:#0B3B2E; color:#FFD54F;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Inter',sans-serif; font-weight:800; font-size:7px;
-}
-.mtv-grille{ display:flex; gap:3px; flex-shrink:0; }
-.mtv-grille span{ width:3px;height:3px;border-radius:50%; background:rgba(255,255,255,0.14); }
-
-.mtv-stand{ display:flex; justify-content:space-between; width:70%; margin:0 auto; position:relative; top:-1px; }
-.mtv-leg{
-  width:11px; height:32px;
-  background:linear-gradient(180deg, #2b2f36, #0a0a0a);
-  clip-path:polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
-  box-shadow:0 10px 14px -6px rgba(0,0,0,0.5);
-}
-.mtv-base-shadow{ width:56%; height:12px; margin:5px auto 0; background:radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 70%); }
-
-.mtv-quality-control{ position:absolute; top:6px; left:6px; z-index:7; }
-.mtv-quality-btn{
-  font-family:'Inter',sans-serif; font-size:10.5px; font-weight:700;
-  color:#fff; background:rgba(0,0,0,0.55);
-  border:1px solid rgba(255,255,255,0.16); border-radius:6px;
-  padding:4px 9px; cursor:pointer; backdrop-filter:blur(4px);
-  display:flex; align-items:center; gap:5px;
-}
-.mtv-quality-btn::before{ content:""; width:5px; height:5px; border-radius:50%; background:#FFD54F; box-shadow:0 0 4px rgba(255,213,79,0.7); }
-.mtv-quality-menu{
-  display:none; position:absolute; top:calc(100% + 5px); left:0;
-  background:rgba(10,20,16,0.95); border:1px solid rgba(255,255,255,0.12);
-  border-radius:8px; overflow:hidden; min-width:90px; z-index:8;
-}
-.mtv-quality-menu.open{ display:block; }
-.mtv-quality-menu button{
-  display:block; width:100%; text-align:left;
-  font-family:'Inter',sans-serif; font-size:11.5px;
-  color:#c7d6cf; background:transparent; border:none;
-  padding:7px 11px; cursor:pointer;
-}
-.mtv-quality-menu button:hover{ background:rgba(255,255,255,0.06); color:#fff; }
-.mtv-quality-menu button.active{ color:#FFD54F; font-weight:700; }
-
-.mtv-status{ margin-top:12px; font-size:11.5px; color:var(--t2); text-align:center; }
-
-/* tap-for-sound pill — shown once the (muted) live stream is actually
-   playing, so people know one tap turns the audio on. Sits low in the
-   frame so it never blocks the picture itself. */
-.mtv-tap-play{
-  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
-  z-index:6; display:flex; align-items:center; gap:8px;
-  padding:7px 16px 7px 8px; border-radius:999px; cursor:pointer;
-  background:rgba(0,0,0,0.62); backdrop-filter:blur(4px);
-  border:1px solid rgba(255,255,255,0.16);
-  box-shadow:0 8px 20px -8px rgba(0,0,0,0.7);
-  animation:mtvTapPulseIn .35s ease;
-}
-.mtv-tap-play:hover{ background:rgba(0,0,0,0.78); }
-@keyframes mtvTapPulseIn{ from{opacity:0;transform:translateX(-50%) translateY(6px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
-.mtv-tap-play-btn{
-  width:26px; height:26px; border-radius:50%; flex-shrink:0;
-  background:linear-gradient(135deg,#FFD54F,#FFA000);
-  display:flex; align-items:center; justify-content:center;
-  color:#1a1400; font-size:11px;
-  box-shadow:0 3px 8px -2px rgba(255,160,0,0.6);
-}
-.mtv-tap-play-txt{ color:#fff; font-size:11.5px; font-weight:600; white-space:nowrap; }
-
-@media(max-width:480px){
-  .mtv-body{ padding:12px; }
-  .mtv-lang-btn{ padding:6px 13px; font-size:12px; }
-}
-
 /* ══ SEARCH ══ */
 .sbar{display:flex;gap:8px;margin-bottom:14px;}
 .sinp{
@@ -2220,7 +2022,102 @@ input, select, textarea {
 .sig-clear{padding:12px;border-radius:10px;border:1px solid #CFD8DC;background:#ECEFF1;color:#37474F;font-weight:700;cursor:pointer;}
 </Style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<!-- ══ MADANI CHANNEL LIVE WIDGET — scoped styles (mc- prefix, no clashes with app classes) ══ -->
+<style>
+.mc-stage{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;}
+.mc-lang-toggle{display:flex;gap:12px;margin-bottom:18px;}
+.mc-lang-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 20px;border-radius:999px;
+  border:1px solid var(--bd);
+  background:linear-gradient(160deg, rgba(255,255,255,0.5), rgba(0,0,0,0.03));
+  color:var(--t2); font-size:13px; font-weight:600; cursor:pointer;
+  transition:all .2s ease; font-family:'Poppins',sans-serif;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.mc-lang-btn svg{width:14px;height:14px;opacity:.55;transition:opacity .2s ease;}
+.mc-lang-btn.active{
+  background:linear-gradient(150deg, var(--a3), var(--a2));
+  color:#1a1400; font-weight:800; border-color:transparent;
+  box-shadow:0 8px 20px -6px rgba(255,160,0,0.55), inset 0 1px 1px rgba(255,255,255,0.5);
+}
+.mc-lang-btn.active svg{opacity:1;}
+body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.15)); color:var(--t2);}
+
+.mc-tv-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;}
+.mc-bias-glow{
+  position:absolute; inset:-30px -22px -46px; z-index:0;
+  border-radius:34px;
+  background:radial-gradient(ellipse at 50% 40%, var(--mc-glow, rgba(21,101,192,0.45)), transparent 68%);
+  filter:blur(32px); opacity:0.85; transition:background 0.6s ease;
+}
+.mc-tv{
+  width:100%; position:relative; z-index:1; padding:16px 16px 0; border-radius:22px;
+  background:
+    repeating-linear-gradient(100deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(155deg, #363636, #161616 55%, #060606);
+  box-shadow:0 34px 70px -26px rgba(0,0,0,0.55), inset 0 2px 2px rgba(255,255,255,0.09), inset 0 -6px 14px rgba(0,0,0,0.65);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.mc-tv::after{
+  content:''; position:absolute; top:7px; left:50%; transform:translateX(-50%);
+  width:50px; height:3px; border-radius:4px;
+  background:linear-gradient(90deg, transparent, var(--a3), transparent); opacity:.6;
+}
+.mc-screen-frame{border-radius:12px; padding:8px; background:linear-gradient(160deg, #060606, #000); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.04);}
+.mc-screen{position:relative; border-radius:7px; overflow:hidden; background:#000;}
+.mc-screen video{width:100%; display:block; aspect-ratio:16/9; background:#000;}
+.mc-glare{position:absolute; inset:0; pointer-events:none; background:linear-gradient(120deg, rgba(255,255,255,0.10) 0%, transparent 30%);}
+.mc-vignette{position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 70px 16px rgba(0,0,0,0.5);}
+.mc-power-dot{position:absolute; bottom:7px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px 2px rgba(74,222,128,0.7); z-index:3;}
+.mc-static{position:absolute; inset:0; z-index:5; background:#000; opacity:0; pointer-events:none; transition:opacity .35s ease;}
+.mc-static.flash{opacity:.85;}
+.mc-bezel-bottom{display:flex; align-items:center; justify-content:space-between; padding:10px 4px 13px;}
+.mc-now-playing{display:flex; align-items:center; gap:7px; font-size:12.5px; color:#c8ccd1; font-weight:600;}
+.mc-dot{width:7px;height:7px;border-radius:50%; background:var(--a3); box-shadow:0 0 0 0 rgba(255,214,117,0.7); animation:mcPulse 1.8s infinite;}
+@keyframes mcPulse{0%{box-shadow:0 0 0 0 rgba(255,214,117,0.55);}70%{box-shadow:0 0 0 8px rgba(255,214,117,0);}100%{box-shadow:0 0 0 0 rgba(255,214,117,0);}}
+.mc-grille{display:flex; gap:4px;}
+.mc-grille span{width:4px;height:4px;border-radius:50%; background:rgba(255,255,255,0.15);}
+.mc-stand{display:flex; justify-content:space-between; width:74%; margin:0 auto; position:relative; top:-1px;}
+.mc-leg{width:12px; height:38px; background:linear-gradient(180deg,#3a3a3a,#0c0c0c); clip-path:polygon(20% 0,80% 0,100% 100%,0% 100%); box-shadow:0 12px 16px -8px rgba(0,0,0,0.5);}
+.mc-base-shadow{width:56%; height:14px; margin:5px auto 0; background:radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 70%);}
+.mc-status{margin-top:16px; font-size:12px; color:var(--t2); text-align:center; font-weight:600;}
+
+.mc-brand-logo{position:relative; width:26px; height:26px; z-index:6; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.mc-logo-ring{position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 0deg, var(--p1), var(--a3), #4ade80, #38bdf8, var(--p2), var(--p1)); animation:mcSpinLogo 5s linear infinite; box-shadow:0 4px 10px -3px rgba(0,0,0,0.7);}
+@keyframes mcSpinLogo{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.mc-logo-text{position:relative; z-index:1; width:20px; height:20px; border-radius:50%; background:#0d1117; color:var(--a3); display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; font-weight:800; font-size:7px; letter-spacing:.3px; box-shadow:inset 0 1px 2px rgba(255,255,255,0.18), 0 0 0 1.5px rgba(255,255,255,0.06);}
+
+.mc-quality-control{position:absolute; top:8px; left:8px; z-index:7;}
+.mc-quality-btn{font-family:'Poppins',sans-serif; font-size:10.5px; font-weight:700; color:#f5f5f5; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); border-radius:7px; padding:5px 10px; cursor:pointer; backdrop-filter:blur(4px); display:flex; align-items:center; gap:5px; transition:background .2s ease;}
+.mc-quality-btn:hover{background:rgba(0,0,0,0.75);}
+.mc-quality-btn::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--a3); box-shadow:0 0 5px rgba(255,214,117,0.7);}
+.mc-quality-menu{display:none; position:absolute; top:calc(100% + 6px); left:0; background:rgba(15,18,22,0.96); border:1px solid rgba(255,255,255,0.14); border-radius:8px; overflow:hidden; min-width:92px; box-shadow:0 12px 28px -10px rgba(0,0,0,0.8);}
+.mc-quality-menu.open{display:block;}
+.mc-quality-menu button{display:block; width:100%; text-align:left; font-family:'Poppins',sans-serif; font-size:11.5px; color:#b7bcc3; background:transparent; border:none; padding:8px 12px; cursor:pointer;}
+.mc-quality-menu button:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.mc-quality-menu button.active{color:var(--a3); font-weight:700;}
+
+.mc-unmute{
+  position:absolute; bottom:10px; right:10px; z-index:7;
+  display:flex; align-items:center; gap:7px;
+  background:rgba(0,0,0,0.72); color:#fff; border:1px solid rgba(255,255,255,0.25);
+  border-radius:20px; padding:7px 13px; font-size:11.5px; font-weight:700;
+  cursor:pointer; backdrop-filter:blur(4px); animation:mcUnmutePulse 1.6s ease-in-out infinite;
+}
+@keyframes mcUnmutePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.15);}50%{box-shadow:0 0 0 6px rgba(255,255,255,0);}}
+.mc-load-msg{margin-top:8px; font-size:11px; color:var(--r2); text-align:center; display:none;}
+.mc-load-msg.show{display:block;}
+
+@media(max-width:480px){
+  .mc-lang-btn{padding:7px 14px; font-size:11.5px;}
+  .mc-tv{padding:10px 10px 0; border-radius:16px;}
+  .mc-bezel-bottom{padding:8px 2px 10px;}
+  .mc-now-playing{font-size:11px;}
+  .mc-status{font-size:11px;}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js" defer onerror="window.__mcHlsLoadFailed=true;"></script>
 
 </head>
 <body>
@@ -2333,61 +2230,259 @@ input, select, textarea {
         <div class="cb" id="d-due"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p data-ur="سب ٹھیک ہے!" data-en="All good!">سب ٹھیک ہے!</p></div></div>
       </div>
 
-      <!-- MADANI CHANNEL LIVE -->
-      <div class="card dash-full-card mtv-card">
-        <div class="ch">
-          <h3><i class="fa-solid fa-satellite-dish"></i> <span data-ur="مدنی چینل لائیو" data-en="Madani Channel Live">مدنی چینل لائیو</span></h3>
-          <div class="mtv-live-pill"><span class="mtv-live-dot"></span><span data-ur="لائیو" data-en="LIVE">لائیو</span></div>
-        </div>
-        <div class="cb mtv-body">
-          <div class="mtv-lang-row">
-            <div class="mtv-lang-btn active" data-lang="ur" id="mtv-btn-ur" onclick="mtvSelectLang('ur')">
-              <i class="fa-solid fa-circle"></i> اردو
-            </div>
-            <div class="mtv-lang-btn" data-lang="en" id="mtv-btn-en" onclick="mtvSelectLang('en')">
-              <i class="fa-solid fa-circle"></i> English
-            </div>
-          </div>
-
-          <div class="mtv-tv-wrap">
-            <div class="mtv-bias-glow" id="mtvBiasGlow"></div>
-            <div class="mtv-tv">
-              <div class="mtv-screen-frame">
-                <div class="mtv-screen">
-                  <video id="mtvPlayer" controls playsinline muted></video>
-                  <div class="mtv-glare"></div>
-                  <div class="mtv-vignette"></div>
-                  <div class="mtv-power-dot"></div>
-                  <div class="mtv-static" id="mtvStatic"></div>
-                  <div class="mtv-tap-play" id="mtvTapPlay" onclick="mtvTapToPlay()" style="display:none;">
-                    <div class="mtv-tap-play-btn"><i class="fa-solid fa-volume-xmark" id="mtvTapPlayIcon"></i></div>
-                    <div class="mtv-tap-play-txt" id="mtvTapPlayTxt" data-ur="آواز کے لیے تھپتھپائیں" data-en="Tap for sound">آواز کے لیے تھپتھپائیں</div>
-                  </div>
-                  <div class="mtv-quality-control" id="mtvQualityControl">
-                    <button class="mtv-quality-btn" id="mtvQualityBtn" onclick="mtvToggleQualityMenu(event)">Auto</button>
-                    <div class="mtv-quality-menu" id="mtvQualityMenu"></div>
-                  </div>
-                </div>
+      <!-- ══ MADANI CHANNEL LIVE — TV widget card ══ -->
+      <div class="card dash-full-card">
+        <div class="ch"><h3><i class="fa-solid fa-tv"></i> <span data-ur="مدنی چینل — لائیو نشریات" data-en="Madani Channel — Live">مدنی چینل — لائیو نشریات</span></h3></div>
+        <div class="cb" style="padding:16px;">
+          <div class="mc-stage">
+            <div class="mc-lang-toggle">
+              <div class="mc-lang-btn active" data-lang="ur" onclick="mcSelectLang('ur', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 5.3 18.5A8.5 8.5 0 0 1 12 2Z"/></svg>
+                اردو
               </div>
-              <div class="mtv-bezel-bottom">
-                <div class="mtv-now-playing"><span class="mtv-dot" id="mtvLiveDot" style="display:none;"></span><span id="mtvNowPlaying">مدنی چینل اردو</span></div>
-                <div class="mtv-brand-logo">
-                  <div class="mtv-logo-ring"></div>
-                  <div class="mtv-logo-text">SM</div>
-                </div>
-                <div class="mtv-grille"><span></span><span></span><span></span><span></span><span></span></div>
+              <div class="mc-lang-btn" data-lang="en" onclick="mcSelectLang('en', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 5.3 18.5A8.5 8.5 0 0 1 12 2Z"/></svg>
+                English
               </div>
             </div>
-            <div class="mtv-stand">
-              <div class="mtv-leg"></div>
-              <div class="mtv-leg"></div>
-            </div>
-            <div class="mtv-base-shadow"></div>
-          </div>
 
-          <div class="mtv-status" id="mtvStatus" data-ur="براہ راست نشر ہو رہا ہے" data-en="Broadcasting live">براہ راست نشر ہو رہا ہے</div>
+            <div class="mc-tv-wrap">
+              <div class="mc-bias-glow" id="mc-biasGlow"></div>
+              <div class="mc-tv">
+                <div class="mc-screen-frame">
+                  <div class="mc-screen">
+                    <video id="mc-player" controls playsinline muted autoplay></video>
+                    <div class="mc-unmute" id="mc-unmute" style="display:none;" onclick="mcUnmute()"><i class="fa-solid fa-volume-xmark"></i> <span>آواز کے لیے ٹیپ کریں</span></div>
+                    <div class="mc-glare"></div>
+                    <div class="mc-vignette"></div>
+                    <div class="mc-power-dot"></div>
+                    <div class="mc-static" id="mc-staticOverlay"></div>
+                    <div class="mc-quality-control" id="mc-qualityControl">
+                      <button class="mc-quality-btn" id="mc-qualityBtn" onclick="mcToggleQualityMenu(event)">Auto</button>
+                      <div class="mc-quality-menu" id="mc-qualityMenu"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mc-bezel-bottom">
+                  <div class="mc-now-playing"><span class="mc-dot" id="mc-liveDot" style="display:none;"></span><span id="mc-nowPlaying">مدنی چینل اردو</span></div>
+                  <div class="mc-brand-logo">
+                    <div class="mc-logo-ring"></div>
+                    <div class="mc-logo-text">SM</div>
+                  </div>
+                  <div class="mc-grille"><span></span><span></span><span></span><span></span><span></span></div>
+                </div>
+              </div>
+              <div class="mc-stand">
+                <div class="mc-leg"></div>
+                <div class="mc-leg"></div>
+              </div>
+              <div class="mc-base-shadow"></div>
+            </div>
+
+            <div class="mc-status" id="mc-status">براہ راست نشر ہو رہا ہے</div>
+            <div class="mc-load-msg" id="mc-loadMsg">سٹریم لوڈ ہونے میں وقت لگ رہا ہے — انٹرنیٹ کنکشن چیک کریں</div>
+          </div>
         </div>
       </div>
+      <script>
+      (function(){
+        var MC_CHANNELS = [
+          { lang:"ur", name:"مدنی چینل اردو", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/b9790f10-cb0d-4e30-82bf-84a756234e58/master.m3u8", glow:"rgba(21,101,192,0.5)" },
+          { lang:"en", name:"Madani Channel English", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/c6a600b0-82cb-454a-8953-2bb2bb372edc/master.m3u8", glow:"rgba(255,160,0,0.45)" }
+        ];
+
+        var mcHls = null;
+        var mcInited = false;
+
+        function mcInit(){
+          if (mcInited) return;
+          var video = document.getElementById('mc-player');
+          if (!video) return;
+          mcInited = true;
+
+          var nowPlaying     = document.getElementById('mc-nowPlaying');
+          var statusEl       = document.getElementById('mc-status');
+          var liveDot        = document.getElementById('mc-liveDot');
+          var biasGlow       = document.getElementById('mc-biasGlow');
+          var staticOverlay  = document.getElementById('mc-staticOverlay');
+          var qualityBtn     = document.getElementById('mc-qualityBtn');
+          var qualityMenu    = document.getElementById('mc-qualityMenu');
+          var unmuteBtn      = document.getElementById('mc-unmute');
+          var loadMsg        = document.getElementById('mc-loadMsg');
+          var mcLoadTimer    = null;
+          var mcRetryCount   = 0;
+
+          window.mcUnmute = function(){
+            video.muted = false;
+            video.play().catch(function(){});
+            unmuteBtn.style.display = 'none';
+          };
+
+          function mcAttemptPlay(){
+            var p = video.play();
+            function afterPlay(){
+              // Video starts muted so autoplay is allowed by the browser;
+              // surface a one-tap unmute affordance whenever that's the case.
+              unmuteBtn.style.display = video.muted ? 'flex' : 'none';
+            }
+            if (p && p.then) {
+              p.then(afterPlay).catch(function(){
+                // Even muted autoplay was blocked — force mute and retry
+                // once more; if that also fails the native controls'
+                // play button still works fine on tap.
+                video.muted = true;
+                video.play().then(afterPlay).catch(function(){});
+              });
+            } else {
+              afterPlay();
+            }
+          }
+
+          function mcClearLoadTimer(){
+            if (mcLoadTimer){ clearTimeout(mcLoadTimer); mcLoadTimer = null; }
+            loadMsg.classList.remove('show');
+          }
+
+          function mcArmLoadTimer(){
+            mcClearLoadTimer();
+            mcLoadTimer = setTimeout(function(){
+              loadMsg.classList.add('show');
+            }, 9000);
+          }
+
+          window.mcSelectLang = function(lang, btn){
+            var all = document.querySelectorAll('.mc-lang-btn');
+            for (var i=0;i<all.length;i++) all[i].classList.remove('active');
+            btn.classList.add('active');
+            for (var j=0;j<MC_CHANNELS.length;j++){
+              if (MC_CHANNELS[j].lang === lang){ mcRetryCount = 0; mcPlayChannel(MC_CHANNELS[j]); break; }
+            }
+          };
+
+          window.mcToggleQualityMenu = function(e){
+            e.stopPropagation();
+            qualityMenu.classList.toggle('open');
+          };
+          document.addEventListener('click', function(){ qualityMenu.classList.remove('open'); });
+
+          function mcLevelLabel(level){
+            if (!level) return '';
+            if (level.height) return level.height + 'p';
+            return Math.round(level.bitrate/1000) + 'kbps';
+          }
+
+          function mcBuildQualityMenu(){
+            if (!mcHls || !mcHls.levels || !mcHls.levels.length) {
+              qualityMenu.innerHTML = '';
+              qualityBtn.innerHTML = 'HD';
+              return;
+            }
+            var order = mcHls.levels.map(function(lvl, idx){ return idx; })
+              .sort(function(a,b){ return mcHls.levels[b].height - mcHls.levels[a].height; });
+
+            var html = '<button data-level="-1" class="' + (mcHls.autoLevelEnabled ? 'active' : '') + '">Auto</button>';
+            order.forEach(function(idx){
+              var lvl = mcHls.levels[idx];
+              var isActive = !mcHls.autoLevelEnabled && mcHls.currentLevel === idx;
+              html += '<button data-level="' + idx + '" class="' + (isActive ? 'active' : '') + '">' + mcLevelLabel(lvl) + '</button>';
+            });
+            qualityMenu.innerHTML = html;
+
+            var btns = qualityMenu.querySelectorAll('button');
+            for (var i=0;i<btns.length;i++){
+              btns[i].onclick = function(e){
+                e.stopPropagation();
+                var lvl = parseInt(this.dataset.level, 10);
+                mcHls.currentLevel = lvl;
+                qualityMenu.classList.remove('open');
+                mcUpdateQualityLabel();
+              };
+            }
+          }
+
+          function mcUpdateQualityLabel(){
+            if (!mcHls) return;
+            var activeIdx = mcHls.currentLevel >= 0 ? mcHls.currentLevel : mcHls.loadLevel;
+            var lvl = mcHls.levels && mcHls.levels[activeIdx];
+            var label = lvl ? mcLevelLabel(lvl) : '';
+            qualityBtn.innerHTML = mcHls.autoLevelEnabled ? ('Auto' + (label ? ' · ' + label : '')) : label;
+            var btns = qualityMenu.querySelectorAll('button');
+            for (var i=0;i<btns.length;i++){
+              var isAuto = btns[i].dataset.level === '-1';
+              btns[i].classList.toggle('active', mcHls.autoLevelEnabled ? isAuto : (!isAuto && parseInt(btns[i].dataset.level,10) === mcHls.currentLevel));
+            }
+          }
+
+          function mcPlayChannel(ch){
+            staticOverlay.classList.add('flash');
+            setTimeout(function(){ staticOverlay.classList.remove('flash'); }, 500);
+
+            biasGlow.style.setProperty('--mc-glow', ch.glow);
+            biasGlow.style.background = 'radial-gradient(ellipse at 50% 40%, ' + ch.glow + ', transparent 68%)';
+
+            nowPlaying.textContent = ch.name;
+            liveDot.style.display = 'inline-block';
+            statusEl.textContent = 'لوڈ ہو رہا ہے...';
+            qualityMenu.classList.remove('open');
+            qualityMenu.innerHTML = '';
+            qualityBtn.innerHTML = 'Auto';
+            unmuteBtn.style.display = 'none';
+            mcArmLoadTimer();
+
+            if (mcHls) { mcHls.destroy(); mcHls = null; }
+
+            if (window.__mcHlsLoadFailed && !video.canPlayType('application/vnd.apple.mpegurl')) {
+              mcClearLoadTimer();
+              statusEl.textContent = 'پلیئر لوڈ نہیں ہو سکا — انٹرنیٹ کنکشن چیک کریں';
+              return;
+            }
+
+            if (window.Hls && window.Hls.isSupported()) {
+              mcHls = new Hls({ startLevel: -1, capLevelToPlayerSize: true });
+              mcHls.loadSource(ch.url);
+              mcHls.attachMedia(video);
+              mcHls.on(Hls.Events.MANIFEST_PARSED, function(){
+                mcClearLoadTimer();
+                mcAttemptPlay();
+                statusEl.textContent = 'براہ راست نشر ہو رہا ہے';
+                mcBuildQualityMenu();
+                mcUpdateQualityLabel();
+              });
+              mcHls.on(Hls.Events.LEVEL_SWITCHED, function(){ mcUpdateQualityLabel(); });
+              mcHls.on(Hls.Events.ERROR, function(event, data){
+                if (data.fatal) {
+                  mcClearLoadTimer();
+                  statusEl.textContent = 'سٹریم لوڈ نہیں ہو سکا — لنک عارضی طور پر بند ہو سکتا ہے';
+                }
+              });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+              video.src = ch.url;
+              video.addEventListener('loadedmetadata', function(){
+                mcClearLoadTimer();
+                mcAttemptPlay();
+                statusEl.textContent = 'براہ راست نشر ہو رہا ہے';
+              });
+            } else if (mcRetryCount < 5) {
+              mcRetryCount++;
+              mcClearLoadTimer();
+              statusEl.textContent = 'پلیئر لوڈ ہونے کا انتظار ہے...';
+              setTimeout(function(){ mcPlayChannel(ch); }, 1200);
+            } else {
+              mcClearLoadTimer();
+              statusEl.textContent = 'پلیئر لوڈ نہیں ہو سکا — انٹرنیٹ کنکشن چیک کریں یا پیج ری لوڈ کریں';
+            }
+          }
+
+          mcPlayChannel(MC_CHANNELS[0]);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', mcInit);
+        } else {
+          mcInit();
+        }
+      })();
+      </script>
     </div>
   </div>
 
@@ -9876,183 +9971,9 @@ _updatePinUI();
 // ══════════════════════════════════════════════════════════════
 
 
-// ══════════════════════════════════════════════════════════════
-//  MADANI CHANNEL LIVE — dashboard TV widget (hls.js player).
-//  Fully self-contained; doesn't touch any existing customer/
-//  installment logic. Two channels (Urdu/English), auto quality
-//  (ABR) with a manual override menu, and a fluid layout that
-//  resizes itself for both mobile and desktop via CSS alone
-//  (aspect-ratio video + % widths — no fixed pixel sizing).
-// ══════════════════════════════════════════════════════════════
-const MTV_CHANNELS = [
-  { lang:"ur", name:"مدنی چینل اردو", nameEn:"Madani Channel Urdu", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/b9790f10-cb0d-4e30-82bf-84a756234e58/master.m3u8", glow:"rgba(15,92,70,0.55)" },
-  { lang:"en", name:"Madani Channel English", nameEn:"Madani Channel English", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/c6a600b0-82cb-454a-8953-2bb2bb372edc/master.m3u8", glow:"rgba(255,111,0,0.5)" },
-];
-let mtvHls = null;
-let mtvStarted = false;
-
-function mtvLevelLabel(level){
-  if(!level) return '';
-  if(level.height) return level.height + 'p';
-  return Math.round(level.bitrate/1000) + 'kbps';
-}
-
-function mtvBuildQualityMenu(){
-  const menu = document.getElementById('mtvQualityMenu');
-  const btn = document.getElementById('mtvQualityBtn');
-  if(!menu || !btn) return;
-  if(!mtvHls || !mtvHls.levels || !mtvHls.levels.length){
-    menu.innerHTML = '';
-    btn.innerHTML = 'HD';
-    return;
-  }
-  const order = mtvHls.levels.map((lvl, idx) => idx).sort((a,b) => mtvHls.levels[b].height - mtvHls.levels[a].height);
-  let html = `<button data-level="-1" class="${mtvHls.autoLevelEnabled ? 'active' : ''}">Auto</button>`;
-  order.forEach(idx => {
-    const lvl = mtvHls.levels[idx];
-    const isActive = !mtvHls.autoLevelEnabled && mtvHls.currentLevel === idx;
-    html += `<button data-level="${idx}" class="${isActive ? 'active' : ''}">${mtvLevelLabel(lvl)}</button>`;
-  });
-  menu.innerHTML = html;
-  menu.querySelectorAll('button').forEach(b => {
-    b.onclick = (e) => {
-      e.stopPropagation();
-      const lvl = parseInt(b.dataset.level, 10);
-      mtvHls.currentLevel = lvl;
-      menu.classList.remove('open');
-      mtvUpdateQualityLabel();
-    };
-  });
-}
-
-function mtvUpdateQualityLabel(){
-  const btn = document.getElementById('mtvQualityBtn');
-  const menu = document.getElementById('mtvQualityMenu');
-  if(!mtvHls || !btn) return;
-  const activeIdx = mtvHls.currentLevel >= 0 ? mtvHls.currentLevel : mtvHls.loadLevel;
-  const lvl = mtvHls.levels && mtvHls.levels[activeIdx];
-  const label = lvl ? mtvLevelLabel(lvl) : '';
-  btn.innerHTML = mtvHls.autoLevelEnabled ? `Auto${label ? ' · ' + label : ''}` : label;
-  if(menu){
-    menu.querySelectorAll('button').forEach(b => {
-      const isAuto = b.dataset.level === '-1';
-      b.classList.toggle('active', mtvHls.autoLevelEnabled ? isAuto : (!isAuto && parseInt(b.dataset.level,10) === mtvHls.currentLevel));
-    });
-  }
-}
-
-function mtvToggleQualityMenu(e){
-  e.stopPropagation();
-  const menu = document.getElementById('mtvQualityMenu');
-  if(menu) menu.classList.toggle('open');
-}
-document.addEventListener('click', () => {
-  const menu = document.getElementById('mtvQualityMenu');
-  if(menu) menu.classList.remove('open');
-});
-
-function mtvSelectLang(lang){
-  document.querySelectorAll('.mtv-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-  const ch = MTV_CHANNELS.find(c => c.lang === lang);
-  // This call originates from a real tap/click, so the browser will
-  // allow audio to start immediately — no need for the muted-first
-  // fallback here.
-  if(ch) mtvPlayChannel(ch, true);
-}
-
-// The "tap for sound" pill: on first load the video starts muted (so
-// autoplay is never blocked and the picture is guaranteed to show),
-// and this one tap — a genuine user gesture — turns the audio on.
-function mtvTapToPlay(){
-  const video = document.getElementById('mtvPlayer');
-  const tap = document.getElementById('mtvTapPlay');
-  if(!video) return;
-  video.muted = false;
-  video.play().catch(()=>{});
-  if(tap) tap.style.display = 'none';
-}
-
-function mtvShowTapPlay(){
-  const tap = document.getElementById('mtvTapPlay');
-  if(tap) tap.style.display = 'flex';
-}
-function mtvHideTapPlay(){
-  const tap = document.getElementById('mtvTapPlay');
-  if(tap) tap.style.display = 'none';
-}
-
-function mtvPlayChannel(ch, userGesture){
-  const video = document.getElementById('mtvPlayer');
-  const nowPlaying = document.getElementById('mtvNowPlaying');
-  const statusEl = document.getElementById('mtvStatus');
-  const liveDot = document.getElementById('mtvLiveDot');
-  const biasGlow = document.getElementById('mtvBiasGlow');
-  const staticOv = document.getElementById('mtvStatic');
-  const qualityBtn = document.getElementById('mtvQualityBtn');
-  const qualityMenu = document.getElementById('mtvQualityMenu');
-  if(!video) return;
-
-  mtvHideTapPlay();
-  if(staticOv){ staticOv.classList.add('flash'); setTimeout(() => staticOv.classList.remove('flash'), 500); }
-  if(biasGlow){ biasGlow.style.setProperty('--mtv-glow', ch.glow); biasGlow.style.background = `radial-gradient(ellipse at 50% 35%, ${ch.glow}, transparent 70%)`; }
-
-  const en = typeof isUrdu !== 'undefined' ? !isUrdu : false;
-  if(nowPlaying) nowPlaying.textContent = en ? ch.nameEn : ch.name;
-  if(liveDot) liveDot.style.display = 'inline-block';
-  if(statusEl) statusEl.textContent = en ? 'Loading…' : 'لوڈ ہو رہا ہے...';
-  if(qualityMenu){ qualityMenu.classList.remove('open'); qualityMenu.innerHTML = ''; }
-  if(qualityBtn) qualityBtn.innerHTML = 'Auto';
-
-  if(mtvHls){ mtvHls.destroy(); mtvHls = null; }
-
-  const tryPlay = () => {
-    video.muted = !userGesture;
-    video.play().then(() => {
-      if(!userGesture) mtvShowTapPlay();
-    }).catch(() => {
-      // Autoplay blocked even muted (rare, strict WebViews) — fall
-      // back to a manual tap so the viewer always has a working
-      // control instead of a silently-stuck black screen.
-      mtvShowTapPlay();
-    });
-  };
-
-  if(typeof Hls !== 'undefined' && Hls.isSupported()){
-    mtvHls = new Hls({ startLevel:-1, capLevelToPlayerSize:true });
-    mtvHls.loadSource(ch.url);
-    mtvHls.attachMedia(video);
-    mtvHls.on(Hls.Events.MANIFEST_PARSED, () => {
-      tryPlay();
-      if(statusEl) statusEl.textContent = en ? 'Broadcasting live' : 'براہ راست نشر ہو رہا ہے';
-      mtvBuildQualityMenu();
-      mtvUpdateQualityLabel();
-    });
-    mtvHls.on(Hls.Events.LEVEL_SWITCHED, () => mtvUpdateQualityLabel());
-    mtvHls.on(Hls.Events.ERROR, (event, data) => {
-      if(data.fatal && statusEl) statusEl.textContent = en ? 'Stream unavailable — link may be temporarily down' : 'سٹریم لوڈ نہیں ہو سکا — لنک عارضی طور پر بند ہو سکتا ہے';
-    });
-  } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-    video.src = ch.url;
-    video.addEventListener('loadedmetadata', () => {
-      tryPlay();
-      if(statusEl) statusEl.textContent = en ? 'Broadcasting live' : 'براہ راست نشر ہو رہا ہے';
-    });
-  } else if(statusEl){
-    statusEl.textContent = en ? 'Your browser does not support this stream format' : 'آپ کا براؤزر یہ سٹریم فارمیٹ سپورٹ نہیں کرتا';
-  }
-}
-
-function mtvInit(){
-  if(mtvStarted) return;
-  if(!document.getElementById('mtvPlayer')) return;
-  mtvStarted = true;
-  mtvPlayChannel(MTV_CHANNELS[0], false);
-}
-
 window.addEventListener('DOMContentLoaded', () => {
   if(typeof applyLang === 'function') applyLang();
   if(typeof renderDash === 'function') renderDash();
-  mtvInit();
 });
 
 // PWA Service Worker Registration
