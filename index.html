@@ -599,19 +599,38 @@ body{padding-top:64px;}
   max-width:1380px;
   margin:0 auto;
 }
-.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;perspective:700px;}
 .brand-icon{
   width:40px;height:40px;flex-shrink:0;
-  border-radius:10px;
-  background:linear-gradient(135deg,#FFD700 0%,#FF8F00 100%);
-  box-shadow:0 4px 14px rgba(255,143,0,0.35);
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,#FFF7D6 0%,#FFD700 32%,#F0A500 62%,#B8860B 100%);
+  box-shadow:0 4px 14px rgba(255,143,0,0.45),
+             inset 0 2px 3px rgba(255,255,255,0.9),
+             inset 0 -3px 5px rgba(120,72,0,0.55),
+             0 0 0 2px #FFE082;
   display:flex;align-items:center;justify-content:center;
+  position:relative;
+  transform-style:preserve-3d;
+  animation:sm-coin-spin 6s linear infinite;
+}
+.brand-icon::before{
+  content:'';position:absolute;inset:3px;border-radius:50%;
+  border:1px dashed rgba(255,255,255,0.55);
+  pointer-events:none;
 }
 .brand-icon .bi-txt{
   font-family:'Poppins',sans-serif;
   font-weight:900;
-  font-size:16px;
-  color:#1A1200;
+  font-size:15px;
+  color:#5C3D00;
+  text-shadow:0 1px 0 rgba(255,255,255,0.65),0 -1px 0 rgba(0,0,0,0.25);
+}
+@keyframes sm-coin-spin{
+  0%{transform:rotateY(0deg);}
+  100%{transform:rotateY(360deg);}
+}
+@media(prefers-reduced-motion:reduce){
+  .brand-icon{animation:none;}
 }
 .brand-text .sname{
   font-size:15px;font-weight:800;
@@ -1233,7 +1252,7 @@ html[dir="ltr"] .mob-nav-grid { direction: ltr; }
   .brand-icon{
     width:36px;
     height:36px;
-    border-radius:10px;
+    border-radius:50%;
   }
   .brand-icon .bi-txt{
     font-size:14px;
@@ -2020,104 +2039,94 @@ input, select, textarea {
 .sig-step-dot{width:9px;height:9px;border-radius:50%;background:#CFD8DC;transition:all .2s;}
 .sig-step-dot.active{background:#1565C0;width:22px;border-radius:5px;}
 .sig-clear{padding:12px;border-radius:10px;border:1px solid #CFD8DC;background:#ECEFF1;color:#37474F;font-weight:700;cursor:pointer;}
+
+/* Welcome popup (login / register / PIN unlock) — bottom, gold 3D text */
+.sm-welcome-popup{
+  border-radius:16px !important;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  border:1px solid rgba(255,215,0,0.35) !important;
+  padding:12px 18px !important;
+}
+.sm-welcome-txt{
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:0.3px;
+  color:#FFD700;
+  text-shadow:0 1px 0 rgba(255,255,255,0.35),
+              0 2px 1px rgba(0,0,0,0.35),
+              0 3px 4px rgba(0,0,0,0.35);
+}
+.sm-sig-step-popup{
+  border-radius:14px !important;
+  border:1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ══ LIVE CLOCK (dashboard) ══ */
+.sm-clock-cb{
+  display:flex;align-items:center;justify-content:center;
+  gap:26px;flex-wrap:wrap;padding:18px 14px;
+}
+.sm-clock-outer{
+  width:132px;height:132px;border-radius:50%;
+  background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 6px 6px 12px rgba(21,101,192,0.12),
+             inset -6px -6px 12px rgba(255,255,255,0.75);
+  border:4px solid var(--bg);
+  flex-shrink:0;
+}
+body.dark .sm-clock-outer{
+  box-shadow:inset 6px 6px 12px rgba(0,0,0,0.5),
+             inset -6px -6px 12px rgba(30,58,95,0.4);
+}
+.sm-clock-dial{
+  width:112px;height:112px;border-radius:50%;
+  background:radial-gradient(circle,var(--card) 60%,var(--bg) 100%);
+  position:relative;
+  box-shadow:0 4px 12px rgba(21,101,192,0.15);
+}
+.sm-clock-pin{
+  width:10px;height:10px;background:#FFD700;
+  border:2px solid var(--card);border-radius:50%;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+.sm-clock-num{
+  position:absolute;font-weight:800;color:var(--t1);font-size:11px;user-select:none;
+}
+.sm-clock-num-12{top:6px;left:50%;transform:translateX(-50%);}
+.sm-clock-num-3{right:9px;top:50%;transform:translateY(-50%);}
+.sm-clock-num-6{bottom:6px;left:50%;transform:translateX(-50%);}
+.sm-clock-num-9{left:9px;top:50%;transform:translateY(-50%);}
+.sm-clock-hand{
+  position:absolute;bottom:50%;left:50%;
+  transform-origin:bottom center;border-radius:8px;z-index:5;
+  transition:transform .05s cubic-bezier(.4,2.08,.55,.44);
+}
+.sm-clock-hour{width:4px;height:28px;background:var(--p1);margin-left:-2px;}
+.sm-clock-minute{width:3px;height:40px;background:var(--p2);margin-left:-1.5px;}
+.sm-clock-second{width:2px;height:47px;background:#FFD700;margin-left:-1px;}
+.sm-clock-digital-wrap{text-align:center;}
+.sm-clock-time{
+  font-size:22px;font-weight:900;font-family:'Courier New',Courier,monospace;
+  background:linear-gradient(135deg,var(--p2),var(--p1));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:1px;
+}
+.sm-clock-date{font-size:12px;color:var(--t2);font-weight:600;margin-top:4px;}
+.sm-clock-badge{
+  display:inline-block;margin-top:6px;padding:3px 12px;
+  background:linear-gradient(135deg,var(--p2),var(--p1));
+  color:#fff;border-radius:12px;font-size:10px;font-weight:800;letter-spacing:0.5px;
+}
+@media(max-width:480px){
+  .sm-clock-cb{gap:16px;padding:14px 10px;}
+  .sm-clock-outer{width:112px;height:112px;}
+  .sm-clock-dial{width:94px;height:94px;}
+}
 </Style>
 
-<!-- ══ MADANI CHANNEL LIVE WIDGET — scoped styles (mc- prefix, no clashes with app classes) ══ -->
-<style>
-.mc-stage{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;}
-.mc-lang-toggle{display:flex;gap:12px;margin-bottom:18px;}
-.mc-lang-btn{
-  display:flex;align-items:center;gap:8px;
-  padding:9px 20px;border-radius:999px;
-  border:1px solid var(--bd);
-  background:linear-gradient(160deg, rgba(255,255,255,0.5), rgba(0,0,0,0.03));
-  color:var(--t2); font-size:13px; font-weight:600; cursor:pointer;
-  transition:all .2s ease; font-family:'Poppins',sans-serif;
-  box-shadow:0 2px 8px rgba(0,0,0,0.06);
-}
-.mc-lang-btn svg{width:14px;height:14px;opacity:.55;transition:opacity .2s ease;}
-.mc-lang-btn.active{
-  background:linear-gradient(150deg, var(--a3), var(--a2));
-  color:#1a1400; font-weight:800; border-color:transparent;
-  box-shadow:0 8px 20px -6px rgba(255,160,0,0.55), inset 0 1px 1px rgba(255,255,255,0.5);
-}
-.mc-lang-btn.active svg{opacity:1;}
-body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.15)); color:var(--t2);}
 
-.mc-tv-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;}
-.mc-bias-glow{
-  position:absolute; inset:-30px -22px -46px; z-index:0;
-  border-radius:34px;
-  background:radial-gradient(ellipse at 50% 40%, var(--mc-glow, rgba(21,101,192,0.45)), transparent 68%);
-  filter:blur(32px); opacity:0.85; transition:background 0.6s ease;
-}
-.mc-tv{
-  width:100%; position:relative; z-index:1; padding:16px 16px 0; border-radius:22px;
-  background:
-    repeating-linear-gradient(100deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px),
-    linear-gradient(155deg, #363636, #161616 55%, #060606);
-  box-shadow:0 34px 70px -26px rgba(0,0,0,0.55), inset 0 2px 2px rgba(255,255,255,0.09), inset 0 -6px 14px rgba(0,0,0,0.65);
-  border:1px solid rgba(255,255,255,0.08);
-}
-.mc-tv::after{
-  content:''; position:absolute; top:7px; left:50%; transform:translateX(-50%);
-  width:50px; height:3px; border-radius:4px;
-  background:linear-gradient(90deg, transparent, var(--a3), transparent); opacity:.6;
-}
-.mc-screen-frame{border-radius:12px; padding:8px; background:linear-gradient(160deg, #060606, #000); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.04);}
-.mc-screen{position:relative; border-radius:7px; overflow:hidden; background:#000;}
-.mc-screen video{width:100%; display:block; aspect-ratio:16/9; background:#000;}
-.mc-glare{position:absolute; inset:0; pointer-events:none; background:linear-gradient(120deg, rgba(255,255,255,0.10) 0%, transparent 30%);}
-.mc-vignette{position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 70px 16px rgba(0,0,0,0.5);}
-.mc-power-dot{position:absolute; bottom:7px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px 2px rgba(74,222,128,0.7); z-index:3;}
-.mc-static{position:absolute; inset:0; z-index:5; background:#000; opacity:0; pointer-events:none; transition:opacity .35s ease;}
-.mc-static.flash{opacity:.85;}
-.mc-bezel-bottom{display:flex; align-items:center; justify-content:space-between; padding:10px 4px 13px;}
-.mc-now-playing{display:flex; align-items:center; gap:7px; font-size:12.5px; color:#c8ccd1; font-weight:600;}
-.mc-dot{width:7px;height:7px;border-radius:50%; background:var(--a3); box-shadow:0 0 0 0 rgba(255,214,117,0.7); animation:mcPulse 1.8s infinite;}
-@keyframes mcPulse{0%{box-shadow:0 0 0 0 rgba(255,214,117,0.55);}70%{box-shadow:0 0 0 8px rgba(255,214,117,0);}100%{box-shadow:0 0 0 0 rgba(255,214,117,0);}}
-.mc-grille{display:flex; gap:4px;}
-.mc-grille span{width:4px;height:4px;border-radius:50%; background:rgba(255,255,255,0.15);}
-.mc-stand{display:flex; justify-content:space-between; width:74%; margin:0 auto; position:relative; top:-1px;}
-.mc-leg{width:12px; height:38px; background:linear-gradient(180deg,#3a3a3a,#0c0c0c); clip-path:polygon(20% 0,80% 0,100% 100%,0% 100%); box-shadow:0 12px 16px -8px rgba(0,0,0,0.5);}
-.mc-base-shadow{width:56%; height:14px; margin:5px auto 0; background:radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 70%);}
-.mc-status{margin-top:16px; font-size:12px; color:var(--t2); text-align:center; font-weight:600;}
-
-.mc-brand-logo{position:relative; width:26px; height:26px; z-index:6; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.mc-logo-ring{position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 0deg, var(--p1), var(--a3), #4ade80, #38bdf8, var(--p2), var(--p1)); animation:mcSpinLogo 5s linear infinite; box-shadow:0 4px 10px -3px rgba(0,0,0,0.7);}
-@keyframes mcSpinLogo{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.mc-logo-text{position:relative; z-index:1; width:20px; height:20px; border-radius:50%; background:#0d1117; color:var(--a3); display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; font-weight:800; font-size:7px; letter-spacing:.3px; box-shadow:inset 0 1px 2px rgba(255,255,255,0.18), 0 0 0 1.5px rgba(255,255,255,0.06);}
-
-.mc-quality-control{position:absolute; top:8px; left:8px; z-index:7;}
-.mc-quality-btn{font-family:'Poppins',sans-serif; font-size:10.5px; font-weight:700; color:#f5f5f5; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); border-radius:7px; padding:5px 10px; cursor:pointer; backdrop-filter:blur(4px); display:flex; align-items:center; gap:5px; transition:background .2s ease;}
-.mc-quality-btn:hover{background:rgba(0,0,0,0.75);}
-.mc-quality-btn::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--a3); box-shadow:0 0 5px rgba(255,214,117,0.7);}
-.mc-quality-menu{display:none; position:absolute; top:calc(100% + 6px); left:0; background:rgba(15,18,22,0.96); border:1px solid rgba(255,255,255,0.14); border-radius:8px; overflow:hidden; min-width:92px; box-shadow:0 12px 28px -10px rgba(0,0,0,0.8);}
-.mc-quality-menu.open{display:block;}
-.mc-quality-menu button{display:block; width:100%; text-align:left; font-family:'Poppins',sans-serif; font-size:11.5px; color:#b7bcc3; background:transparent; border:none; padding:8px 12px; cursor:pointer;}
-.mc-quality-menu button:hover{background:rgba(255,255,255,0.06); color:#fff;}
-.mc-quality-menu button.active{color:var(--a3); font-weight:700;}
-
-.mc-unmute{
-  position:absolute; bottom:10px; right:10px; z-index:7;
-  display:flex; align-items:center; gap:7px;
-  background:rgba(0,0,0,0.72); color:#fff; border:1px solid rgba(255,255,255,0.25);
-  border-radius:20px; padding:7px 13px; font-size:11.5px; font-weight:700;
-  cursor:pointer; backdrop-filter:blur(4px); animation:mcUnmutePulse 1.6s ease-in-out infinite;
-}
-@keyframes mcUnmutePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.15);}50%{box-shadow:0 0 0 6px rgba(255,255,255,0);}}
-.mc-load-msg{margin-top:8px; font-size:11px; color:var(--r2); text-align:center; display:none;}
-.mc-load-msg.show{display:block;}
-
-@media(max-width:480px){
-  .mc-lang-btn{padding:7px 14px; font-size:11.5px;}
-  .mc-tv{padding:10px 10px 0; border-radius:16px;}
-  .mc-bezel-bottom{padding:8px 2px 10px;}
-  .mc-now-playing{font-size:11px;}
-  .mc-status{font-size:11px;}
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js" defer onerror="window.__mcHlsLoadFailed=true;"></script>
 
 </head>
 <body>
@@ -2215,6 +2224,28 @@ body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06)
       <div class="dc bred"><div class="dico">⏳</div><div class="dnum" id="d-p">₨0</div><div class="dlbl" data-ur="باقی رقم" data-en="Remaining">باقی رقم</div></div>
     </div>
     <div class="dash-grid-layout">
+      <div class="card dash-full-card">
+        <div class="ch"><h3><i class="fa-solid fa-clock"></i> <span data-ur="لائیو وقت" data-en="Live Clock">لائیو وقت</span></h3></div>
+        <div class="cb sm-clock-cb">
+          <div class="sm-clock-outer">
+            <div class="sm-clock-dial" id="sm-clock-dial">
+              <div class="sm-clock-pin"></div>
+              <div class="sm-clock-hand sm-clock-hour" id="sm-clock-hour"></div>
+              <div class="sm-clock-hand sm-clock-minute" id="sm-clock-minute"></div>
+              <div class="sm-clock-hand sm-clock-second" id="sm-clock-second"></div>
+              <span class="sm-clock-num sm-clock-num-12">12</span>
+              <span class="sm-clock-num sm-clock-num-3">3</span>
+              <span class="sm-clock-num sm-clock-num-6">6</span>
+              <span class="sm-clock-num sm-clock-num-9">9</span>
+            </div>
+          </div>
+          <div class="sm-clock-digital-wrap">
+            <div class="sm-clock-time" id="sm-clock-time">00:00:00 AM</div>
+            <div class="sm-clock-date" id="sm-clock-date">آپ کا وقت لوڈ ہو رہا ہے...</div>
+            <div class="sm-clock-badge" id="sm-clock-badge">LIVE</div>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="ch"><h3><i class="fa-solid fa-calendar-days"></i> <span data-ur="پلان بریک ڈاؤن" data-en="Plan Breakdown">پلان بریک ڈاؤن</span></h3></div>
         <div class="cb" id="d-plans-summary" style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -2229,260 +2260,6 @@ body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06)
         <div class="ch"><h3><i class="fa-solid fa-triangle-exclamation"></i> <span data-ur="باقی اقساط والے کسٹمرز" data-en="Pending Installments">باقی اقساط والے کسٹمرز</span></h3></div>
         <div class="cb" id="d-due"><div class="empty"><div class="empty-ico"><i class="fa-solid fa-circle-check"></i></div><p data-ur="سب ٹھیک ہے!" data-en="All good!">سب ٹھیک ہے!</p></div></div>
       </div>
-
-      <!-- ══ MADANI CHANNEL LIVE — TV widget card ══ -->
-      <div class="card dash-full-card">
-        <div class="ch"><h3><i class="fa-solid fa-tv"></i> <span data-ur="مدنی چینل — لائیو نشریات" data-en="Madani Channel — Live">مدنی چینل — لائیو نشریات</span></h3></div>
-        <div class="cb" style="padding:16px;">
-          <div class="mc-stage">
-            <div class="mc-lang-toggle">
-              <div class="mc-lang-btn active" data-lang="ur" onclick="mcSelectLang('ur', this)">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 5.3 18.5A8.5 8.5 0 0 1 12 2Z"/></svg>
-                اردو
-              </div>
-              <div class="mc-lang-btn" data-lang="en" onclick="mcSelectLang('en', this)">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 5.3 18.5A8.5 8.5 0 0 1 12 2Z"/></svg>
-                English
-              </div>
-            </div>
-
-            <div class="mc-tv-wrap">
-              <div class="mc-bias-glow" id="mc-biasGlow"></div>
-              <div class="mc-tv">
-                <div class="mc-screen-frame">
-                  <div class="mc-screen">
-                    <video id="mc-player" controls playsinline muted autoplay></video>
-                    <div class="mc-unmute" id="mc-unmute" style="display:none;" onclick="mcUnmute()"><i class="fa-solid fa-volume-xmark"></i> <span>آواز کے لیے ٹیپ کریں</span></div>
-                    <div class="mc-glare"></div>
-                    <div class="mc-vignette"></div>
-                    <div class="mc-power-dot"></div>
-                    <div class="mc-static" id="mc-staticOverlay"></div>
-                    <div class="mc-quality-control" id="mc-qualityControl">
-                      <button class="mc-quality-btn" id="mc-qualityBtn" onclick="mcToggleQualityMenu(event)">Auto</button>
-                      <div class="mc-quality-menu" id="mc-qualityMenu"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="mc-bezel-bottom">
-                  <div class="mc-now-playing"><span class="mc-dot" id="mc-liveDot" style="display:none;"></span><span id="mc-nowPlaying">مدنی چینل اردو</span></div>
-                  <div class="mc-brand-logo">
-                    <div class="mc-logo-ring"></div>
-                    <div class="mc-logo-text">SM</div>
-                  </div>
-                  <div class="mc-grille"><span></span><span></span><span></span><span></span><span></span></div>
-                </div>
-              </div>
-              <div class="mc-stand">
-                <div class="mc-leg"></div>
-                <div class="mc-leg"></div>
-              </div>
-              <div class="mc-base-shadow"></div>
-            </div>
-
-            <div class="mc-status" id="mc-status">براہ راست نشر ہو رہا ہے</div>
-            <div class="mc-load-msg" id="mc-loadMsg">سٹریم لوڈ ہونے میں وقت لگ رہا ہے — انٹرنیٹ کنکشن چیک کریں</div>
-          </div>
-        </div>
-      </div>
-      <script>
-      (function(){
-        var MC_CHANNELS = [
-          { lang:"ur", name:"مدنی چینل اردو", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/b9790f10-cb0d-4e30-82bf-84a756234e58/master.m3u8", glow:"rgba(21,101,192,0.5)" },
-          { lang:"en", name:"Madani Channel English", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/c6a600b0-82cb-454a-8953-2bb2bb372edc/master.m3u8", glow:"rgba(255,160,0,0.45)" }
-        ];
-
-        var mcHls = null;
-        var mcInited = false;
-
-        function mcInit(){
-          if (mcInited) return;
-          var video = document.getElementById('mc-player');
-          if (!video) return;
-          mcInited = true;
-
-          var nowPlaying     = document.getElementById('mc-nowPlaying');
-          var statusEl       = document.getElementById('mc-status');
-          var liveDot        = document.getElementById('mc-liveDot');
-          var biasGlow       = document.getElementById('mc-biasGlow');
-          var staticOverlay  = document.getElementById('mc-staticOverlay');
-          var qualityBtn     = document.getElementById('mc-qualityBtn');
-          var qualityMenu    = document.getElementById('mc-qualityMenu');
-          var unmuteBtn      = document.getElementById('mc-unmute');
-          var loadMsg        = document.getElementById('mc-loadMsg');
-          var mcLoadTimer    = null;
-          var mcRetryCount   = 0;
-
-          window.mcUnmute = function(){
-            video.muted = false;
-            video.play().catch(function(){});
-            unmuteBtn.style.display = 'none';
-          };
-
-          function mcAttemptPlay(){
-            var p = video.play();
-            function afterPlay(){
-              // Video starts muted so autoplay is allowed by the browser;
-              // surface a one-tap unmute affordance whenever that's the case.
-              unmuteBtn.style.display = video.muted ? 'flex' : 'none';
-            }
-            if (p && p.then) {
-              p.then(afterPlay).catch(function(){
-                // Even muted autoplay was blocked — force mute and retry
-                // once more; if that also fails the native controls'
-                // play button still works fine on tap.
-                video.muted = true;
-                video.play().then(afterPlay).catch(function(){});
-              });
-            } else {
-              afterPlay();
-            }
-          }
-
-          function mcClearLoadTimer(){
-            if (mcLoadTimer){ clearTimeout(mcLoadTimer); mcLoadTimer = null; }
-            loadMsg.classList.remove('show');
-          }
-
-          function mcArmLoadTimer(){
-            mcClearLoadTimer();
-            mcLoadTimer = setTimeout(function(){
-              loadMsg.classList.add('show');
-            }, 9000);
-          }
-
-          window.mcSelectLang = function(lang, btn){
-            var all = document.querySelectorAll('.mc-lang-btn');
-            for (var i=0;i<all.length;i++) all[i].classList.remove('active');
-            btn.classList.add('active');
-            for (var j=0;j<MC_CHANNELS.length;j++){
-              if (MC_CHANNELS[j].lang === lang){ mcRetryCount = 0; mcPlayChannel(MC_CHANNELS[j]); break; }
-            }
-          };
-
-          window.mcToggleQualityMenu = function(e){
-            e.stopPropagation();
-            qualityMenu.classList.toggle('open');
-          };
-          document.addEventListener('click', function(){ qualityMenu.classList.remove('open'); });
-
-          function mcLevelLabel(level){
-            if (!level) return '';
-            if (level.height) return level.height + 'p';
-            return Math.round(level.bitrate/1000) + 'kbps';
-          }
-
-          function mcBuildQualityMenu(){
-            if (!mcHls || !mcHls.levels || !mcHls.levels.length) {
-              qualityMenu.innerHTML = '';
-              qualityBtn.innerHTML = 'HD';
-              return;
-            }
-            var order = mcHls.levels.map(function(lvl, idx){ return idx; })
-              .sort(function(a,b){ return mcHls.levels[b].height - mcHls.levels[a].height; });
-
-            var html = '<button data-level="-1" class="' + (mcHls.autoLevelEnabled ? 'active' : '') + '">Auto</button>';
-            order.forEach(function(idx){
-              var lvl = mcHls.levels[idx];
-              var isActive = !mcHls.autoLevelEnabled && mcHls.currentLevel === idx;
-              html += '<button data-level="' + idx + '" class="' + (isActive ? 'active' : '') + '">' + mcLevelLabel(lvl) + '</button>';
-            });
-            qualityMenu.innerHTML = html;
-
-            var btns = qualityMenu.querySelectorAll('button');
-            for (var i=0;i<btns.length;i++){
-              btns[i].onclick = function(e){
-                e.stopPropagation();
-                var lvl = parseInt(this.dataset.level, 10);
-                mcHls.currentLevel = lvl;
-                qualityMenu.classList.remove('open');
-                mcUpdateQualityLabel();
-              };
-            }
-          }
-
-          function mcUpdateQualityLabel(){
-            if (!mcHls) return;
-            var activeIdx = mcHls.currentLevel >= 0 ? mcHls.currentLevel : mcHls.loadLevel;
-            var lvl = mcHls.levels && mcHls.levels[activeIdx];
-            var label = lvl ? mcLevelLabel(lvl) : '';
-            qualityBtn.innerHTML = mcHls.autoLevelEnabled ? ('Auto' + (label ? ' · ' + label : '')) : label;
-            var btns = qualityMenu.querySelectorAll('button');
-            for (var i=0;i<btns.length;i++){
-              var isAuto = btns[i].dataset.level === '-1';
-              btns[i].classList.toggle('active', mcHls.autoLevelEnabled ? isAuto : (!isAuto && parseInt(btns[i].dataset.level,10) === mcHls.currentLevel));
-            }
-          }
-
-          function mcPlayChannel(ch){
-            staticOverlay.classList.add('flash');
-            setTimeout(function(){ staticOverlay.classList.remove('flash'); }, 500);
-
-            biasGlow.style.setProperty('--mc-glow', ch.glow);
-            biasGlow.style.background = 'radial-gradient(ellipse at 50% 40%, ' + ch.glow + ', transparent 68%)';
-
-            nowPlaying.textContent = ch.name;
-            liveDot.style.display = 'inline-block';
-            statusEl.textContent = 'لوڈ ہو رہا ہے...';
-            qualityMenu.classList.remove('open');
-            qualityMenu.innerHTML = '';
-            qualityBtn.innerHTML = 'Auto';
-            unmuteBtn.style.display = 'none';
-            mcArmLoadTimer();
-
-            if (mcHls) { mcHls.destroy(); mcHls = null; }
-
-            if (window.__mcHlsLoadFailed && !video.canPlayType('application/vnd.apple.mpegurl')) {
-              mcClearLoadTimer();
-              statusEl.textContent = 'پلیئر لوڈ نہیں ہو سکا — انٹرنیٹ کنکشن چیک کریں';
-              return;
-            }
-
-            if (window.Hls && window.Hls.isSupported()) {
-              mcHls = new Hls({ startLevel: -1, capLevelToPlayerSize: true });
-              mcHls.loadSource(ch.url);
-              mcHls.attachMedia(video);
-              mcHls.on(Hls.Events.MANIFEST_PARSED, function(){
-                mcClearLoadTimer();
-                mcAttemptPlay();
-                statusEl.textContent = 'براہ راست نشر ہو رہا ہے';
-                mcBuildQualityMenu();
-                mcUpdateQualityLabel();
-              });
-              mcHls.on(Hls.Events.LEVEL_SWITCHED, function(){ mcUpdateQualityLabel(); });
-              mcHls.on(Hls.Events.ERROR, function(event, data){
-                if (data.fatal) {
-                  mcClearLoadTimer();
-                  statusEl.textContent = 'سٹریم لوڈ نہیں ہو سکا — لنک عارضی طور پر بند ہو سکتا ہے';
-                }
-              });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-              video.src = ch.url;
-              video.addEventListener('loadedmetadata', function(){
-                mcClearLoadTimer();
-                mcAttemptPlay();
-                statusEl.textContent = 'براہ راست نشر ہو رہا ہے';
-              });
-            } else if (mcRetryCount < 5) {
-              mcRetryCount++;
-              mcClearLoadTimer();
-              statusEl.textContent = 'پلیئر لوڈ ہونے کا انتظار ہے...';
-              setTimeout(function(){ mcPlayChannel(ch); }, 1200);
-            } else {
-              mcClearLoadTimer();
-              statusEl.textContent = 'پلیئر لوڈ نہیں ہو سکا — انٹرنیٹ کنکشن چیک کریں یا پیج ری لوڈ کریں';
-            }
-          }
-
-          mcPlayChannel(MC_CHANNELS[0]);
-        }
-
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', mcInit);
-        } else {
-          mcInit();
-        }
-      })();
-      </script>
     </div>
   </div>
 
@@ -3821,7 +3598,7 @@ body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06)
      Step 2: customer signs (same layout) → Save -->
 <div id="sig-wizard" style="position:fixed;inset:0;background:#ffffff;z-index:10001;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;flex-shrink:0;">
-    <h3 style="color:#000;margin:0;font-size:15px;font-weight:900;"><i class="fa-solid fa-file-signature"></i> <span id="sig-wizard-title">مالک دکان / اونر کے دستخط (Owner Signature)</span></h3>
+    <h3 style="color:#000;margin:0;font-size:15px;font-weight:900;"><i class="fa-solid fa-file-signature"></i> <span id="sig-wizard-title">کسٹمر کے دستخط (Customer Signature)</span></h3>
     <button onclick="cancelSignatureModal()" style="background:none;border:none;font-size:19px;color:#78909C;cursor:pointer;line-height:1;"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
@@ -3831,18 +3608,19 @@ body.dark .mc-lang-btn{background:linear-gradient(160deg, rgba(255,255,255,0.06)
   </div>
 
   <div style="text-align:center;font-size:13px;color:#546E7A;padding:0 16px;flex-shrink:0;" id="sig-wizard-hint">
-    مرحلہ 1 از 2 — دکاندار براہ مہربانی نیچے دستخط کریں
+    مرحلہ 1 از 2 — کسٹمر براہ مہربانی نیچے دستخط کریں
   </div>
 
   <!-- Both pads live in the DOM the whole time (so going back preserves
        a signature already drawn); only the active step's pad is shown,
-       each filling the full width and roughly half the screen height. -->
+       each filling the full width and roughly half the screen height.
+       Order shown to the user: Customer first, then Owner. -->
   <div style="flex:1;display:flex;flex-direction:column;padding:14px;min-height:0;">
-    <div id="sig-pad-shop-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;">
-      <canvas id="sig-canvas-shop" style="width:100%;height:100%;touch-action:none;display:block;"></canvas>
-    </div>
-    <div id="sig-pad-cust-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;display:none;">
+    <div id="sig-pad-cust-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;">
       <canvas id="sig-canvas-cust" style="width:100%;height:100%;touch-action:none;display:block;"></canvas>
+    </div>
+    <div id="sig-pad-shop-wrap" style="flex:1;border:2px dashed #90A4AE;border-radius:14px;overflow:hidden;background:#fff;display:none;">
+      <canvas id="sig-canvas-shop" style="width:100%;height:100%;touch-action:none;display:block;"></canvas>
     </div>
   </div>
 
@@ -4173,7 +3951,7 @@ async function authRegister(){
   try{
     try{ await _fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
     await _fbAuth.createUserWithEmailAndPassword(email, pass);
-    showToast('<i class="fa-solid fa-circle-check"></i> اکاؤنٹ بن گیا! خوش آمدید');
+    showWelcomePopup('<i class="fa-solid fa-circle-check"></i> اکاؤنٹ بن گیا! خوش آمدید');
     // onAuthStateChanged fires automatically from here and runs _hardLoginSync
   } catch(e){
     err.innerHTML = _friendlyAuthError(e);
@@ -4199,7 +3977,7 @@ async function authLogin(){
     // even if init ran before the SDK was fully ready.
     try{ await _fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
     await _fbAuth.signInWithEmailAndPassword(email, pass);
-    showToast('<i class="fa-solid fa-hand"></i> خوش آمدید!');
+    showWelcomePopup('<i class="fa-solid fa-hand"></i> خوش آمدید!');
     // onAuthStateChanged fires automatically from here and runs _hardLoginSync
   } catch(e){
     err.innerHTML = _friendlyAuthError(e);
@@ -5168,11 +4946,11 @@ function cancelSignatureModal(){
 // ══════════════════════════════════════════════════════════════
 //  FULL-SCREEN DUAL SIGNATURE WIZARD
 // ──────────────────────────────────────────────────────────────
-//  Step 1: Shopkeeper Signature (full-width / half-height pad) → Next
-//  Step 2: Customer Signature (same layout) → Save
+//  Step 1: Customer Signature (full-width / half-height pad) → Next
+//  Step 2: Owner / Shopkeeper Signature (same layout) → Save
 // ══════════════════════════════════════════════════════════════
 let _pendingCustomerData = null; // customer data waiting on both signatures
-let _sigStep = 1;                // 1 = shopkeeper, 2 = customer
+let _sigStep = 1;                // 1 = customer, 2 = shopkeeper/owner
 
 function openSignatureModal(){
   openMod('sig-wizard'); // handles the 'open' class + back-button nav stack
@@ -5187,18 +4965,22 @@ function openSignatureModal(){
     clearSignature('sig-canvas-shop');
     clearSignature('sig-canvas-cust');
   });
+
+  // Small popup announcing which signature is being collected first.
+  setTimeout(()=>_sigStepPopup(), 250);
 }
 
-// Moves the wizard forward: step 1 → validate shopkeeper signed → step 2.
+// Moves the wizard forward: step 1 → validate customer signed → step 2.
 // Step 2's button re-uses this same handler but triggers the actual save.
 function sigWizardNext(){
   if(_sigStep === 1){
-    if(_isCanvasBlank(document.getElementById('sig-canvas-shop'))){
-      showToast('<i class="fa-solid fa-triangle-exclamation"></i> پہلے دکاندار کے دستخط کریں', 'warn');
+    if(_isCanvasBlank(document.getElementById('sig-canvas-cust'))){
+      showToast('<i class="fa-solid fa-triangle-exclamation"></i> پہلے کسٹمر کے دستخط کریں', 'warn');
       return;
     }
     _sigStep = 2;
     _sigWizardRender();
+    setTimeout(()=>_sigStepPopup(), 200);
   } else {
     finalizeAgreementWithSignatures();
   }
@@ -5208,12 +4990,33 @@ function sigWizardBack(){
   if(_sigStep === 2){
     _sigStep = 1;
     _sigWizardRender();
+    setTimeout(()=>_sigStepPopup(), 200);
   }
 }
 
 // Clears whichever pad is currently active/visible.
 function clearActiveSignature(){
-  clearSignature(_sigStep === 1 ? 'sig-canvas-shop' : 'sig-canvas-cust');
+  clearSignature(_sigStep === 1 ? 'sig-canvas-cust' : 'sig-canvas-shop');
+}
+
+// Small popup shown whenever the signature page opens on a new step,
+// telling the person whose signature is currently being collected.
+function _sigStepPopup(){
+  if(typeof Swal === 'undefined') return;
+  const isCustomer = _sigStep === 1;
+  Swal.fire({
+    toast:true,
+    position:'bottom',
+    showConfirmButton:false,
+    timer:1800,
+    timerProgressBar:true,
+    background:'#161B27',
+    color:'#fff',
+    customClass:{ popup:'sm-sig-step-popup' },
+    html: isCustomer
+      ? '<i class="fa-solid fa-user" style="color:#4FC3F7;margin-left:6px;"></i> <b>کسٹمر سگنیچر</b>'
+      : '<i class="fa-solid fa-store" style="color:#FFD54F;margin-left:6px;"></i> <b>اونر سگنیچر</b>'
+  });
 }
 
 function _sigWizardRender(){
@@ -5227,26 +5030,26 @@ function _sigWizardRender(){
   const dot2     = document.getElementById('sig-step-dot-2');
 
   if(_sigStep === 1){
-    if(shopWrap) shopWrap.style.display = 'flex';
-    if(custWrap) custWrap.style.display = 'none';
-    if(title) title.textContent = 'مالک دکان / اونر کے دستخط (Owner Signature)';
-    if(hint)  hint.textContent  = 'مرحلہ 1 از 2 — دکاندار براہ مہربانی نیچے دستخط کریں';
+    if(custWrap) custWrap.style.display = 'flex';
+    if(shopWrap) shopWrap.style.display = 'none';
+    if(title) title.textContent = 'کسٹمر کے دستخط (Customer Signature)';
+    if(hint)  hint.textContent  = 'مرحلہ 1 از 2 — کسٹمر براہ مہربانی نیچے دستخط کریں';
     if(nextBtn) nextBtn.innerHTML = 'اگلا <i class="fa-solid fa-arrow-left"></i>';
     if(backBtn) backBtn.style.display = 'none';
     if(dot1) dot1.classList.add('active');
     if(dot2) dot2.classList.remove('active');
     // Re-fit in case the pad was resized while hidden.
-    requestAnimationFrame(()=>_fitSignatureCanvas(document.getElementById('sig-canvas-shop')));
+    requestAnimationFrame(()=>_fitSignatureCanvas(document.getElementById('sig-canvas-cust')));
   } else {
-    if(shopWrap) shopWrap.style.display = 'none';
-    if(custWrap) custWrap.style.display = 'flex';
-    if(title) title.textContent = 'کسٹمر کے دستخط (Customer Signature)';
-    if(hint)  hint.textContent  = 'مرحلہ 2 از 2 — کسٹمر براہ مہربانی نیچے دستخط کریں';
+    if(custWrap) custWrap.style.display = 'none';
+    if(shopWrap) shopWrap.style.display = 'flex';
+    if(title) title.textContent = 'مالک دکان / اونر کے دستخط (Owner Signature)';
+    if(hint)  hint.textContent  = 'مرحلہ 2 از 2 — دکاندار براہ مہربانی نیچے دستخط کریں';
     if(nextBtn) nextBtn.innerHTML = '<i class="fa-solid fa-check"></i> محفوظ کریں';
     if(backBtn) backBtn.style.display = 'block';
     if(dot1) dot1.classList.remove('active');
     if(dot2) dot2.classList.add('active');
-    requestAnimationFrame(()=>_fitSignatureCanvas(document.getElementById('sig-canvas-cust')));
+    requestAnimationFrame(()=>_fitSignatureCanvas(document.getElementById('sig-canvas-shop')));
   }
 }
 
@@ -6182,6 +5985,28 @@ async function delCust(id){
   customers = customers.filter(x=>x.id!==id);
   save(); renderCustomers(); renderDash();
   showToast('<i class="fa-solid fa-trash"></i> حذف ہو گیا', 'warn');
+}
+
+// A dedicated, more decorative popup used only for the "welcome" moments
+// (login / register / PIN-unlock). Shown lower on the screen instead of
+// the top corner, with a bit of 3D-style text so it stands out.
+function showWelcomePopup(msg){
+  if(typeof Swal === 'undefined'){ showToast(msg); return; }
+  Swal.fire({
+    toast:true,
+    position:'bottom',
+    showConfirmButton:false,
+    timer:2600,
+    timerProgressBar:true,
+    background:'linear-gradient(135deg,#0D2B6B,#1565C0)',
+    color:'#fff',
+    customClass:{ popup:'sm-welcome-popup' },
+    html:`<span class="sm-welcome-txt">${msg}</span>`,
+    didOpen:(toast)=>{
+      toast.addEventListener('mouseenter', Swal.stopTimer);
+      toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+  });
 }
 
 function showToast(msg, t=''){
@@ -7795,7 +7620,7 @@ async function pinKeyPress(k){
       const lock = document.getElementById('pin-lock-screen');
       if(lock) lock.style.display = 'none';
       showSc('dash');
-      showToast('<i class="fa-solid fa-circle-check"></i> خوش آمدید!');
+      showWelcomePopup('<i class="fa-solid fa-circle-check"></i> خوش آمدید!');
     } else {
       if(err) err.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> غلط PIN — دوبارہ کوشش کریں';
       setTimeout(()=>{ _pinEntry=''; _updatePinDots('pin-dot-',''); }, 500);
@@ -9975,6 +9800,49 @@ window.addEventListener('DOMContentLoaded', () => {
   if(typeof applyLang === 'function') applyLang();
   if(typeof renderDash === 'function') renderDash();
 });
+
+// ══════════════════════════════════════════════════════════════
+//  DASHBOARD LIVE CLOCK (analog + digital, theme-matched)
+// ══════════════════════════════════════════════════════════════
+(function(){
+  const dial = document.getElementById('sm-clock-dial');
+  if(!dial) return;
+
+  function updateSmClock(){
+    const now = new Date();
+    const seconds = now.getSeconds();
+    const minutes = now.getMinutes();
+    const hours   = now.getHours();
+
+    const secDeg  = (seconds / 60) * 360;
+    const minDeg  = ((minutes + seconds / 60) / 60) * 360;
+    const hourDeg = ((hours % 12 + minutes / 60) / 12) * 360;
+
+    const hourEl = document.getElementById('sm-clock-hour');
+    const minEl  = document.getElementById('sm-clock-minute');
+    const secEl  = document.getElementById('sm-clock-second');
+    if(secEl) secEl.style.transform = `rotate(${secDeg}deg)`;
+    if(minEl) minEl.style.transform = `rotate(${minDeg}deg)`;
+    if(hourEl) hourEl.style.transform = `rotate(${hourDeg}deg)`;
+
+    let h = hours % 12 || 12;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const m = minutes < 10 ? '0' + minutes : minutes;
+    const s = seconds < 10 ? '0' + seconds : seconds;
+    const timeEl = document.getElementById('sm-clock-time');
+    if(timeEl) timeEl.textContent = `${h}:${m}:${s} ${ampm}`;
+
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateEl = document.getElementById('sm-clock-date');
+    if(dateEl) dateEl.textContent = now.toLocaleDateString('ur-PK', dateOptions);
+
+    const badgeEl = document.getElementById('sm-clock-badge');
+    if(badgeEl) badgeEl.textContent = now.toLocaleDateString('ur-PK', { weekday: 'long' });
+  }
+
+  setInterval(updateSmClock, 1000);
+  updateSmClock();
+})();
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
