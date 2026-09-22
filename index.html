@@ -8092,9 +8092,9 @@ function _approvedDateStr(c){
 // Sticker + pretty date pill. Only for agreements that have been signed.
 function _approvedStickerHtml(c){
   if(!c?.signatures?.customer && !c?.signatures?.shopkeeper) return '';
-  return `<div style="position:absolute;top:6px;left:6px;width:96px;text-align:center;transform:rotate(-9deg);transform-origin:center;z-index:5;pointer-events:none;direction:rtl;">
-      <img src="${APPROVED_STAMP_IMG}" alt="Approved" style="display:block;width:96px;height:auto;margin:0 auto;">
-      <div style="display:inline-block;margin-top:1px;padding:0 9px;border:1.5px solid #3E8E00;border-radius:20px;background:#fff;color:#2E7D00;font-size:11px;font-weight:800;line-height:1.8;white-space:nowrap;box-shadow:0 1px 0 #B7E08A;">${_approvedDateStr(c)}</div>
+  return `<div style="text-align:center;margin:18px 0 6px;">
+      <img src="${APPROVED_STAMP_IMG}" alt="Approved" style="display:inline-block;width:92px;height:auto;transform:rotate(-6deg);">
+      <div style="margin-top:2px;"><span style="display:inline-block;padding:2px 12px;border:1.5px solid #3E8E00;border-radius:20px;background:#fff;color:#2E7D00;font-size:11px;font-weight:800;line-height:1.8;white-space:nowrap;box-shadow:0 1px 0 #B7E08A;">${_approvedDateStr(c)}</span></div>
     </div>`;
 }
 let agreementCust=null;
@@ -8119,8 +8119,7 @@ function showAgreement(id){
   ).join('');
 
   document.getElementById('agreement-body').innerHTML=`
-  <div id="agreement-content" style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:16px;line-height:2.2;font-size:13px;position:relative;">
-    ${_approvedStickerHtml(c)}
+  <div id="agreement-content" style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:16px;line-height:2.2;font-size:13px;">
     <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px;">
       <div style="font-size:20px;font-weight:900;"><i class="fa-solid fa-mobile-screen-button"></i> ${shopProfile.name}</div>
       <div style="font-size:12px;"><i class="fa-solid fa-phone"></i> ${shopProfile.phone}${shopProfile.email?' | '+shopProfile.email:''}</div>
@@ -8160,6 +8159,7 @@ function showAgreement(id){
     ${tcEmbedEnabled ? `<div style="border:1px solid #ccc;padding:10px 12px;margin-bottom:12px;font-size:12px;border-radius:4px;background:#fffef0;">
       <b>شرائط و ضوابط:</b><br>${termsConditions.replace(/\n/g,'<br>')}
     </div>` : ''}
+    ${_approvedStickerHtml(c)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;text-align:center;">
       <div style="padding-top:6px;">
         ${c.signatures?.customer ? `<img src="${c.signatures.customer}" style="max-height:70px;max-width:100%;border-bottom:1px solid #000;padding-bottom:4px;">` : `<div style="border-top:1px solid #000;padding-top:6px;"></div>`}
