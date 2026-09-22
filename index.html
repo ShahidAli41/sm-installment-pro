@@ -709,6 +709,21 @@ body{padding-top:64px;}
   backdrop-filter:blur(6px);
 }
 .pill b{display:inline-block;font-size:12px;font-weight:800;color:#38BDF8;margin-right:2px;}
+/* Standalone bell — always visible (desktop + mobile), unlike .hdr-nav
+   which is hidden on small screens. Lets an unpaid/overdue reminder be
+   seen and opened from anywhere, without going through the burger menu. */
+.hdr-bell-btn{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  color:#CBD5E1;font-size:15px;cursor:pointer;transition:all .2s;
+}
+.hdr-bell-btn:hover{background:rgba(255,255,255,0.16);color:#fff;}
+.hdr-bell-dot{
+  position:absolute;top:-4px;left:-4px;min-width:16px;height:16px;padding:0 3px;
+  background:#E53935;color:#fff;font-size:9px;font-weight:800;line-height:16px;
+  text-align:center;border-radius:8px;border:2px solid var(--bg,#0F172A);
+}
 
 .hdr-logout-btn{
   background:rgba(239,68,68,0.15);
@@ -2172,6 +2187,14 @@ body.dark .sm-clock-outer{
         </div>
       </div>
 
+      <!-- STANDALONE NOTIFICATION BELL — visible on every screen size
+           (unlike the alerts item inside .hdr-nav / the burger menu,
+           which are hidden on mobile). Click takes you straight to Alerts. -->
+      <button type="button" class="hdr-bell-btn" onclick="showSc('alerts')" id="hdr-bell-btn" title="یاددہانی الرٹس">
+        <i class="fa-solid fa-bell"></i>
+        <span class="hdr-bell-dot" id="hdr-bell-dot" style="display:none;">0</span>
+      </button>
+
       <button class="hdr-logout-btn" onclick="authLogout()" title="لاگ آؤٹ">
         <i class="fa-solid fa-right-from-bracket"></i>
         <span class="t">لاگ آؤٹ</span>
@@ -3057,6 +3080,18 @@ body.dark .sm-clock-outer{
 
   <!-- REMINDERS SCREEN (یاددہانی) -->
   <div id="sc-reminders" class="screen">
+    <!-- All customers, with a one-click Reminder button next to each — so
+         any customer can be sent a reminder any time during the month,
+         not just when they show up as late/upcoming in Alerts. Sits above
+         the message-template editor so it's the first thing seen here. -->
+    <div class="card">
+      <div class="ch"><h3><i class="fa-solid fa-users"></i> کسٹمرز کو یاددہانی بھیجیں</h3></div>
+      <div class="cb">
+        <input type="text" id="reminders-cust-search" placeholder="🔍 کسٹمر کا نام یا نمبر تلاش کریں…" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-size:13px;margin-bottom:10px;" oninput="renderReminderCustList()">
+        <div id="reminders-cust-list"></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="ch"><h3><i class="fa-solid fa-bell"></i> یاددہانی کے پیغامات</h3></div>
       <div class="cb">
@@ -6571,6 +6606,34 @@ function renderReminders(){
   if(g) g.value = reminderTemplates.general;
   if(s) s.value = reminderTemplates.schedule;
   renderTermsConditionsUI();
+  renderReminderCustList();
+}
+
+// All customers with a one-click "Reminder" button — lets the shopkeeper
+// message anyone, any time during the month, regardless of due date.
+function renderReminderCustList(){
+  const el = document.getElementById('reminders-cust-list');
+  if(!el) return;
+  const q = (document.getElementById('reminders-cust-search')?.value || '').trim().toLowerCase();
+  let list = customers.filter(c => c.mobile);
+  if(q){
+    list = list.filter(c =>
+      (c.name||'').toLowerCase().includes(q) ||
+      (c.phone||'').replace(/[^0-9]/g,'').includes(q.replace(/[^0-9]/g,'')));
+  }
+  list.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ur'));
+  if(!list.length){
+    el.innerHTML = `<div class="empty"><div class="empty-ico"><i class="fa-solid fa-user-slash"></i></div><p>${isUrdu ? 'کوئی کسٹمر نہیں ملا' : 'No customers found'}</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--bd);">
+      <div style="min-width:0;">
+        <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
+        <div style="font-size:11px;color:var(--t2);"><i class="fa-solid fa-phone"></i> ${c.phone||''}${c.mobile?.model ? ' • '+c.mobile.model : ''}</div>
+      </div>
+      <button class="btn bwa bsm" style="flex-shrink:0;" onclick="openReminderChoice(${c.id},'general')"><i class="fa-brands fa-whatsapp"></i> ${isUrdu ? 'یاددہانی' : 'Reminder'}</button>
+    </div>`).join('');
 }
 
 function saveReminderTemplates(){
@@ -6678,23 +6741,36 @@ function renderAlerts(){
     const diffDays=Math.floor(diffMs/(1000*60*60*24));
     list.push({c,rem,paidCount,nextDue,diffDays});
   });
-  // Advanced Alerts rule: only surface a customer here once their due
-  // date is 3 days away or less (or already overdue) — flagged as an
-  // "Upcoming Due" / "Late Payment Alert" notice. Anything further out
-  // doesn't need attention yet, so it's left off this list.
-  const flagged = list.filter(x=>x.diffDays>=-3);
+  // Alerts rule: a customer's reminder becomes visible from the 1st day
+  // of the month their installment is due (not just the last 3 days),
+  // and — once it's showing — it keeps showing every day after that
+  // (however overdue) until the payment for that installment is
+  // actually received. Only customers whose due date is still more
+  // than a few days into the future are left off this list.
+  const flagged = list.filter(x=>{
+    if(x.diffDays>=-3) return true; // due within 3 days, due today, or overdue
+    // Also show anything due later this same calendar month.
+    return x.nextDue.getMonth()===today.getMonth() && x.nextDue.getFullYear()===today.getFullYear();
+  });
   flagged.sort((a,b)=>b.diffDays-a.diffDays);
 
   const overdue=flagged.filter(x=>x.diffDays>0).length;
   const dueToday=flagged.filter(x=>x.diffDays===0).length;
   const upcoming=flagged.filter(x=>x.diffDays<0&&x.diffDays>=-3).length;
 
-  // Update badge
+  // Update badge — both the desktop nav item and the standalone bell
+  // (the bell stays visible on mobile too, where the nav item is hidden).
   const navAl=document.getElementById('nav-alerts');
   if(navAl){
     const badge=navAl.querySelector('.nlbl');
     const txt = isUrdu ? 'الرٹس' : 'Alerts';
     badge.innerHTML=overdue>0?`${txt}<span class="badge-count">${overdue}</span>`:txt;
+  }
+  const bellDot=document.getElementById('hdr-bell-dot');
+  if(bellDot){
+    const bellCount = flagged.length;
+    if(bellCount>0){ bellDot.style.display='inline-block'; bellDot.textContent = bellCount>99?'99+':String(bellCount); }
+    else { bellDot.style.display='none'; }
   }
 
   const smry=document.getElementById('alerts-summary');
@@ -6868,6 +6944,24 @@ function generateReminderMedia(id, kind, diffDays){
   ctx.font='500 13px Arial';
   ctx.fillStyle='rgba(255,255,255,0.85)';
   ctx.fillText(vars.phone, W/2, 118);
+
+  // ── "Reminder" ribbon sticker — drawn straight onto the canvas (no
+  // external image), so it travels with this receipt everywhere it's
+  // used: download, share, print, and the WhatsApp media/PDF send. ──
+  (function drawReminderSticker(){
+    ctx.save();
+    ctx.translate(92, 52);
+    ctx.rotate(-18 * Math.PI/180);
+    ctx.fillStyle = '#E65100';
+    ctx.fillRect(-95, -16, 190, 32);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(-95, -16, 190, 32);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 16px Arial';
+    ctx.fillText(isUrdu ? '🔔 یاددہانی' : '🔔 REMINDER', 0, 6);
+    ctx.restore();
+  })();
 
   let y = 190;
   ctx.textAlign='right';
