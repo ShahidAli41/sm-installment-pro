@@ -13,6 +13,26 @@
 <title>SM Installment Pro - انسٹالمنٹ سسٹم</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script>
+// ── EARLY GLOBAL ERROR NET ──────────────────────────────────────
+// If any script on the page throws before the app finishes loading
+// (a bad connection cutting off a CDN file mid-download, an old
+// WebView not supporting some JS syntax, etc.), the person otherwise
+// just sees a login screen that silently does nothing when tapped —
+// impossible to diagnose remotely. This shows the real error text
+// right on the login screen instead, and keeps the newest one so it
+// survives even if more errors follow.
+window.addEventListener('error', function(ev){
+  try{
+    var box = document.getElementById('auth-error');
+    if(box && (!box.textContent || box.textContent.indexOf('⚠️') === 0 || /^\s*$/.test(box.textContent))){
+      var msg = ev && ev.message ? ev.message : 'نامعلوم خرابی';
+      var src = ev && ev.filename ? (' — ' + ev.filename.split('/').pop() + ':' + ev.lineno) : '';
+      box.innerHTML = '⚠️ ' + msg + src;
+    }
+  }catch(e){}
+});
+</script>
+<script>
 /* html2canvas 1.4.1 — bundled locally so PDF/print generation works even without internet access to a CDN */
 /*!
  * html2canvas 1.4.1 <https://html2canvas.hertzen.com>
@@ -487,7 +507,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     setupFirebasePersistence();
   });
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
 
 <!-- style  -->
@@ -9959,4 +9978,24 @@ window.addEventListener('DOMContentLoaded', () => {
     const dateEl = document.getElementById('sm-clock-date');
     if(dateEl) dateEl.textContent = now.toLocaleDateString('ur-PK', dateOptions);
 
-    const badgeEl = document.getElementById('sm
+    const badgeEl = document.getElementById('sm-clock-badge');
+    if(badgeEl) badgeEl.textContent = now.toLocaleDateString('ur-PK', { weekday: 'long' });
+  }
+
+  setInterval(updateSmClock, 1000);
+  updateSmClock();
+})();
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(registration => {
+      registration.update();
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }).catch(err => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
+</script>
+</html>
