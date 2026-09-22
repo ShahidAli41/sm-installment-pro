@@ -719,14 +719,6 @@ body{padding-top:64px;}
   color:#CBD5E1;font-size:15px;cursor:pointer;transition:all .2s;
 }
 .hdr-bell-btn:hover{background:rgba(255,255,255,0.16);color:#fff;}
-
-.hdr-file-btn{
-  display:flex;align-items:center;justify-content:center;
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;
-  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
-  color:#CBD5E1;font-size:15px;cursor:pointer;transition:all .2s;
-}
-.hdr-file-btn:hover{background:rgba(255,255,255,0.16);color:#fff;}
 .hdr-bell-dot{
   position:absolute;top:-4px;left:-4px;min-width:16px;height:16px;padding:0 3px;
   background:#E53935;color:#fff;font-size:9px;font-weight:800;line-height:16px;
@@ -857,33 +849,12 @@ body{padding-top:64px;}
 }
 .mob-ctrl-btn i{ font-size:15px; color:#38BDF8; }
 
-.mob-logout-btn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  width:100%;
-  margin-top:8px;
-  padding:10px 8px;
-  background:rgba(239,68,68,0.12);
-  border:1px solid rgba(239,68,68,0.3);
-  border-radius:12px;
-  color:#FCA5A5;
-  font-size:12px;
-  font-weight:700;
-  cursor:pointer;
-  transition:all 0.2s;
-  font-family:inherit;
-}
-.mob-logout-btn:hover{
-  background:#EF4444;
-  color:#fff;
-  border-color:#EF4444;
-}
-
 @media(max-width:992px){
   .hdr-nav{display:none;}
   .hdr-menu-btn{display:flex;}
+  /* Logout moves into the burger dropdown below on small screens, so
+     the compact top row has room for the bell without overflowing. */
+  .hdr-logout-btn{display:none;}
 }
 @media(max-width:480px){
   .mob-nav-grid{grid-template-columns:repeat(3,1fr);}
@@ -1353,13 +1324,11 @@ html[dir="ltr"] .mob-nav-grid { direction: ltr; }
   .lang-switch.en .ls-thumb{
     transform:translateX(-14px);
   }
-  /* Theme / language switches and the logout button move into the
-     burger dropdown below this width (see .mob-controls-row /
-     .mob-logout-btn) so the bell, file and hamburger buttons always
-     have enough room to stay visible and tappable. */
-  .hdr-controls .theme-switch,
-  .hdr-controls .lang-switch,
-  .hdr-controls .hdr-logout-btn{
+  .hdr-logout-btn{
+    padding:5px 8px;
+    border-radius:8px;
+  }
+  .hdr-logout-btn .t{
     display:none;
   }
 }
@@ -2234,11 +2203,6 @@ body.dark .sm-clock-outer{
         <span class="t">لاگ آؤٹ</span>
       </button>
 
-      <!-- FILE / BACKUP SHORTCUT — jumps straight to Export/Import section -->
-      <button type="button" class="hdr-file-btn" onclick="openFileBackup()" id="hdr-file-btn" title="فائل (ایکسپورٹ / امپورٹ)">
-        <i class="fa-solid fa-folder-open"></i>
-      </button>
-
       <!-- MOBILE BURGER BUTTON -->
       <button type="button" class="hdr-menu-btn" onclick="toggleMobileMenu()" id="mobile-menu-btn" title="مینو">
         <i class="fa-solid fa-bars"></i>
@@ -2271,10 +2235,14 @@ body.dark .sm-clock-outer{
         <span data-ur="زبان" data-en="Language">زبان</span>
       </button>
     </div>
-    <button class="mob-logout-btn" onclick="authLogout()" title="لاگ آؤٹ">
-      <i class="fa-solid fa-right-from-bracket"></i>
-      <span data-ur="لاگ آؤٹ" data-en="Logout">لاگ آؤٹ</span>
-    </button>
+    <!-- Logout — lives here on mobile now that it's off the compact top
+         row (see .hdr-logout-btn{display:none} at max-width:992px). -->
+    <div class="mob-controls-row">
+      <button class="mob-ctrl-btn" onclick="authLogout()" title="لاگ آؤٹ" style="color:#FCA5A5;">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span data-ur="لاگ آؤٹ" data-en="Logout">لاگ آؤٹ</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -3038,7 +3006,7 @@ body.dark .sm-clock-outer{
         </div>
 
         <!-- LOCAL BACKUP SECTION -->
-        <div id="local-backup-section" style="border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;scroll-margin-top:70px;">
+        <div style="border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;">
           <div style="background:linear-gradient(135deg,#37474F,#263238);padding:12px 16px;color:#fff;display:flex;align-items:center;gap:10px;">
             <div style="font-size:22px;"><i class="fa-solid fa-mobile-screen-button"></i></div>
             <div>
@@ -7155,26 +7123,6 @@ function navMobileGo(n){
   if(btn) btn.classList.remove('active');
 }
 
-// Header "file" shortcut — jumps to Settings and scrolls straight to
-// the Local Device Backup card (Export / Import) instead of making
-// the user hunt for it inside the Settings screen.
-function openFileBackup(){
-  const dropdown = document.getElementById('hdr-mobile-dropdown');
-  const menuBtn = document.getElementById('mobile-menu-btn');
-  if(dropdown) dropdown.classList.remove('open');
-  if(menuBtn) menuBtn.classList.remove('active');
-  showSc('about');
-  setTimeout(()=>{
-    const sec = document.getElementById('local-backup-section');
-    if(sec){
-      sec.scrollIntoView({behavior:'smooth', block:'start'});
-      sec.style.transition = 'box-shadow .3s ease';
-      sec.style.boxShadow = '0 0 0 3px rgba(255,143,0,0.55)';
-      setTimeout(()=>{ sec.style.boxShadow = ''; }, 1400);
-    }
-  }, 80);
-}
-
 // Override recPay to show receipt after payment
 function recPay(){
   const rawVal=document.getElementById('pay-sel').value;
@@ -9968,4 +9916,47 @@ _updatePinUI();
 
 
 //  FIREBASE CONFIG & INIT
-// ══════════════
+// ══════════════════════════════════════════════════════════════
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  if(typeof applyLang === 'function') applyLang();
+  if(typeof renderDash === 'function') renderDash();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  DASHBOARD LIVE CLOCK (analog + digital, theme-matched)
+// ══════════════════════════════════════════════════════════════
+(function(){
+  const dial = document.getElementById('sm-clock-dial');
+  if(!dial) return;
+
+  function updateSmClock(){
+    const now = new Date();
+    const seconds = now.getSeconds();
+    const minutes = now.getMinutes();
+    const hours   = now.getHours();
+
+    const secDeg  = (seconds / 60) * 360;
+    const minDeg  = ((minutes + seconds / 60) / 60) * 360;
+    const hourDeg = ((hours % 12 + minutes / 60) / 12) * 360;
+
+    const hourEl = document.getElementById('sm-clock-hour');
+    const minEl  = document.getElementById('sm-clock-minute');
+    const secEl  = document.getElementById('sm-clock-second');
+    if(secEl) secEl.style.transform = `rotate(${secDeg}deg)`;
+    if(minEl) minEl.style.transform = `rotate(${minDeg}deg)`;
+    if(hourEl) hourEl.style.transform = `rotate(${hourDeg}deg)`;
+
+    let h = hours % 12 || 12;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const m = minutes < 10 ? '0' + minutes : minutes;
+    const s = seconds < 10 ? '0' + seconds : seconds;
+    const timeEl = document.getElementById('sm-clock-time');
+    if(timeEl) timeEl.textContent = `${h}:${m}:${s} ${ampm}`;
+
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateEl = document.getElementById('sm-clock-date');
+    if(dateEl) dateEl.textContent = now.toLocaleDateString('ur-PK', dateOptions);
+
+    const badgeEl = document.getElementById('sm
