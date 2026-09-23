@@ -3428,6 +3428,7 @@ body.dark .sm-clock-outer{
         <button class="btn bg" onclick="shareReceipt()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
         <button class="btn bmail" onclick="emailReceipt()"><i class="fa-solid fa-envelope"></i> ای میل</button>
         <button class="btn" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="sendReceiptPDF()"><i class="fa-solid fa-file-pdf"></i> پی ڈی ایف</button>
+        <button class="btn" style="background:linear-gradient(135deg,#00897B,#00695C);color:#fff;" onclick="sendReceiptImage()"><i class="fa-solid fa-image"></i> تصویر</button>
         <button class="btn ba" onclick="closeMod('mod-receipt')"><i class="fa-solid fa-xmark"></i> بند</button>
       </div>
     </div>
@@ -3606,6 +3607,7 @@ body.dark .sm-clock-outer{
         <button class="btn bp" onclick="printAgreement()"><i class="fa-solid fa-print"></i> <span data-ur="پرنٹ" data-en="Print">پرنٹ</span></button>
         <button class="btn bg" onclick="shareAgreement()"><i class="fa-brands fa-whatsapp"></i> <span data-ur="واٹس ایپ پر بھیجیں" data-en="Send on WhatsApp">واٹس ایپ پر بھیجیں</span></button>
         <button class="btn" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="sendAgreementPDFviaWhatsApp()"><i class="fa-solid fa-file-pdf"></i> <span data-ur="پی ڈی ایف بھیجیں" data-en="Send PDF">پی ڈی ایف بھیجیں</span></button>
+        <button class="btn" style="background:linear-gradient(135deg,#00897B,#00695C);color:#fff;" onclick="sendAgreementImage()"><i class="fa-solid fa-image"></i> <span data-ur="تصویر بھیجیں" data-en="Send Image">تصویر بھیجیں</span></button>
         <button class="btn" style="background:linear-gradient(135deg,#546E7A,#37474F);color:#fff;" onclick="shareAgreementSMS()"><i class="fa-solid fa-comment-sms"></i> <span data-ur="SMS پر بھیجیں" data-en="Send SMS">SMS پر بھیجیں</span></button>
         <button class="btn ba" onclick="closeMod('mod-agreement')"><i class="fa-solid fa-xmark"></i> <span data-ur="بند" data-en="Close">بند</span></button>
       </div>
@@ -3623,6 +3625,7 @@ body.dark .sm-clock-outer{
         <button class="btn bp" onclick="printOverdueNotice()"><i class="fa-solid fa-print"></i> پرنٹ</button>
         <button class="btn bg" onclick="shareOverdueNoticeWA()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
         <button class="btn" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="sendOverdueNoticePDF()"><i class="fa-solid fa-file-pdf"></i> پی ڈی ایف</button>
+        <button class="btn" style="background:linear-gradient(135deg,#00897B,#00695C);color:#fff;" onclick="sendOverdueNoticeImage()"><i class="fa-solid fa-image"></i> تصویر</button>
         <button class="btn" style="background:linear-gradient(135deg,#546E7A,#37474F);color:#fff;" onclick="copyOverdueNoticeText()"><i class="fa-solid fa-copy"></i> کاپی کریں</button>
         <button class="btn ba" onclick="closeMod('mod-overdue-notice')"><i class="fa-solid fa-xmark"></i> بند</button>
       </div>
@@ -6496,6 +6499,53 @@ async function _generateReceiptPdfBlob(){
       {label:'Remaining', value:'Rs. '+fmt(rem)},
     ], shopProfile.phone);
   }
+}
+// ── Generic "send as image" fallback — shares/downloads a PNG of the
+// given content element directly (no PDF wrapping at all). Added as a
+// safety net next to every PDF button: if PDF generation ever fails on
+// a particular device, the shopkeeper still has one-tap way to get the
+// same content out as a plain image instead of nothing. ──
+async function _shareOrDownloadImage(elementId, fileNamePrefix, shareTitle, shareText){
+  const content = document.getElementById(elementId);
+  if(!content){ showToast('❌ مواد نہیں ملا', 'warn'); return; }
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> تصویر تیار ہو رہی ہے...');
+  try{
+    const canvas = await _captureElementCanvas(content);
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png',0.95));
+    if(!blob){ showToast('❌ تصویر نہیں بن سکی', 'warn'); return; }
+    const fileName = `${fileNamePrefix}.png`;
+    const file = new File([blob], fileName, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({ files:[file], title: shareTitle, text: shareText });
+        showToast('<i class="fa-solid fa-circle-check"></i> تصویر بھیج دی گئی');
+      }catch(shareErr){
+        if(shareErr && shareErr.name === 'AbortError') return;
+        throw shareErr;
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    showToast('<i class="fa-solid fa-image"></i> تصویر ڈاؤن لوڈ ہو گئی');
+  }catch(e){
+    console.error('Image export failed:', e);
+    showToast('❌ تصویر بنانے میں مسئلہ ہوا', 'warn');
+  }
+}
+function sendReceiptImage(){
+  const name = (lastReceiptData?.c?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'');
+  _shareOrDownloadImage('receipt-content', `Receipt-${name}`, `${shopProfile.name} — رسید`, lastReceiptData?`${lastReceiptData.c.name} کی ادائیگی رسید`:'');
+}
+function sendAgreementImage(){
+  const name = (agreementCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'');
+  _shareOrDownloadImage('agreement-content', `Agreement-${name}`, `${shopProfile.name} — معاہدہ`, agreementCust?`${agreementCust.name} کا معاہدہ`:'');
+}
+function sendOverdueNoticeImage(){
+  const name = (overdueNoticeCust?.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'');
+  _shareOrDownloadImage('overdue-notice-content', `Notice-${name}`, `${shopProfile.name} — تنبیہ نامہ`, overdueNoticeCust?`${overdueNoticeCust.name} کے لیے تنبیہ نامہ`:'');
 }
 function printReceipt(){
   const content=document.getElementById('receipt-content');
