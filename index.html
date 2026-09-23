@@ -6470,6 +6470,41 @@ async function _captureElementCanvas(content){
     throw err;
   }
 }
+// ── Honest file delivery — used by every PDF/Image button. Earlier,
+// once navigator.share wasn't available, the code silently clicked a
+// hidden download link and just *claimed* "downloaded!" — but on some
+// Android WebViews that click does nothing at all, so the shopkeeper
+// saw a success message for a file that never appeared anywhere. This
+// instead actually opens the file in a new tab (the device's own PDF/
+// image viewer takes over from there, with its own real Share/Download
+// controls), and only ever describes what we can actually confirm
+// happened. ──
+async function _deliverGeneratedFile(blob, fileName, mimeType, shareTitle, shareText, kindLabel){
+  const file = new File([blob], fileName, {type:mimeType});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({ files:[file], title: shareTitle, text: shareText });
+      showToast(`<i class="fa-solid fa-circle-check"></i> ${kindLabel} بھیج دی گئی`);
+      return;
+    }catch(shareErr){
+      if(shareErr && shareErr.name === 'AbortError') return; // user cancelled the share sheet
+      console.error('Share failed, falling back to opening the file:', shareErr);
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, '_blank');
+  if(opened){
+    showToast(`<i class="fa-solid fa-arrow-up-right-from-square"></i> ${kindLabel} نئے ٹیب میں کھل گئی — وہاں سے ڈاؤن لوڈ یا واٹس ایپ پر شیئر کر لیں`);
+  }else{
+    // Popup blocked — last resort: a normal download link. We no longer
+    // claim this definitely worked; on some WebViews it silently does
+    // nothing, so we say where to check instead of declaring success.
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    showToast(`<i class="fa-solid fa-download"></i> ${kindLabel} ڈاؤن لوڈ کی کوشش کی گئی — اگر یہاں نظر نہ آئے تو فون کے "Downloads" فولڈر میں دیکھیں`);
+  }
+  setTimeout(()=>URL.revokeObjectURL(url), 120000);
+}
 // ── Renders #receipt-content into a real PDF file, same approach used
 // for the agreement PDF, so it works even inside Android WebView apps
 // where window.print() often does nothing. ──
@@ -6513,26 +6548,12 @@ async function _shareOrDownloadImage(elementId, fileNamePrefix, shareTitle, shar
     const canvas = await _captureElementCanvas(content);
     const blob = await new Promise(res=>canvas.toBlob(res,'image/png',0.95));
     if(!blob){ showToast('❌ تصویر نہیں بن سکی', 'warn'); return; }
-    const fileName = `${fileNamePrefix}.png`;
-    const file = new File([blob], fileName, {type:'image/png'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({ files:[file], title: shareTitle, text: shareText });
-        showToast('<i class="fa-solid fa-circle-check"></i> تصویر بھیج دی گئی');
-      }catch(shareErr){
-        if(shareErr && shareErr.name === 'AbortError') return;
-        throw shareErr;
-      }
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-    showToast('<i class="fa-solid fa-image"></i> تصویر ڈاؤن لوڈ ہو گئی');
+    await _deliverGeneratedFile(blob, `${fileNamePrefix}.png`, 'image/png', shareTitle, shareText, 'تصویر');
   }catch(e){
+    // Show the real technical reason on screen (instead of a vague
+    // message) so it can be screenshotted and reported precisely.
     console.error('Image export failed:', e);
-    showToast('❌ تصویر بنانے میں مسئلہ ہوا', 'warn');
+    showToast(`❌ تصویر نہیں بن سکی — ${e && e.message ? e.message : 'نامعلوم خرابی'}`, 'warn');
   }
 }
 function sendReceiptImage(){
@@ -6602,25 +6623,10 @@ async function sendReceiptPDF(){
     if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
     const {c}=lastReceiptData;
     const fileName = `Receipt-${(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
-    const file = new File([blob], fileName, {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({ files:[file], title: `${shopProfile.name} — رسید`, text: `${c.name} کی ادائیگی رسید` });
-        showToast('<i class="fa-solid fa-circle-check"></i> رسید PDF بھیج دی گئی');
-      }catch(shareErr){
-        if(shareErr && shareErr.name === 'AbortError') return;
-        throw shareErr;
-      }
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-    showToast('<i class="fa-solid fa-file-pdf"></i> رسید PDF ڈاؤن لوڈ ہو گئی');
+    await _deliverGeneratedFile(blob, fileName, 'application/pdf', `${shopProfile.name} — رسید`, `${c.name} کی ادائیگی رسید`, 'رسید PDF');
   }catch(e){
     console.error(e);
-    showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
+    showToast(`❌ PDF نہیں بن سکی — ${e && e.message ? e.message : 'نامعلوم خرابی'}`, 'warn');
   }
 }
 // ── "ای میل" button in the receipt popup — opens the device's mail
@@ -8456,34 +8462,10 @@ async function sendAgreementPDFviaWhatsApp(){
     const blob = await _generateAgreementPdfBlob();
     if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
     const fileName = `Agreement-${(agreementCust.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
-    const file = new File([blob], fileName, {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({
-          files:[file],
-          title: `${shopProfile.name} — قسط معاہدہ`,
-          text: `${agreementCust.name} کے لیے قسط معاہدہ`
-        });
-        showToast('<i class="fa-solid fa-circle-check"></i> PDF بھیج دی گئی');
-      }catch(shareErr){
-        if(shareErr && shareErr.name === 'AbortError') return; // user simply cancelled the share sheet
-        throw shareErr;
-      }
-      return;
-    }
-    // Web Share API for files isn't supported on this device/WebView —
-    // download the real PDF only. We deliberately do NOT also fire a
-    // separate plain-text WhatsApp message here anymore: that was the
-    // exact bug — this button looked like it "just sends a text"
-    // instead of actually producing the PDF.
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-    showToast('<i class="fa-solid fa-file-pdf"></i> PDF ڈاؤن لوڈ ہو گئی — واٹس ایپ چیٹ کھول کر اسے فائل کے طور پر اٹیچ کر دیں');
+    await _deliverGeneratedFile(blob, fileName, 'application/pdf', `${shopProfile.name} — قسط معاہدہ`, `${agreementCust.name} کے لیے قسط معاہدہ`, 'معاہدہ PDF');
   }catch(e){
     console.error(e);
-    showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
+    showToast(`❌ PDF نہیں بن سکی — ${e && e.message ? e.message : 'نامعلوم خرابی'}`, 'warn');
   }
 }
 
@@ -8648,25 +8630,10 @@ async function sendOverdueNoticePDF(){
     if(!blob){ showToast('❌ PDF نہیں بن سکی، دوبارہ کوشش کریں', 'warn'); return; }
     const c=overdueNoticeCust;
     const fileName = `Warning-Notice-${(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
-    const file = new File([blob], fileName, {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({ files:[file], title:`${shopProfile.name} — تنبیہ نامہ`, text:`${c.name} کے لیے تنبیہ نامہ` });
-        showToast('<i class="fa-solid fa-circle-check"></i> تنبیہ نامہ بھیج دیا گیا');
-      }catch(shareErr){
-        if(shareErr && shareErr.name==='AbortError') return;
-        throw shareErr;
-      }
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-    showToast('<i class="fa-solid fa-file-pdf"></i> تنبیہ نامہ PDF ڈاؤن لوڈ ہو گئی');
+    await _deliverGeneratedFile(blob, fileName, 'application/pdf', `${shopProfile.name} — تنبیہ نامہ`, `${c.name} کے لیے تنبیہ نامہ`, 'تنبیہ نامہ PDF');
   }catch(e){
     console.error(e);
-    showToast('❌ PDF بھیجنے میں مسئلہ ہوا', 'warn');
+    showToast(`❌ PDF نہیں بن سکی — ${e && e.message ? e.message : 'نامعلوم خرابی'}`, 'warn');
   }
 }
 
