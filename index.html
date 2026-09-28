@@ -871,9 +871,6 @@ body{padding-top:64px;}
 @media(max-width:992px){
   .hdr-nav{display:none;}
   .hdr-menu-btn{display:flex;}
-  /* Logout moves into the burger dropdown below on small screens, so
-     the compact top row has room for the bell without overflowing. */
-  .hdr-logout-btn{display:none;}
 }
 @media(max-width:480px){
   .mob-nav-grid{grid-template-columns:repeat(3,1fr);}
@@ -1702,7 +1699,7 @@ body.dark .bar-chart-lbl{color:#8899AA;}
 .about-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:rgba(255,255,255,0.07);border-radius:50%;}
 .about-hero::after{content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;background:rgba(255,213,79,0.1);border-radius:50%;}
 .about-avatar{
-  width:90px;height:90px;border-radius:50%;margin:0 auto 14px;
+  width:90px;height:90px;min-width:90px;min-height:90px;aspect-ratio:1/1;flex-shrink:0;border-radius:50%;margin:0 auto 14px;
   background:linear-gradient(135deg,#FFD54F,#FF6F00);
   display:flex;align-items:center;justify-content:center;font-size:42px;
   box-shadow:0 8px 28px rgba(255,111,0,0.5),0 0 0 4px rgba(255,255,255,0.2);
@@ -1764,9 +1761,10 @@ body.dark .profile-drawer{background-color:#0F1E33;}
   display:flex;align-items:center;justify-content:center;transition:all .2s;
 }
 .pd-close:hover{background:rgba(255,255,255,0.32);transform:rotate(90deg);}
-.pd-pic-wrap{position:relative;width:96px;height:96px;margin:0 auto;display:block;}
+.pd-head{flex-shrink:0;}
+.pd-pic-wrap{position:relative;width:96px;height:96px;min-width:96px;min-height:96px;margin:6px auto;display:block;flex-shrink:0;aspect-ratio:1/1;}
 .pd-pic-frame{width:96px;height:96px;border-radius:50%;overflow:hidden;position:relative;z-index:1;box-shadow:0 8px 24px rgba(0,0,0,0.35);border:3px solid #fff;background:#dde8f8;box-sizing:border-box;}
-.pd-pic{width:100%;height:100%;object-fit:cover;display:block;}
+.pd-pic{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:50%;}
 .pd-pic-ring{position:absolute;inset:-6px;border-radius:50%;border:2px dashed rgba(255,215,0,0.65);animation:spin18 10s linear infinite;pointer-events:none;}
 .pd-pic-edit{
   position:absolute;bottom:0;left:0;z-index:2;width:28px;height:28px;border-radius:50%;
@@ -2161,6 +2159,56 @@ body.dark .sm-clock-outer{
   .sm-clock-outer{width:112px;height:112px;}
   .sm-clock-dial{width:94px;height:94px;}
 }
+
+/* ══ 3D ACTION BUTTONS — compact top row + burger-menu controls ══ */
+.hdr-controls .hdr-bell-btn{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:12px;border:none;flex-shrink:0;cursor:pointer;
+  color:#fff;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  transition:transform .1s, box-shadow .1s;
+}
+.hdr-controls .hdr-bell-btn{
+  background:linear-gradient(160deg,#FCD34D,#F59E0B 55%,#D97706);
+  box-shadow:0 4px 0 #92400E,0 7px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.hdr-controls .hdr-bell-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #92400E,0 2px 4px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4);}
+
+@media(max-width:992px){
+  /* the two small toggles leave the top row — they live in the menu now */
+  .hdr-controls .theme-switch,
+  .hdr-controls .lang-switch{display:none;}
+  /* logout = red 3D icon button in the freed-up space */
+  .hdr-controls .hdr-logout-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:38px;height:38px;padding:0;border-radius:12px;border:none;flex-shrink:0;
+    color:#fff;font-size:16px;
+    background:linear-gradient(160deg,#FCA5A5,#EF4444 55%,#B91C1C);
+    box-shadow:0 4px 0 #7F1D1D,0 7px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.45);
+    transition:transform .1s, box-shadow .1s;
+  }
+  .hdr-controls .hdr-logout-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7F1D1D,0 2px 4px rgba(0,0,0,.3);}
+  .hdr-controls .hdr-logout-btn .t{display:none;}
+}
+
+/* Theme + Language buttons inside the burger menu */
+.mob-controls-row{padding-bottom:8px;}
+.mob-controls-row .mob-ctrl-3d{
+  flex-direction:column;gap:4px;padding:12px 8px;border:none;border-radius:16px;
+  color:#fff;font-size:13px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.4);
+  transition:transform .1s, box-shadow .1s;
+}
+.mob-controls-row .mob-ctrl-3d i{font-size:22px;color:#fff;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));}
+.mob-controls-row .mc-theme{
+  background:linear-gradient(160deg,#D8B4FE,#8B5CF6 55%,#5B21B6);
+  box-shadow:0 6px 0 #3B0F8C,0 10px 16px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.2);
+}
+.mob-controls-row .mc-lang{
+  background:linear-gradient(160deg,#99F6E4,#14B8A6 55%,#0F766E);
+  box-shadow:0 6px 0 #0B4F4A,0 10px 16px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.2);
+}
+.mob-controls-row .mc-theme:hover,.mob-controls-row .mc-lang:hover{filter:brightness(1.08);color:#fff;}
+.mob-controls-row .mc-theme:active{transform:translateY(4px);box-shadow:0 2px 0 #3B0F8C,0 4px 8px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.3);}
+.mob-controls-row .mc-lang:active{transform:translateY(4px);box-shadow:0 2px 0 #0B4F4A,0 4px 8px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.3);}
 </Style>
 
 
@@ -2243,23 +2291,15 @@ body.dark .sm-clock-outer{
       <div class="mob-ni" onclick="navMobileGo('games')"><i class="fa-solid fa-gamepad"></i><span>گیمز</span></div>
       <div class="mob-ni" onclick="navMobileGo('about')"><i class="fa-solid fa-gear"></i><span>سیٹنگز</span></div>
     </div>
-    <!-- MOBILE CONTROLS ROW: Theme + Language -->
+    <!-- MOBILE CONTROLS ROW: Theme + Language (3D colour buttons) -->
     <div class="mob-controls-row">
-      <button class="mob-ctrl-btn" onclick="toggleDark()" title="Dark / Light">
+      <button class="mob-ctrl-btn mob-ctrl-3d mc-theme" onclick="toggleDark()" title="Dark / Light">
         <i class="fa-solid fa-circle-half-stroke"></i>
         <span data-ur="تھیم" data-en="Theme">تھیم</span>
       </button>
-      <button class="mob-ctrl-btn" onclick="toggleLang()" title="اردو / English">
-        <span style="font-size:16px">🌐</span>
+      <button class="mob-ctrl-btn mob-ctrl-3d mc-lang" onclick="toggleLang()" title="اردو / English">
+        <i class="fa-solid fa-globe"></i>
         <span data-ur="زبان" data-en="Language">زبان</span>
-      </button>
-    </div>
-    <!-- Logout — lives here on mobile now that it's off the compact top
-         row (see .hdr-logout-btn{display:none} at max-width:992px). -->
-    <div class="mob-controls-row">
-      <button class="mob-ctrl-btn" onclick="authLogout()" title="لاگ آؤٹ" style="color:#FCA5A5;">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span data-ur="لاگ آؤٹ" data-en="Logout">لاگ آؤٹ</span>
       </button>
     </div>
   </div>
@@ -2687,9 +2727,11 @@ body.dark .sm-clock-outer{
             <div class="crow"><span class="cl"><i class="fa-solid fa-circle-check"></i> <span data-ur="ادا شدہ" data-en="Paid">ادا شدہ</span></span><span class="cv green" id="pi-paid">—</span></div>
             <div class="crow"><span class="cl">⏳ <span data-ur="باقی" data-en="Remaining">باقی</span></span><span class="cv red" id="pi-rem">—</span></div>
             <div class="crow"><span class="cl"><i class="fa-solid fa-calendar-days"></i> <span data-ur="اقساط" data-en="Installments">اقساط</span></span><span class="cv" id="pi-cnt">—</span></div>
+            <div class="crow" id="pi-carry-row" style="display:none;background:#FFEBEE;border-radius:8px;padding:8px;"><span class="cl" style="color:#C62828;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> <span data-ur="پچھلی کمی (اس قسط میں شامل)" data-en="Previous shortfall (added to this installment)">پچھلی کمی (اس قسط میں شامل)</span></span><span class="cv red" id="pi-carry">—</span></div>
           </div>
           <div class="fgrid" style="margin-top:12px;">
-            <div class="fg"><label><i class="fa-solid fa-money-bill"></i> <span data-ur="قسط رقم (Rs.)" data-en="Amount (Rs.)">قسط رقم (Rs.)</span></label><input type="number" id="pay-amt" placeholder="رقم" data-placeholder-ur="رقم" data-placeholder-en="Amount"></div>
+            <div class="fg"><label><i class="fa-solid fa-money-bill"></i> <span data-ur="قسط رقم (Rs.)" data-en="Amount (Rs.)">قسط رقم (Rs.)</span></label><input type="number" id="pay-amt" oninput="updatePayShortLive()" placeholder="رقم" data-placeholder-ur="رقم" data-placeholder-en="Amount"></div>
+            <div class="fg full" id="pay-short-live" style="display:none;"></div>
             <div class="fg"><label><i class="fa-solid fa-calendar-days"></i> <span data-ur="تاریخ" data-en="Date">تاریخ</span></label><input type="date" id="pay-date"></div>
             
             <div class="fg"><label><i class="fa-solid fa-wallet"></i> <span data-ur="ادائیگی کا طریقہ" data-en="Payment Method">ادائیگی کا طریقہ</span></label>
@@ -2885,7 +2927,7 @@ body.dark .sm-clock-outer{
     </div>
     <div class="about-hero" onclick="openProfileSidebar()" style="cursor:pointer;" title="پروفائل اپڈیٹ کرنے کے لیے تھپتھپائیں">
       <div class="about-avatar" style="background:none;padding:0;overflow:hidden;">
-        <img id="about-avatar-img" src="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+        <img id="about-avatar-img" src="" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;display:block;">
       </div>
       <div class="about-name" id="about-profile-name">شاہد مدنی</div>
       <div class="about-title">SHOP OWNER • PROFILE & SETTINGS</div>
@@ -3563,10 +3605,12 @@ body.dark .sm-clock-outer{
     <div class="mhdr"><h3 id="led-title"><i class="fa-solid fa-chart-column"></i> لیجر</h3><button class="mcls" onclick="closeMod('mod-ledger')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="mbdy">
       <div id="ledger-body"></div>
-      <div class="bgrp" style="margin-top:12px;">
+      <div class="bgrp" style="margin-top:12px;flex-wrap:wrap;">
         <button class="btn bwa" onclick="sendLedgerWA()"><i class="fa-brands fa-whatsapp"></i> واٹس ایپ</button>
         <button class="btn bmail" onclick="sendLedgerMail()"><i class="fa-solid fa-envelope"></i> ای میل</button>
         <button class="btn bsms" onclick="copyLedger()"><i class="fa-solid fa-clipboard"></i> کاپی</button>
+        <button class="btn" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);color:#fff;" onclick="sendLedgerPDF()"><i class="fa-solid fa-file-pdf"></i> پی ڈی ایف</button>
+        <button class="btn" style="background:linear-gradient(135deg,#00897B,#00695C);color:#fff;" onclick="sendLedgerImage()"><i class="fa-solid fa-image"></i> تصویر</button>
       </div>
     </div>
   </div>
@@ -4442,6 +4486,8 @@ function selectPlan(m, el){
   } else {
     mb.style.display = 'none';
     document.getElementById('m-months').value = m;
+    // a fixed plan overrides any manual monthly amount typed earlier
+    document.getElementById('m-monthly-manual').value = '';
   }
   calc();
 }
@@ -4455,12 +4501,15 @@ function onManualMonths(){
 }
 
 function onManualMonthly(){
-  // if user types monthly manually, override calc result display
+  // Monthly amount typed by hand -> months are worked out automatically
+  // (remaining ÷ monthly, rounded up) and the Manual plan is selected.
   const mv = parseFloat(document.getElementById('m-monthly-manual').value)||0;
-  if(mv > 0){
-    document.getElementById('cres').style.display = 'block';
-    document.getElementById('cr-mon').textContent = 'Rs. '+fmt(mv)+' (مینوئل)';
+  if(mv > 0 && selectedPlan !== 'manual'){
+    selectedPlan = 'manual';
+    document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+    const pm = document.getElementById('plan-manual'); if(pm) pm.classList.add('selected');
   }
+  calc();
 }
 
 // ══════════════════════════════
@@ -4470,8 +4519,9 @@ function calc(){
   suggestModel();
   const price  = parseFloat(document.getElementById('m-price').value)||0;
   const adv    = parseFloat(document.getElementById('m-adv').value)||0;
-  const months = parseInt(document.getElementById('m-months').value)||6;
+  let months = parseInt(document.getElementById('m-months').value)||6;
   const mval   = parseFloat(document.getElementById('m-markup').value)||0;
+  const manualMon = parseFloat(document.getElementById('m-monthly-manual').value)||0;
 
   if(!price){ document.getElementById('cres').style.display='none'; updatePlanPrices(0,0); return; }
 
@@ -4481,7 +4531,12 @@ function calc(){
 
   const total   = price + markup;
   const remain  = total - adv;
-  const monthly = Math.ceil(remain / months);
+  if(manualMon > 0 && remain > 0){
+    months = Math.max(1, Math.ceil(remain / manualMon));
+    document.getElementById('m-months').value = months;
+    const mm = document.getElementById('m-months-manual'); if(mm) mm.value = months;
+  }
+  const monthly = manualMon > 0 ? manualMon : Math.ceil(remain / months);
 
   document.getElementById('cres').style.display='block';
   document.getElementById('cr-price').textContent  = 'Rs. '+fmt(price);
@@ -4490,7 +4545,7 @@ function calc(){
   document.getElementById('cr-adv').textContent    = 'Rs. '+fmt(adv);
   document.getElementById('cr-rem').textContent    = 'Rs. '+fmt(remain);
   document.getElementById('cr-mo').textContent     = months+(isUrdu ? ' ماہ' : ' months');
-  document.getElementById('cr-mon').textContent    = 'Rs. '+fmt(monthly);
+  document.getElementById('cr-mon').textContent    = 'Rs. '+fmt(monthly)+(manualMon>0 ? ' (مینوئل)' : '');
 
   updatePlanPrices(total, adv);
 }
@@ -4861,7 +4916,7 @@ function saveCustomer(){
   if(!name||!phone||!price||!model){ showToast('<i class="fa-solid fa-triangle-exclamation"></i> نام، نمبر، آئٹم اور قیمت لازمی ہے','warn'); return; }
 
   const adv    = parseFloat(document.getElementById('m-adv').value)||0;
-  const months = parseInt(document.getElementById('m-months').value)||6;
+  let months = parseInt(document.getElementById('m-months').value)||6;
   const mval   = parseFloat(document.getElementById('m-markup').value)||0;
   let markup=0;
   if(markupType==='pct') markup = price*mval/100;
@@ -4870,6 +4925,7 @@ function saveCustomer(){
   const remain  = total - adv;
   // Use manual monthly if entered, else auto-calculate
   const manualMonthly = parseFloat(document.getElementById('m-monthly-manual').value)||0;
+  if(manualMonthly > 0 && remain > 0) months = Math.max(1, Math.ceil(remain/manualMonthly));
   const monthly = manualMonthly > 0 ? manualMonthly : Math.ceil(remain/months);
   const startD  = document.getElementById('m-start').value || new Date().toISOString().split('T')[0];
 
@@ -4886,13 +4942,14 @@ function saveCustomer(){
       lng: document.getElementById('c-gps-lng').value ? parseFloat(document.getElementById('c-gps-lng').value) : null
     },
     guarantor:{ name:document.getElementById('g-name').value.trim(), phone:document.getElementById('g-phone').value.trim(), cnic:document.getElementById('g-cnic').value.trim() },
-    mobile:{ category, item, itemType: item || category, itemBrand, itemSpec, model, imei, engineNo, extra, price, markup, markupType, markupPct: markupType==='pct'?mval:0, total, advance:adv, remaining:remain, months, monthly, startDate:startD, dueDay:parseInt(document.getElementById('m-dday').value)||10 },
+    mobile:{ category, item, itemType: item || category, itemBrand, itemSpec, model, imei, engineNo, extra, price, markup, markupType, markupPct: markupType==='pct'?mval:0, total, advance:adv, remaining:remain, months, monthly, manualMonthly: manualMonthly>0, startDate:startD, dueDay:parseInt(document.getElementById('m-dday').value)||10 },
     // ── Google Drive media links (customer photo / product photo /
     // first-installment receipt) — filled automatically as each photo
     // is captured & auto-uploaded to the user's own Drive. Empty string
     // if that particular photo was never captured for this agreement.
     driveMedia: {
       customerPhotoLink: (window._driveMedia && window._driveMedia.customerPhoto) ? window._driveMedia.customerPhoto.link : '',
+      customerPhotoThumb: (window._driveMedia && window._driveMedia.customerPhotoThumb) ? window._driveMedia.customerPhotoThumb : '',
       productPhotoLink:  (window._driveMedia && window._driveMedia.productPhoto)  ? window._driveMedia.productPhoto.link  : '',
       receiptPhotoLink:  (window._driveMedia && window._driveMedia.receiptPhoto)  ? window._driveMedia.receiptPhoto.link  : ''
     },
@@ -4905,6 +4962,7 @@ function saveCustomer(){
       // Don't blank out previously-saved Drive links with empty ones if
       // no new photo was captured during this edit session.
       if(!data.driveMedia.customerPhotoLink && customers[idx].driveMedia) data.driveMedia.customerPhotoLink = customers[idx].driveMedia.customerPhotoLink || '';
+      if(!data.driveMedia.customerPhotoThumb && customers[idx].driveMedia) data.driveMedia.customerPhotoThumb = customers[idx].driveMedia.customerPhotoThumb || '';
       if(!data.driveMedia.productPhotoLink  && customers[idx].driveMedia) data.driveMedia.productPhotoLink  = customers[idx].driveMedia.productPhotoLink  || '';
       if(!data.driveMedia.receiptPhotoLink  && customers[idx].driveMedia) data.driveMedia.receiptPhotoLink  = customers[idx].driveMedia.receiptPhotoLink  || '';
       customers[idx] = {...customers[idx], ...data};
@@ -5280,6 +5338,8 @@ function editCustomer(id){
     document.getElementById('m-months').value = savedMonths;
   }
   if(c.mobile?.manualMonthly) document.getElementById('m-monthly-manual').value = c.mobile.monthly;
+  { const _th = c.driveMedia && c.driveMedia.customerPhotoThumb; const _pv = document.getElementById('c-photo-preview');
+    if(_pv){ if(_th){ _pv.src=_th; _pv.style.display='block'; } } }
   calc();
   showSc('add');
   window.scrollTo(0,0);
@@ -5639,38 +5699,62 @@ function openLedger(id){
   const paid=c.payments.reduce((s,p)=>s+p.amount,0);
   const rem=Math.max(0,c.mobile.remaining-paid);
 
-  // Build monthly schedule
+  // Build monthly schedule — uses REAL payments (short payments are
+  // deducted from the balance and the shortfall carries into next row)
   let rows='';
-  let cumPaid=c.mobile.advance;
   const startD=new Date(c.mobile.startDate||new Date());
-
-  for(let i=1;i<=c.mobile.months;i++){
+  const plan=_instPlan(c);
+  const mth=c.mobile.monthly||0;
+  const nRows = mth>0 ? (c.payments.length + Math.ceil(plan.bal/mth)) : c.mobile.months;
+  let runBal=c.mobile.remaining;
+  let carry=0;
+  for(let i=1;i<=Math.max(nRows,1);i++){
     const d=new Date(startD);
     d.setMonth(d.getMonth()+i);
     d.setDate(c.mobile.dueDay||10);
-    const payForMonth=c.payments[i-1];
-    const status=payForMonth?'<span class="pst spaid">ادا <i class="fa-solid fa-circle-check"></i></span>':'<span class="pst sdue">باقی ⏳</span>';
-    const payAmt=payForMonth?'Rs. '+fmt(payForMonth.amount):'—';
-    const balance=c.mobile.remaining - Math.min(c.mobile.monthly*i, c.mobile.remaining);
+    const pay=c.payments[i-1];
+    let expected, payAmt, status;
+    if(pay){
+      const pr=plan.rows[i-1];
+      expected=pr.expected; runBal=Math.max(0,runBal-pay.amount);
+      payAmt='Rs. '+fmt(pay.amount);
+      status='<span class="pst spaid">ادا <i class="fa-solid fa-circle-check"></i></span>';
+      if(pr.short>0) status+='<div style="color:#C62828;font-size:10px;font-weight:700;margin-top:3px;">کمی Rs. '+fmt(pr.short)+'</div>';
+      carry=pr.short;
+    } else {
+      expected=Math.min(mth+carry,runBal);
+      runBal=Math.max(0,runBal-expected);
+      payAmt='—';
+      status='<span class="pst sdue">باقی ⏳</span>';
+      if(carry>0) status+='<div style="color:#C62828;font-size:10px;font-weight:700;margin-top:3px;">پچھلی کمی شامل</div>';
+      carry=0;
+    }
     rows+=`<tr>
       <td>${i}</td>
       <td>${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</td>
-      <td>Rs. ${fmt(c.mobile.monthly)}</td>
+      <td>Rs. ${fmt(expected)}</td>
       <td>${payAmt}</td>
-      <td>Rs. ${fmt(Math.max(0,balance))}</td>
+      <td>Rs. ${fmt(runBal)}</td>
       <td>${status}</td>
     </tr>`;
   }
+  const custPhoto = (c.driveMedia && c.driveMedia.customerPhotoThumb) || '';
+  const shortBanner = (plan.carry>0 && rem>0)
+    ? `<div style="background:#FFEBEE;border:1px solid #EF9A9A;color:#C62828;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12px;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> کمی Rs. ${fmt(plan.carry)} — اگلی قسط Rs. ${fmt(plan.nextDue)} ہوگی</div>`
+    : '';
 
   document.getElementById('ledger-body').innerHTML=`
+    <div id="ledger-capture" style="background:#fff;padding:10px;color:#1a1a1a;">
     <div class="rcpt" style="margin-bottom:14px;">
       <div class="rcpt-hdr"><h2><i class="fa-solid fa-mobile-screen-button"></i> ${shopProfile.name}</h2><p>ماہانہ قسط لیجر — ${c.name}</p></div>
+      ${custPhoto?`<div style="text-align:center;margin:10px 0 4px;"><img src="${custPhoto}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:50%;border:3px solid #1565C0;box-shadow:0 2px 8px rgba(0,0,0,.25);"></div>`:''}
       <hr class="rcpt-hr">
       <div class="rrow"><span><i class="fa-solid fa-mobile-screen-button"></i> موبائل</span><strong>${c.mobile.model}</strong></div>
       <div class="rrow"><span><i class="fa-solid fa-money-bill"></i> کل قیمت</span><strong>Rs. ${fmt(c.mobile.total||c.mobile.price)}</strong></div>
       <div class="rrow"><span><i class="fa-solid fa-credit-card"></i> ایڈوانس</span><strong>Rs. ${fmt(c.mobile.advance)}</strong></div>
       <div class="rrow total"><span><i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط</span><strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
     </div>
+    ${shortBanner}
     <div style="overflow-x:auto;">
       <table class="ledger-table">
         <thead><tr><th>#</th><th>تاریخ</th><th>قسط</th><th>ادائیگی</th><th>بقایا</th><th>حال</th></tr></thead>
@@ -5678,7 +5762,8 @@ function openLedger(id){
         <tr class="total"><td colspan="2">کل</td><td>Rs. ${fmt(c.mobile.remaining)}</td><td>Rs. ${fmt(paid)}</td><td>Rs. ${fmt(rem)}</td><td></td></tr>
       </table>
     </div>
-    <div class="dua">🤲 جَزَاكَ اللَّهُ خَيْرًا فِي الدَّارَيْن 🌸<br>${shopProfile.name}</div>`;
+    <div class="dua">🤲 جَزَاكَ اللَّهُ خَيْرًا فِي الدَّارَيْن 🌸<br>${shopProfile.name}</div>
+    </div>`;
   openMod('mod-ledger');
 }
 
@@ -5696,6 +5781,46 @@ function buildLedgerText(){
     rows+=`${st} ${i}.  ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}   Rs.${fmt(c.mobile.monthly)}   ${pf?'Rs.'+fmt(pf.amount):'باقی'}   Rs.${fmt(balance)}\n`;
   }
   return `<i class="fa-solid fa-mobile-screen-button"></i> *${shopProfile.name}*\n━━━━━━━━━━━━━━━━━\n*ماہانہ قسط لیجر*\n\n<i class="fa-solid fa-user"></i> *${c.name}*\n<i class="fa-solid fa-phone"></i> ${c.phone}\n<i class="fa-solid fa-mobile-screen-button"></i> ${c.mobile.model}\n<i class="fa-solid fa-money-bill"></i> کل قیمت: Rs. ${fmt(c.mobile.total||c.mobile.price)}\n<i class="fa-solid fa-credit-card"></i> ایڈوانس: Rs. ${fmt(c.mobile.advance)}\n<i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط: Rs. ${fmt(c.mobile.monthly)}\n${rows}\n<i class="fa-solid fa-circle-check"></i> ادا شدہ: Rs. ${fmt(paid)}\n⏳ باقی: Rs. ${fmt(rem)}\n━━━━━━━━━━━━━━━━━\n🤲 جَزَاكَ اللَّهُ خَيْرًا فِي الدَّارَيْن 🌸\n${shopProfile.name}\n<i class="fa-solid fa-phone"></i> ${shopProfile.phone}`;
+}
+
+// ── Ledger as PDF / Image (customer photo included) ──
+async function _generateLedgerPdfBlob(){
+  const content=document.getElementById('ledger-capture');
+  const canvas = await _captureElementCanvas(content);
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const imgW = pageW;
+  const imgH = canvas.height * imgW / canvas.width;
+  let heightLeft = imgH, position = 0;
+  pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+  heightLeft -= pageH;
+  while(heightLeft > 0){
+    position = heightLeft - imgH;
+    pdf.addPage();
+    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+    heightLeft -= pageH;
+  }
+  return pdf.output('blob');
+}
+async function sendLedgerPDF(){
+  const c=ledCust; if(!c) return;
+  showToast('<i class="fa-solid fa-spinner fa-spin"></i> PDF تیار ہو رہا ہے...');
+  try{
+    const blob = await _generateLedgerPdfBlob();
+    const fileName = `Ledger-${(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'')}.pdf`;
+    await _deliverGeneratedFile(blob, fileName, 'application/pdf', `${shopProfile.name} — لیجر`, `${c.name} کا لیجر`, 'لیجر PDF');
+  }catch(e){
+    console.error(e);
+    showToast(`❌ PDF نہیں بن سکی — ${e && e.message ? e.message : 'نامعلوم خرابی'}`, 'warn');
+  }
+}
+function sendLedgerImage(){
+  const c=ledCust; if(!c) return;
+  const name=(c.name||'Customer').replace(/[^a-zA-Z0-9ا-ی ]/g,'');
+  _shareOrDownloadImage('ledger-capture', `Ledger-${name}`, `${shopProfile.name} — لیجر`, `${c.name} کا لیجر`);
 }
 function sendLedgerWA(){ const c=ledCust;if(!c)return;const n=(c.wa||c.phone).replace(/[^0-9]/g,'');const intl=n.startsWith('0')?'92'+n.slice(1):n;window.open(`https://wa.me/${intl}?text=${encodeURIComponent(_cleanWaText(buildLedgerText()))}`,'_blank');closeMod('mod-ledger');}
 function sendLedgerMail(){ const c=ledCust;if(!c||!c.email){showToast('<i class="fa-solid fa-triangle-exclamation"></i> ای میل نہیں','warn');return;}window.open(`mailto:${c.email}?subject=${encodeURIComponent(shopProfile.name + ' — قسط لیجر')}&body=${encodeURIComponent(_cleanWaText(buildLedgerText()))}`,'_blank');closeMod('mod-ledger');}
@@ -5750,6 +5875,44 @@ function popPaySel(){
   sel.value = stillExists ? cur : '';
   loadPay();
 }
+
+// ══════════════════════════════
+//  SHORT-PAYMENT (کم ادائیگی) TRACKING
+//  Every payment is compared with what was actually due that month
+//  (monthly + shortfall carried from earlier). Any shortfall is kept
+//  in the balance (ledger) and added to the NEXT installment.
+// ══════════════════════════════
+function _instPlan(c){
+  const monthly = (c && c.mobile && c.mobile.monthly) || 0;
+  let bal = (c && c.mobile && c.mobile.remaining) || 0;
+  let carry = 0;
+  const rows = [];
+  ((c && c.payments) || []).forEach(p=>{
+    const expected = Math.min(monthly + carry, bal);
+    const amt = p.amount || 0;
+    const short = Math.max(0, expected - amt);
+    rows.push({expected, paid:amt, short, carryIn:carry});
+    bal = Math.max(0, bal - amt);
+    carry = short;
+  });
+  return {rows, carry, bal, nextDue: Math.min(monthly + carry, bal)};
+}
+function updatePayShortLive(){
+  const box = document.getElementById('pay-short-live');
+  const sel = document.getElementById('pay-sel');
+  if(!box || !sel) return;
+  const c = customers.find(x=>String(x.id)===String(sel.value));
+  const amt = parseFloat(document.getElementById('pay-amt').value)||0;
+  if(!c || !amt){ box.style.display='none'; return; }
+  const plan = _instPlan(c);
+  const short = Math.max(0, plan.nextDue - amt);
+  if(short > 0){
+    box.style.display='block';
+    box.innerHTML = '<div style="background:#FFEBEE;border:1px solid #EF9A9A;color:#C62828;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;">'
+      + '<i class="fa-solid fa-triangle-exclamation"></i> کمی: Rs. '+fmt(short)+' — یہ رقم اگلی قسط میں شامل ہو جائے گی</div>';
+  } else { box.style.display='none'; }
+}
+
 function loadPay(){
   const sel=document.getElementById('pay-sel');
   const box=document.getElementById('pay-info');
@@ -5770,7 +5933,16 @@ function loadPay(){
   document.getElementById('pi-paid').textContent = 'Rs. '+fmt(paid);
   document.getElementById('pi-rem').textContent = 'Rs. '+fmt(rem);
   document.getElementById('pi-cnt').textContent = `${payments.length}/${mobile.months||0} اقساط`;
-  document.getElementById('pay-amt').value = mobile.monthly || '';
+  const _plan = _instPlan(c);
+  document.getElementById('pay-amt').value = (_plan.nextDue || mobile.monthly || '');
+  const _pc = document.getElementById('pi-carry-row');
+  if(_pc){
+    if(_plan.carry > 0 && rem > 0){
+      _pc.style.display = 'flex';
+      document.getElementById('pi-carry').textContent = 'Rs. '+fmt(_plan.carry);
+    } else { _pc.style.display = 'none'; }
+  }
+  updatePayShortLive();
   document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
   renderPayHist(c);
 }
@@ -7209,10 +7381,20 @@ function recPay(){
   
   const c=customers.find(x=>String(x.id)===String(rawVal));
   if(!c||!amt){showToast(isUrdu ? '<i class="fa-solid fa-triangle-exclamation"></i> کسٹمر اور رقم لازمی ہے' : '<i class="fa-solid fa-triangle-exclamation"></i> Customer and Amount are required','warn');return;}
-  const payObj={amount:amt,date,note,method,time:new Date().toISOString()};
+  const _before = _instPlan(c);
+  const _expected = _before.nextDue;
+  const _short = Math.max(0, _expected - amt);
+  const payObj={amount:amt,date,note,method,time:new Date().toISOString(),expected:_expected,short:_short};
   c.payments.push(payObj);
   const paid=c.payments.reduce((s,p)=>s+p.amount,0);
   if(paid>=c.mobile.remaining) c.status='done';
+  if(_short > 0 && c.status!=='done'){
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i> قسط جمع ہو گئی — کمی Rs. '+fmt(_short)+' اگلی قسط میں شامل','warn');
+    save(); loadPay(); renderDash();
+    document.getElementById('pay-note').value='';
+    setTimeout(()=>showReceipt(c.id,payObj),400);
+    return;
+  }
   save();showToast(isUrdu ? '<i class="fa-solid fa-circle-check"></i> قسط جمع ہو گئی!' : '<i class="fa-solid fa-circle-check"></i> Payment Received!');
   loadPay();renderDash();
   document.getElementById('pay-note').value='';
@@ -9514,10 +9696,10 @@ async function uploadImageToDrive(file, fileNamePrefix){
    currently being added/edited. Reset via _resetDriveMediaState()
    after every save/cancel so a stale link never leaks into the next
    customer's record. ─────────────────────────────────────────────── */
-window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null };
+window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null, customerPhotoThumb: null };
 
 function _resetDriveMediaState(){
-  window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null };
+  window._driveMedia = { customerPhoto: null, productPhoto: null, receiptPhoto: null, customerPhotoThumb: null };
   [
     ['c-photo-input','c-photo-preview','c-photo-status'],
     ['m-photo-input','m-photo-preview','m-photo-status'],
@@ -9571,8 +9753,35 @@ function _previewAndUploadToDrive(file, previewId, statusId, prefix, storeKey){
 }
 
 /* ─── The 3 handlers wired to onchange= on each camera/file input ─── */
+// Small local copy (≈320px JPEG) of the customer photo, stored inside the
+// customer record so it can be printed on the ledger PDF/image even when
+// offline or when Google Drive isn't signed in.
+function _makePhotoThumb(file, maxSide){
+  return new Promise(resolve=>{
+    const fr = new FileReader();
+    fr.onerror = ()=>resolve(null);
+    fr.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>resolve(null);
+      img.onload = ()=>{
+        try{
+          const k = Math.min(1, maxSide/Math.max(img.width,img.height));
+          const w = Math.max(1,Math.round(img.width*k)), h = Math.max(1,Math.round(img.height*k));
+          const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+          const cx = cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+          resolve(cv.toDataURL('image/jpeg',0.78));
+        }catch(e){ resolve(null); }
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
 function handleCustomerPhotoCapture(event){
   const file = event.target.files && event.target.files[0];
+  if(file && file.type && file.type.startsWith('image/')){
+    _makePhotoThumb(file, 320).then(d=>{ if(d) window._driveMedia.customerPhotoThumb = d; });
+  }
   _previewAndUploadToDrive(file, 'c-photo-preview', 'c-photo-status', 'customer_photo', 'customerPhoto');
 }
 function handleProductPhotoCapture(event){
