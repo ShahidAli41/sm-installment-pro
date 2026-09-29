@@ -806,38 +806,55 @@ body{padding-top:64px;}
 }
 .mob-nav-grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
 }
 .mob-ni{
+  position:relative;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:4px;
-  padding:10px 6px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px;
-  color:#CBD5E1;
-  font-size:11px;
-  font-weight:700;
+  gap:8px;
+  aspect-ratio:1/1;
+  padding:14px 8px;
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:22px;
+  color:#fff;
+  font-size:12.5px;
+  font-weight:800;
+  text-align:center;
   cursor:pointer;
-  transition:all 0.2s;
+  overflow:hidden;
+  transition:transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  box-shadow:0 8px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -8px 14px rgba(0,0,0,0.14);
 }
+.mob-ni::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,0.30),rgba(255,255,255,0) 45%);
+}
+.mob-ni:active{transform:scale(.95);filter:brightness(1.05);}
 .mob-ni i{
   display:inline-flex;align-items:center;justify-content:center;
-  width:38px;height:38px;border-radius:11px;
-  font-size:15px;color:#fff;
-  box-shadow:0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.15);
-  margin-bottom:2px;
+  width:52px;height:52px;border-radius:16px;
+  font-size:24px;color:#fff;
+  background:rgba(255,255,255,0.20);
+  box-shadow:0 4px 10px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -3px 5px rgba(0,0,0,0.18);
+  text-shadow:0 2px 3px rgba(0,0,0,0.25);
+  position:relative;z-index:1;
 }
-.mob-ni.active{
-  background:linear-gradient(135deg,var(--p2),var(--p1));
-  color:#fff;
-  border-color:transparent;
-}
-.mob-ni.active i{color:#fff;}
+.mob-ni span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,0.35);}
+.mob-ni.active{outline:2px solid rgba(255,255,255,0.75);outline-offset:-2px;}
+.mob-ni.mni-home{background:linear-gradient(150deg,#93C5FD,#2563EB 65%,#1D4ED8);}
+.mob-ni.mni-calc{background:linear-gradient(150deg,#DDD6FE,#8B5CF6 65%,#6D28D9);}
+.mob-ni.mni-add{background:linear-gradient(150deg,#86EFAC,#22C55E 65%,#15803D);}
+.mob-ni.mni-customers{background:linear-gradient(150deg,#FDE68A,#F59E0B 65%,#B45309);}
+.mob-ni.mni-pay{background:linear-gradient(150deg,#6EE7B7,#10B981 65%,#047857);}
+.mob-ni.mni-alerts{background:linear-gradient(150deg,#FCA5A5,#EF4444 65%,#B91C1C);}
+.mob-ni.mni-reminders{background:linear-gradient(150deg,#FDE68A,#F59E0B 65%,#B45309);}
+.mob-ni.mni-report{background:linear-gradient(150deg,#A5B4FC,#6366F1 65%,#4338CA);}
+.mob-ni.mni-games{background:linear-gradient(150deg,#F9A8D4,#EC4899 65%,#BE185D);}
+.mob-ni.mni-about{background:linear-gradient(150deg,#CBD5E1,#64748B 65%,#334155);}
 
 /* MOBILE CONTROLS ROW (theme + lang) */
 .mob-controls-row{
@@ -873,7 +890,6 @@ body{padding-top:64px;}
   .hdr-menu-btn{display:flex;}
 }
 @media(max-width:480px){
-  .mob-nav-grid{grid-template-columns:repeat(3,1fr);}
   .brand-text .sname{font-size:13px;max-width:115px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .pill .t, .hdr-logout-btn .t{display:none;}
 }
@@ -2280,16 +2296,16 @@ body.dark .sm-clock-outer{
   <!-- MOBILE COLLAPSIBLE MENU -->
   <div class="hdr-mobile-dropdown" id="hdr-mobile-dropdown">
     <div class="mob-nav-grid">
-      <div class="mob-ni active" onclick="navMobileGo('dash')"><i class="fa-solid fa-house"></i><span>ہوم</span></div>
-      <div class="mob-ni" onclick="navMobileGo('calc')"><i class="fa-solid fa-calculator"></i><span>کیلکولیٹر</span></div>
-      <div class="mob-ni" onclick="navMobileGo('add')"><i class="fa-solid fa-circle-plus"></i><span>نیا کسٹمر</span></div>
-      <div class="mob-ni" onclick="navMobileGo('customers')"><i class="fa-solid fa-users"></i><span>کسٹمرز</span></div>
-      <div class="mob-ni" onclick="navMobileGo('pay')"><i class="fa-solid fa-money-bill-wave"></i><span>وصولی</span></div>
-      <div class="mob-ni" onclick="navMobileGo('alerts')"><i class="fa-solid fa-bell"></i><span>الرٹس</span></div>
-      <div class="mob-ni" onclick="navMobileGo('reminders')"><i class="fa-solid fa-comment-dots"></i><span>یاددہانی</span></div>
-      <div class="mob-ni" onclick="navMobileGo('report')"><i class="fa-solid fa-chart-column"></i><span>رپورٹ</span></div>
-      <div class="mob-ni" onclick="navMobileGo('games')"><i class="fa-solid fa-gamepad"></i><span>گیمز</span></div>
-      <div class="mob-ni" onclick="navMobileGo('about')"><i class="fa-solid fa-gear"></i><span>سیٹنگز</span></div>
+      <div class="mob-ni mni-home active" onclick="navMobileGo('dash')"><i class="fa-solid fa-house"></i><span>ہوم</span></div>
+      <div class="mob-ni mni-calc" onclick="navMobileGo('calc')"><i class="fa-solid fa-calculator"></i><span>کیلکولیٹر</span></div>
+      <div class="mob-ni mni-add" onclick="navMobileGo('add')"><i class="fa-solid fa-circle-plus"></i><span>نیا کسٹمر</span></div>
+      <div class="mob-ni mni-customers" onclick="navMobileGo('customers')"><i class="fa-solid fa-users"></i><span>کسٹمرز</span></div>
+      <div class="mob-ni mni-pay" onclick="navMobileGo('pay')"><i class="fa-solid fa-money-bill-wave"></i><span>وصولی</span></div>
+      <div class="mob-ni mni-alerts" onclick="navMobileGo('alerts')"><i class="fa-solid fa-bell"></i><span>الرٹس</span></div>
+      <div class="mob-ni mni-reminders" onclick="navMobileGo('reminders')"><i class="fa-solid fa-comment-dots"></i><span>یاددہانی</span></div>
+      <div class="mob-ni mni-report" onclick="navMobileGo('report')"><i class="fa-solid fa-chart-column"></i><span>رپورٹ</span></div>
+      <div class="mob-ni mni-games" onclick="navMobileGo('games')"><i class="fa-solid fa-gamepad"></i><span>گیمز</span></div>
+      <div class="mob-ni mni-about" onclick="navMobileGo('about')"><i class="fa-solid fa-gear"></i><span>سیٹنگز</span></div>
     </div>
     <!-- MOBILE CONTROLS ROW: Theme + Language (3D colour buttons) -->
     <div class="mob-controls-row">
