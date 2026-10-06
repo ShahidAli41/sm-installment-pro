@@ -815,13 +815,13 @@ body{padding-top:64px;}
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:10px;
   aspect-ratio:1/1;
-  padding:14px 8px;
+  padding:16px 8px;
   border:1px solid rgba(255,255,255,0.14);
   border-radius:22px;
   color:#fff;
-  font-size:12.5px;
+  font-size:15px;
   font-weight:800;
   text-align:center;
   cursor:pointer;
@@ -836,8 +836,8 @@ body{padding-top:64px;}
 .mob-ni:active{transform:scale(.95);filter:brightness(1.05);}
 .mob-ni i{
   display:inline-flex;align-items:center;justify-content:center;
-  width:52px;height:52px;border-radius:16px;
-  font-size:24px;color:#fff;
+  width:64px;height:64px;border-radius:18px;
+  font-size:30px;color:#fff;
   background:rgba(255,255,255,0.20);
   box-shadow:0 4px 10px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -3px 5px rgba(0,0,0,0.18);
   text-shadow:0 2px 3px rgba(0,0,0,0.25);
@@ -1447,20 +1447,150 @@ html[dir="ltr"] .mob-nav-grid { direction: ltr; }
 .toast.warn{background:var(--a1);}
 .toast.err{background:var(--r2);}
 
-/* ══ PIN KEYPAD ══ */
-.pdot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);transition:all .2s;}
-.pdot.filled{background:#FFD54F;border-color:#FFD54F;box-shadow:0 0 12px rgba(255,213,79,0.7);}
-.pkey{
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.15);
-  color:#fff;border-radius:50%;
-  width:72px;height:72px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .15s;
-  box-shadow:0 4px 16px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.1) inset;
-  margin:0 auto;
+/* ══ PIN KEYPAD — 3D gold vault style ══ */
+.pin-screen{
+  position:fixed;inset:0;z-index:10000;
+  flex-direction:column;align-items:center;
+  text-align:center;padding:18px 20px 22px;overflow-y:auto;
+  background:
+    radial-gradient(ellipse 90% 42% at 50% 0%,rgba(255,196,60,.22) 0%,transparent 72%),
+    radial-gradient(ellipse 80% 40% at 50% 100%,rgba(255,143,0,.12) 0%,transparent 70%),
+    radial-gradient(ellipse at top,#2B1F07 0%,#0C0904 60%,#000 100%);
+  --k:clamp(54px,9.3vh,74px);
 }
-.pkey:active{transform:scale(0.92);background:rgba(255,255,255,0.22);}
+.pin-wrap{margin:auto;display:flex;flex-direction:column;align-items:center;width:100%;max-width:330px;}
+
+/* 3D gold medallion (top icon) */
+.pin-hero{
+  position:relative;flex:none;
+  width:clamp(64px,10.6vh,96px);height:clamp(64px,10.6vh,96px);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:clamp(10px,2vh,18px);
+  background:radial-gradient(circle at 30% 22%,#FFF6CF 0%,#FFDE70 24%,#F2A900 56%,#9A6400 100%);
+  box-shadow:
+    0 9px 0 #5E3D00,
+    0 18px 26px rgba(0,0,0,.72),
+    0 0 44px rgba(255,190,40,.38),
+    inset 0 3px 4px rgba(255,255,255,.75),
+    inset 0 -8px 12px rgba(120,65,0,.55);
+}
+.pin-hero::before{
+  content:"";position:absolute;inset:10%;border-radius:50%;
+  background:radial-gradient(circle at 50% 0%,#3D2C09 0%,#190F03 75%);
+  box-shadow:inset 0 5px 9px rgba(0,0,0,.85),0 1px 0 rgba(255,240,180,.65);
+}
+.pin-hero i{
+  position:relative;font-size:clamp(28px,5.2vh,42px);
+  color:#FFCA28;
+  background:linear-gradient(180deg,#FFF3C0 0%,#FFCA28 52%,#E69100 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 3px 0 #6B4400) drop-shadow(0 7px 6px rgba(0,0,0,.6));
+}
+
+/* Title + hint */
+.pin-title{
+  font-size:clamp(20px,3.4vh,24px);font-weight:800;line-height:1.6;padding:2px 0;margin-bottom:2px;
+  color:#FFE9A6;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FFE9A6 55%,#F5B93A 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.65)) drop-shadow(0 4px 8px rgba(0,0,0,.5));
+}
+.pin-sub{
+  font-size:13.5px;line-height:1.9;color:rgba(255,238,200,.82);
+  max-width:285px;margin-bottom:clamp(10px,2vh,20px);
+}
+
+/* PIN dots — glass beads that light up gold */
+.pin-dots{display:flex;gap:18px;margin-bottom:6px;}
+.pdot{
+  width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.38) 0%,rgba(255,255,255,.05) 60%),#1B1406;
+  border:1.5px solid rgba(255,213,79,.5);
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.85),0 1px 0 rgba(255,235,170,.28);
+  transition:all .2s;
+}
+.pdot.filled{
+  background:radial-gradient(circle at 35% 28%,#FFF8D6 0%,#FFD54F 46%,#E69100 100%);
+  border-color:#FFE082;
+  box-shadow:0 0 14px rgba(255,200,60,.9),0 2px 0 #7A4B00,inset 0 -2px 3px rgba(150,80,0,.5);
+  transform:scale(1.14);
+}
+.pin-err{color:#FF8A80;font-size:13px;font-weight:700;min-height:20px;line-height:20px;margin-bottom:clamp(6px,1.4vh,12px);}
+
+/* Dial pad */
+.pin-pad{
+  display:grid;grid-template-columns:repeat(3,var(--k));justify-content:center;
+  gap:clamp(11px,2.2vh,20px) clamp(14px,5vw,22px);
+  padding-bottom:8px;
+}
+.pkey{
+  position:relative;width:var(--k);height:var(--k);border-radius:50%;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Poppins',sans-serif;font-size:calc(var(--k)*.40);font-weight:600;line-height:1;
+  color:#FFE9A8;
+  text-shadow:0 2px 0 rgba(0,0,0,.85),0 0 10px rgba(255,200,60,.5);
+  background:
+    radial-gradient(ellipse 60% 36% at 50% 13%,rgba(255,255,255,.42) 0%,rgba(255,255,255,0) 100%),
+    radial-gradient(circle at 50% 120%,rgba(255,176,0,.42) 0%,rgba(255,176,0,0) 58%),
+    linear-gradient(165deg,#8B6A20 0%,#4B3911 42%,#1D1408 100%);
+  border:1px solid rgba(255,224,130,.42);
+  box-shadow:
+    0 7px 0 #080502,
+    0 13px 16px rgba(0,0,0,.68),
+    inset 0 2px 2px rgba(255,240,180,.55),
+    inset 0 -5px 9px rgba(0,0,0,.6);
+  cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,box-shadow .08s ease,filter .08s ease;
+}
+.pkey i{font-size:.8em;}
+.pkey:active{
+  transform:translateY(5px);
+  box-shadow:
+    0 2px 0 #080502,
+    0 4px 7px rgba(0,0,0,.6),
+    inset 0 2px 2px rgba(255,240,180,.38),
+    inset 0 -3px 6px rgba(0,0,0,.6);
+  filter:brightness(1.2);
+}
+/* # (clear) and backspace keys: warm coral tint so they read as "function" keys */
+.pin-pad .pkey:nth-child(10),.pin-pad .pkey:nth-child(12){
+  color:#FFB59A;
+  text-shadow:0 2px 0 rgba(0,0,0,.85),0 0 10px rgba(255,110,64,.5);
+  background:
+    radial-gradient(ellipse 60% 36% at 50% 13%,rgba(255,255,255,.36) 0%,rgba(255,255,255,0) 100%),
+    radial-gradient(circle at 50% 120%,rgba(255,87,34,.40) 0%,rgba(255,87,34,0) 58%),
+    linear-gradient(165deg,#7A3A26 0%,#44201A 42%,#190B08 100%);
+  border-color:rgba(255,160,120,.38);
+}
+
+/* Logout — clear, tappable pill */
+.pin-logout{
+  display:inline-flex;align-items:center;gap:9px;
+  margin-top:clamp(10px,2.2vh,22px);padding:9px 26px;border-radius:999px;
+  font-family:inherit;font-size:15px;font-weight:800;line-height:1.6;color:#FFE9A8;
+  background:linear-gradient(180deg,rgba(255,213,79,.24) 0%,rgba(255,213,79,.07) 100%);
+  border:1.5px solid rgba(255,213,79,.65);
+  box-shadow:0 4px 0 rgba(0,0,0,.65),0 9px 16px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.28);
+  text-shadow:0 1px 0 rgba(0,0,0,.85);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,box-shadow .08s ease;
+}
+.pin-logout i{color:#FFB74D;font-size:15px;}
+.pin-logout:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.65),0 3px 8px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.2);}
+
+/* Close button on the PIN-setup screen */
+.pin-close{
+  position:absolute;top:16px;left:16px;width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#FFE9A8;cursor:pointer;
+  background:linear-gradient(165deg,#6B5624 0%,#2A200C 100%);
+  border:1px solid rgba(255,224,130,.45);
+  box-shadow:0 4px 0 #080502,0 8px 12px rgba(0,0,0,.55),inset 0 1px 2px rgba(255,240,180,.5);
+  -webkit-tap-highlight-color:transparent;
+}
+.pin-close:active{transform:translateY(3px);box-shadow:0 1px 0 #080502,0 3px 6px rgba(0,0,0,.5);}
 .pk-num{font-size:26px;font-weight:300;line-height:1;font-family:'Poppins',sans-serif;}
 .pk-sub{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.5);margin-top:1px;font-weight:600;}
 .pkey-del{border-radius:14px !important;background:rgba(255,80,80,0.15) !important;font-size:13px;font-weight:700;letter-spacing:1px;}
@@ -1671,6 +1801,10 @@ body.dark .bar-chart-lbl{color:#8899AA;}
 .gc-play-zen{ background:linear-gradient(135deg,#4ee6c4,#c084fc); box-shadow:0 4px 12px rgba(78,230,196,0.4); }
 .gc-puzzle{ background:linear-gradient(135deg,#2c1b12,#5b3a29 45%,#FF5D8F); }
 .gc-play-puzzle{ background:linear-gradient(135deg,#FFB84C,#FF5D8F); box-shadow:0 4px 12px rgba(255,93,143,0.4); }
+.gc-merge{ background:linear-gradient(135deg,#1a0a33,#4a0d6b 45%,#9d3fd1); }
+.gc-play-merge{ background:linear-gradient(135deg,#d29bff,#7b2ff7); box-shadow:0 4px 12px rgba(157,63,209,0.4); }
+.gc-chicken{ background:linear-gradient(135deg,#2a1505,#6b3310 45%,#f2a33d); }
+.gc-play-chicken{ background:linear-gradient(135deg,#ffd08a,#f2762e); box-shadow:0 4px 12px rgba(242,118,46,0.4); }
 .gr-badge-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; margin-bottom:18px; }
 .gr-badge{ display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:999px; background:linear-gradient(135deg,#FFE58A,#FFC107 45%,#FF9800); color:#3a2200; font-weight:900; font-size:17px; letter-spacing:.5px; box-shadow:0 6px 18px rgba(255,152,0,0.4), 0 1px 0 rgba(255,255,255,0.6) inset; }
 .gr-badge i{ font-size:15px; }
@@ -3408,69 +3542,69 @@ body.dark .sm-clock-outer{
 <!-- PIN APP-LOCK SCREEN — shown after Firebase confirms the session
      (or automatically after the 1-minute background auto-lock) whenever
      the user has PIN Lock switched on in Settings. -->
-<div id="pin-lock-screen" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at top,#241A05 0%,#0C0904 60%,#000000 100%);z-index:10000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
-  <div style="width:78px;height:78px;border-radius:50%;background:rgba(255,213,79,0.1);border:2px solid rgba(255,213,79,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-    <i class="fa-solid fa-user-shield" style="font-size:34px;color:#FFD54F;"></i>
-  </div>
-  <div style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;">PIN درج کریں</div>
-  <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:20px;">ایپ کھولنے کے لیے اپنا 4 ہندسوں کا PIN درج کریں</div>
+<div id="pin-lock-screen" class="pin-screen" style="display:none;">
+  <div class="pin-wrap">
+    <div class="pin-hero"><i class="fa-solid fa-user-shield"></i></div>
+    <div class="pin-title">PIN درج کریں</div>
+    <div class="pin-sub">ایپ کھولنے کے لیے اپنا 4 ہندسوں کا PIN درج کریں</div>
 
-  <div style="display:flex;gap:14px;margin-bottom:8px;">
-    <div class="pdot" id="pin-dot-0"></div>
-    <div class="pdot" id="pin-dot-1"></div>
-    <div class="pdot" id="pin-dot-2"></div>
-    <div class="pdot" id="pin-dot-3"></div>
-  </div>
-  <div id="pin-lock-err" style="color:#FF8A80;font-size:12px;min-height:18px;margin-bottom:14px;"></div>
+    <div class="pin-dots">
+      <div class="pdot" id="pin-dot-0"></div>
+      <div class="pdot" id="pin-dot-1"></div>
+      <div class="pdot" id="pin-dot-2"></div>
+      <div class="pdot" id="pin-dot-3"></div>
+    </div>
+    <div id="pin-lock-err" class="pin-err"></div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:280px;">
-    <div class="pkey" onclick="pinKeyPress('1')">1</div>
-    <div class="pkey" onclick="pinKeyPress('2')">2</div>
-    <div class="pkey" onclick="pinKeyPress('3')">3</div>
-    <div class="pkey" onclick="pinKeyPress('4')">4</div>
-    <div class="pkey" onclick="pinKeyPress('5')">5</div>
-    <div class="pkey" onclick="pinKeyPress('6')">6</div>
-    <div class="pkey" onclick="pinKeyPress('7')">7</div>
-    <div class="pkey" onclick="pinKeyPress('8')">8</div>
-    <div class="pkey" onclick="pinKeyPress('9')">9</div>
-    <div class="pkey" onclick="pinKeyPress('hash')">#</div>
-    <div class="pkey" onclick="pinKeyPress('0')">0</div>
-    <div class="pkey" onclick="pinKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
-  </div>
+    <div class="pin-pad">
+      <div class="pkey" onclick="pinKeyPress('1')">1</div>
+      <div class="pkey" onclick="pinKeyPress('2')">2</div>
+      <div class="pkey" onclick="pinKeyPress('3')">3</div>
+      <div class="pkey" onclick="pinKeyPress('4')">4</div>
+      <div class="pkey" onclick="pinKeyPress('5')">5</div>
+      <div class="pkey" onclick="pinKeyPress('6')">6</div>
+      <div class="pkey" onclick="pinKeyPress('7')">7</div>
+      <div class="pkey" onclick="pinKeyPress('8')">8</div>
+      <div class="pkey" onclick="pinKeyPress('9')">9</div>
+      <div class="pkey" onclick="pinKeyPress('hash')">#</div>
+      <div class="pkey" onclick="pinKeyPress('0')">0</div>
+      <div class="pkey" onclick="pinKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
+    </div>
 
-  <div style="margin-top:20px;font-size:12px;color:#FFD54F;cursor:pointer;" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket"></i> لاگ آؤٹ کریں</div>
+    <button type="button" class="pin-logout" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket"></i> لاگ آؤٹ کریں</button>
+  </div>
 </div>
 
 <!-- PIN SETUP / CHANGE SCREEN — opened from Settings -->
-<div id="pin-setup-screen" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at top,#241A05 0%,#0C0904 60%,#000000 100%);z-index:10000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;">
-  <button onclick="closePinSetup()" style="position:absolute;top:20px;left:20px;background:none;border:none;color:#fff;font-size:19px;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-  <div style="width:78px;height:78px;border-radius:50%;background:rgba(255,213,79,0.1);border:2px solid rgba(255,213,79,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-    <i class="fa-solid fa-key" style="font-size:34px;color:#FFD54F;"></i>
-  </div>
-  <div style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;" id="pin-setup-title">نیا PIN درج کریں</div>
-  <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:20px;" id="pin-setup-hint">4 ہندسوں کا PIN منتخب کریں</div>
+<div id="pin-setup-screen" class="pin-screen" style="display:none;">
+  <button type="button" class="pin-close" onclick="closePinSetup()" aria-label="بند کریں"><i class="fa-solid fa-xmark"></i></button>
+  <div class="pin-wrap">
+    <div class="pin-hero"><i class="fa-solid fa-key"></i></div>
+    <div class="pin-title" id="pin-setup-title">نیا PIN درج کریں</div>
+    <div class="pin-sub" id="pin-setup-hint">4 ہندسوں کا PIN منتخب کریں</div>
 
-  <div style="display:flex;gap:14px;margin-bottom:8px;">
-    <div class="pdot" id="pin-setup-dot-0"></div>
-    <div class="pdot" id="pin-setup-dot-1"></div>
-    <div class="pdot" id="pin-setup-dot-2"></div>
-    <div class="pdot" id="pin-setup-dot-3"></div>
-  </div>
-  <div id="pin-setup-err" style="color:#FF8A80;font-size:12px;min-height:18px;margin-bottom:14px;"></div>
+    <div class="pin-dots">
+      <div class="pdot" id="pin-setup-dot-0"></div>
+      <div class="pdot" id="pin-setup-dot-1"></div>
+      <div class="pdot" id="pin-setup-dot-2"></div>
+      <div class="pdot" id="pin-setup-dot-3"></div>
+    </div>
+    <div id="pin-setup-err" class="pin-err"></div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:280px;">
-    <div class="pkey" onclick="pinSetupKeyPress('1')">1</div>
-    <div class="pkey" onclick="pinSetupKeyPress('2')">2</div>
-    <div class="pkey" onclick="pinSetupKeyPress('3')">3</div>
-    <div class="pkey" onclick="pinSetupKeyPress('4')">4</div>
-    <div class="pkey" onclick="pinSetupKeyPress('5')">5</div>
-    <div class="pkey" onclick="pinSetupKeyPress('6')">6</div>
-    <div class="pkey" onclick="pinSetupKeyPress('7')">7</div>
-    <div class="pkey" onclick="pinSetupKeyPress('8')">8</div>
-    <div class="pkey" onclick="pinSetupKeyPress('9')">9</div>
-    <div class="pkey" onclick="pinSetupKeyPress('hash')">#</div>
-    <div class="pkey" onclick="pinSetupKeyPress('0')">0</div>
-    <div class="pkey" onclick="pinSetupKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
+    <div class="pin-pad">
+      <div class="pkey" onclick="pinSetupKeyPress('1')">1</div>
+      <div class="pkey" onclick="pinSetupKeyPress('2')">2</div>
+      <div class="pkey" onclick="pinSetupKeyPress('3')">3</div>
+      <div class="pkey" onclick="pinSetupKeyPress('4')">4</div>
+      <div class="pkey" onclick="pinSetupKeyPress('5')">5</div>
+      <div class="pkey" onclick="pinSetupKeyPress('6')">6</div>
+      <div class="pkey" onclick="pinSetupKeyPress('7')">7</div>
+      <div class="pkey" onclick="pinSetupKeyPress('8')">8</div>
+      <div class="pkey" onclick="pinSetupKeyPress('9')">9</div>
+      <div class="pkey" onclick="pinSetupKeyPress('hash')">#</div>
+      <div class="pkey" onclick="pinSetupKeyPress('0')">0</div>
+      <div class="pkey" onclick="pinSetupKeyPress('back')"><i class="fa-solid fa-delete-left"></i></div>
+    </div>
   </div>
 </div>
 
@@ -5962,28 +6096,96 @@ function loadPay(){
   document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
   renderPayHist(c);
 }
+// Index (into the customer's real, non-reversed payments array) of the
+// payment row currently open for editing — null when nothing is being
+// edited. Only one row can be edited at a time.
+let _payEditIdx = null;
 function renderPayHist(c){
   const el=document.getElementById('pay-hist');
-  el.innerHTML=c.payments.length?[...c.payments].reverse().map(p=>{
+  if(!c.payments.length){
+    el.innerHTML=`<div style="text-align:center;padding:14px;color:var(--t2);">${isUrdu ? 'ابھی کوئی ادائیگی نہیں' : 'No payments yet'}</div>`;
+    return;
+  }
+  const plan = _instPlan(c);
+  el.innerHTML = c.payments.map((p, idx) => {
+    if(idx === _payEditIdx){
+      const dVal = (p.date||'').split('T')[0] || p.date || '';
+      return `
+    <div class="pitem" style="flex-direction:column;align-items:stretch;gap:8px;background:rgba(21,101,192,0.06);border:1px dashed var(--p1);border-radius:10px;">
+      <div style="display:flex;gap:8px;">
+        <input type="date" id="pe-date" value="${dVal}" style="flex:1;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid var(--bd);">
+        <input type="number" id="pe-amt" value="${p.amount}" style="flex:1;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid var(--bd);">
+      </div>
+      <input type="text" id="pe-note" value="${(p.note||'').replace(/"/g,'&quot;')}" placeholder="${isUrdu?'نوٹ (اختیاری)':'Note (optional)'}" style="padding:7px 8px;border-radius:8px;border:1px solid var(--bd);">
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn bp bsm" style="flex:1;" onclick="savePayEdit(${idx})"><i class="fa-solid fa-check"></i> ${isUrdu?'محفوظ کریں':'Save'}</button>
+        <button type="button" class="btn bsm" style="flex:1;background:var(--bd);color:var(--t1);" onclick="cancelPayEdit()">${isUrdu?'منسوخ':'Cancel'}</button>
+      </div>
+    </div>`;
+    }
     const methodStr = p.method || 'Cash';
     let displayMethod = methodStr;
     if(isUrdu) {
       const map = { 'Cash':'کیش', 'Bank Transfer':'بینک ٹرانسفر', 'JazzCash':'جاز کیش', 'EasyPaisa':'ایزی پیسہ', 'Raast':'راست', 'Cheque':'چیک', 'Other':'دیگر' };
       displayMethod = map[methodStr] || methodStr;
     }
+    const pr = plan.rows[idx];
+    const shortHere = pr && pr.short > 0;
     return `
     <div class="pitem">
       <div>
         <div style="font-weight:600;">${fmtDT(p.date)}</div>
         <div class="pdate" style="margin-top:2px;color:var(--p1);font-weight:500;"><i class="fa-solid fa-wallet"></i> ${displayMethod}</div>
         ${p.note?`<div class="pdate"><i class="fa-solid fa-note-sticky"></i> ${p.note}</div>`:''}
+        ${shortHere?`<div class="pdate" style="color:#C62828;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> ${isUrdu?'کمی':'Short'} Rs. ${fmt(pr.short)}</div>`:''}
       </div>
       <div style="text-align:right;">
         <span class="pamt" style="display:block;">Rs. ${fmt(p.amount)}</span>
         <span class="pst spaid">${isUrdu ? 'ادا' : 'Paid'} <i class="fa-solid fa-circle-check"></i></span>
+        <div style="display:flex;gap:6px;margin-top:5px;justify-content:flex-end;">
+          <button type="button" class="btn bsm" style="padding:4px 9px;background:var(--bd);color:var(--t1);" onclick="startPayEdit(${idx})" title="${isUrdu?'ترمیم':'Edit'}"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="btn bsm" style="padding:4px 9px;background:#FFEBEE;color:#C62828;" onclick="deletePayRow(${idx})" title="${isUrdu?'حذف':'Delete'}"><i class="fa-solid fa-trash"></i></button>
+        </div>
       </div>
     </div>`;
-  }).join(''):`<div style="text-align:center;padding:14px;color:var(--t2);">${isUrdu ? 'ابھی کوئی ادائیگی نہیں' : 'No payments yet'}</div>`;
+  }).reverse().join('');
+}
+function startPayEdit(idx){ _payEditIdx = idx; loadPay(); }
+function cancelPayEdit(){ _payEditIdx = null; loadPay(); }
+// Recompute a customer's done/active status from their actual payments —
+// used after any edit or delete so correcting a past entry can't leave
+// the record permanently stuck as "done" (or vice versa).
+function _recalcCustStatus(c){
+  const paid = c.payments.reduce((s,p)=>s+(p.amount||0),0);
+  if(paid >= (c.mobile.remaining||0)) c.status='done';
+  else if(c.status==='done') c.status='active';
+}
+function savePayEdit(idx){
+  const sel=document.getElementById('pay-sel');
+  const c = sel && customers.find(x=>String(x.id)===String(sel.value));
+  if(!c || !c.payments[idx]) return;
+  const newAmt = parseFloat(document.getElementById('pe-amt').value)||0;
+  if(newAmt<=0){ showToast(isUrdu?'<i class="fa-solid fa-triangle-exclamation"></i> رقم درست نہیں':'<i class="fa-solid fa-triangle-exclamation"></i> Invalid amount','warn'); return; }
+  const newDate = document.getElementById('pe-date').value || c.payments[idx].date;
+  const newNote = document.getElementById('pe-note').value.trim();
+  c.payments[idx].amount = newAmt;
+  c.payments[idx].date = newDate;
+  c.payments[idx].note = newNote;
+  _recalcCustStatus(c);
+  _payEditIdx = null;
+  save(); loadPay(); renderDash();
+  showToast(isUrdu ? '<i class="fa-solid fa-circle-check"></i> ادائیگی اپڈیٹ ہو گئی!' : '<i class="fa-solid fa-circle-check"></i> Payment updated!');
+}
+function deletePayRow(idx){
+  const sel=document.getElementById('pay-sel');
+  const c = sel && customers.find(x=>String(x.id)===String(sel.value));
+  if(!c || !c.payments[idx]) return;
+  if(!confirm(isUrdu?'یہ ادائیگی حذف کر دیں؟ یہ واپس نہیں ہو سکتا۔':'Delete this payment? This cannot be undone.')) return;
+  c.payments.splice(idx,1);
+  _recalcCustStatus(c);
+  _payEditIdx = null;
+  save(); loadPay(); renderDash();
+  showToast(isUrdu ? '<i class="fa-solid fa-circle-check"></i> ادائیگی حذف ہو گئی' : '<i class="fa-solid fa-circle-check"></i> Payment deleted');
 }
 // ══════════════════════════════
 //  DASHBOARD
@@ -6859,7 +7061,7 @@ let stock=JSON.parse(window.safeLS.getItem('sms_stock')||'[]');
 //  Placeholders are filled in automatically when a reminder is sent.
 // ══════════════════════════════
 const DEFAULT_REMINDER_TEMPLATES = {
-  general: 'السلام علیکم {name} صاحب! 🌸\n\n{shopName} کی طرف سے یاددہانی:\n\n<i class="fa-solid fa-mobile-screen-button"></i> موبائل: {model}\n<i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط: Rs. {monthly}\n⏳ باقی رقم: Rs. {remaining}\n\n{lateInfo}\n\n<i class="fa-solid fa-phone"></i> {shopName}: {phone}\nجَزَاكَ اللَّهُ خَيْرًا <i class="fa-solid fa-handshake"></i>',
+  general: 'السلام علیکم {name} صاحب! 🌸\n\n{shopName} کی طرف سے یاددہانی:\n\n<i class="fa-solid fa-mobile-screen-button"></i> موبائل: {model}\n<i class="fa-solid fa-sack-dollar"></i> اس ماہ واجب رقم: Rs. {dueAmount}{shortNote}\n⏳ کل باقی رقم: Rs. {remaining}\n\n{lateInfo}\n\n<i class="fa-solid fa-phone"></i> {shopName}: {phone}\nجَزَاكَ اللَّهُ خَيْرًا <i class="fa-solid fa-handshake"></i>',
   schedule: 'السلام علیکم {name} صاحب! 🌸\n\n<i class="fa-solid fa-mobile-screen-button"></i> *{model}* قسط شیڈول:\n\n{schedule}\n<i class="fa-solid fa-sack-dollar"></i> ماہانہ قسط: Rs.{monthly}\n<i class="fa-solid fa-phone"></i> {shopName}: {phone}\nجَزَاكَ اللَّهُ خَيْرًا <i class="fa-solid fa-handshake"></i>'
 };
 
@@ -7070,6 +7272,10 @@ function renderAlerts(){
 
     const daycls=diffDays>0?'days-over':'days-ok';
     const left=c.mobile.months-paidCount;
+    // Next due amount folds in any shortfall carried from a past short
+    // payment, so the alert always shows what's actually owed now.
+    const plan = _instPlan(c);
+    const dueNow = plan.nextDue || c.mobile.monthly || 0;
     return `<div class="alert-card ${cls}">
       <div class="alert-top">
         <div>
@@ -7078,8 +7284,9 @@ function renderAlerts(){
         </div>
         <span class="alert-days ${daycls}">${daytxt}</span>
       </div>
+      ${plan.carry>0 ? `<div style="background:#FFEBEE;border:1px solid #EF9A9A;color:#C62828;border-radius:8px;padding:5px 9px;margin:6px 0;font-size:11px;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> ${isUrdu?'پچھلی کمی':'Past shortfall'} Rs. ${fmt(plan.carry)} — ${isUrdu?'اس قسط میں شامل':'added to this installment'}</div>` : ''}
       <div class="alert-info">
-        <div class="alert-ii">${isUrdu ? 'ماہانہ قسط' : 'Monthly Inst.'}<strong>Rs. ${fmt(c.mobile.monthly)}</strong></div>
+        <div class="alert-ii">${plan.carry>0 ? (isUrdu?'اس ماہ واجب':'Due Now') : (isUrdu ? 'ماہانہ قسط' : 'Monthly Inst.')}<strong${plan.carry>0?' style="color:#C62828"':''}>Rs. ${fmt(dueNow)}</strong></div>
         <div class="alert-ii">${isUrdu ? 'باقی رقم' : 'Remaining'}<strong style="color:var(--r2)">Rs. ${fmt(rem)}</strong></div>
         <div class="alert-ii">${isUrdu ? 'اگلی تاریخ' : 'Next Date'}<strong>${dd}</strong></div>
         <div class="alert-ii">${isUrdu ? 'باقی اقساط' : 'Left Inst.'}<strong>${left} ${isUrdu ? 'ماہ' : 'Mo.'}</strong></div>
@@ -7108,10 +7315,21 @@ function _buildReminderVars(c, diffDays){
     diffDays>0 ? `آپ کی قسط ${diffDays} دن سے تاخیر میں ہے۔ براہ کرم جلد ادا کریں۔` :
     diffDays===0 ? 'آپ کی قسط آج واجب الادا ہے۔' :
     `آپ کی اگلی قسط ${Math.abs(diffDays)} دن میں واجب الادا ہے۔`;
+  // Next due amount = this month's installment PLUS any shortfall carried
+  // over from a previous short payment — so the reminder always reflects
+  // what's actually owed next, not just the flat monthly figure.
+  const plan = _instPlan(c);
+  const shortCarry = plan.carry || 0;
+  const shortNote = shortCarry>0
+    ? `\n⚠️ پچھلی قسط میں Rs. ${fmt(shortCarry)} کی کمی رہ گئی تھی، جو اس قسط میں شامل کر لی گئی ہے۔`
+    : '';
   return {
     name      : c.name || '—',
     model     : mobile.model || '—',
     monthly   : fmt(mobile.monthly || 0),
+    dueAmount : fmt(plan.nextDue || mobile.monthly || 0),
+    shortCarry: shortCarry,
+    shortNote : shortNote,
     remaining : fmt(rem),
     lateInfo  : late,
     shopName  : (shopProfile && shopProfile.name) || 'SM Pro Installment',
@@ -7255,7 +7473,7 @@ function generateReminderMedia(id, kind, diffDays){
   ctx.fillText(vars.name + ' صاحب', rightX, y); y += 40;
 
   row('آئٹم ماڈل', vars.model);
-  row('ماہانہ قسط', 'Rs. ' + vars.monthly);
+  row(vars.shortCarry>0 ? 'اس ماہ واجب (کمی سمیت)' : 'ماہانہ قسط', 'Rs. ' + vars.dueAmount, vars.shortCarry>0?{color:'#C62828'}:{});
   if(kind==='schedule'){
     const startD = new Date(mobile.startDate || new Date());
     const months = mobile.months || 0;
